@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model UserRole {
+  id       String @id @default(uuid()) @db.Uuid
+  roleName String @unique @map("role_name")
+
+  @@map("user_roles")
+}
+
+model Profile {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  groupType    String   @default("embaixador") @map("group_type")
+  tier         String   @default("Embaixador Voice")
+  xp           Int      @default(0)
+  level        Int      @default(1)
+  isAdmin      Boolean  @default(false) @map("is_admin")
+  isActive     Boolean  @default(true) @map("is_active")
+  profileImage String?  @map("profile_image")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  enrollments  Enrollment[]
+  certificates Certificate[]
+  posts        Post[]
+  postLikes    PostLike[]
+  postComments PostComment[]
+
+  @@map("profiles")
+}
+
+model Course {
+  id            String   @id @default(uuid()) @db.Uuid
+  title         String
+  description   String?
+  workloadHours Int      @default(0) @map("workload_hours")
+  xpReward      Int      @default(50) @map("xp_reward")
+  coverUrl      String?  @map("cover_url")
+  targetGroup   String   @default("all") @map("target_group")
+  isPublished   Boolean  @default(false) @map("is_published")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  modules       Module[]
+  enrollments   Enrollment[]
+  certificates  Certificate[]
+
+  @@map("courses")
+}
+
+model Module {
+  id          String   @id @default(uuid()) @db.Uuid
+  courseId    String?  @map("course_id") @db.Uuid
+  title       String
+  description String?
+  content     String?
+  videoUrl    String?  @map("video_url")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress    ModuleProgress[]
+
+  @@map("modules")
+}
+
+model Enrollment {
+  id          String    @id @default(uuid()) @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  courseId    String?   @map("course_id") @db.Uuid
+  enrolledAt  DateTime  @default(now()) @map("enrolled_at") @db.Timestamptz(6)
+  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+
+  user        Profile?  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course      Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress    ModuleProgress[]
+
+  @@unique([userId, courseId])
+  @@map("enrollments")
+}
+
+model ModuleProgress {
+  id           String    @id @default(uuid()) @db.Uuid
+  enrollmentId String?   @map("enrollment_id") @db.Uuid
+  moduleId     String?   @map("module_id") @db.Uuid
+  isCompleted  Boolean   @default(false) @map("is_completed")
+  completedAt  DateTime? @map("completed_at") @db.Timestamptz(6)
+
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  module       Module?     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([enrollmentId, moduleId])
+  @@map("module_progress")
+}
+
+model Certificate {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String?  @map("user_id") @db.Uuid
+  courseId         String?  @map("course_id") @db.Uuid
+  verificationCode String   @unique @map("verification_code")
+  issuedAt         DateTime @default(now()) @map("issued_at") @db.Timestamptz(6)
+
+  user             Profile? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course           Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@map("certificates")
+}
+
+model Post {
+  id        String   @id @default(uuid()) @db.Uuid
+  authorId  String   @map("author_id") @db.Uuid
+  title     String
+  body      String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  author    Profile  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  likes     PostLike[]
+  comments  PostComment[]
+
+  @@map("posts")
+}
+
+model PostLike {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@map("post_likes")
+}
+
+model PostComment {
+  id        String   @id @default(uuid()) @db.Uuid
+  postId    String   @map("post_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  content   String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("post_comments")
+}

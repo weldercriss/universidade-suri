@@ -1,0 +1,22 @@
+{
+  "short_name": "UniSuri",
+  "name": "Universidade Suri",
+  "description": "Plataforma de Cursos Online da Suri para VIPs e Embaixadores",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#020519",
+  "theme_color": "#000f9b",
+  "display": "standalone",
+  "orientation": "portrait"
+}
