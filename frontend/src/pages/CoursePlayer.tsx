@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { type Course } from "@/types";
 import { AppShell } from "@/components/app-shell";
@@ -8,9 +8,19 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Circle, ArrowRight, ArrowLeft, Loader2, Award } from "lucide-react";
+import { CheckCircle2, Circle, ArrowRight, ArrowLeft, Loader2, Award, Lock } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+
+function extractYoutubeId(urlOrId: string) {
+  if (!urlOrId) return "dQw4w9WgXcQ";
+  const match = urlOrId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?\/\s]{11})/);
+  return (match?.[1] ?? urlOrId) || "dQw4w9WgXcQ";
+}
+
+function buildCompletedMap(lessonIds: string[], completedModuleIds: string[]) {
+  const completedSet = new Set(completedModuleIds);
+  return Object.fromEntries(lessonIds.map((id) => [id, completedSet.has(id)]));
+}
 
 export function CoursePlayerPage() {
   const { courseId } = useParams<{ courseId: string }>();
@@ -31,74 +41,115 @@ export function CoursePlayerPage() {
   }, [user, navigate]);
 
   useEffect(() => {
-    if (!courseId) return;
+    if (!courseId || !user || user.group === "admin" || user.isAdmin) return;
 
-    const extractYoutubeId = (urlOrId: string) => {
-      if (!urlOrId) return "dQw4w9WgXcQ";
-      const match = urlOrId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?\/\s]{11})/);
-      return match ? match[1] : urlOrId;
-    };
+    setLoading(true);
 
-    apiRequest<any>(`/courses/${courseId}`)
-      .then((data) => {
+    const load = async () => {
+      try {
+        const [data, progressData] = await Promise.all([
+          apiRequest<any>(`/courses/${courseId}`),
+          apiRequest<{
+            enrollmentId: string | null;
+            completedModuleIds: string[];
+            totalModules: number;
+            completedCount: number;
+          }>(`/enrollments/courses/${courseId}/progress`),
+        ]);
+
+        if (!progressData.enrollmentId) {
+          await apiRequest(`/enrollments/${courseId}/join`, { method: "POST" });
+        }
+
+        const rawLessons = [...(data.lessons || [])].sort(
+          (a: { sortOrder?: number }, b: { sortOrder?: number }) =>
+            (a.sortOrder ?? 0) - (b.sortOrder ?? 0)
+        );
+
+        const lessonIds = rawLessons.map((l: { id: string }) => l.id);
+        const completedMap = buildCompletedMap(lessonIds, progressData.completedModuleIds);
+
         const mapped: Course = {
           id: data.id,
           title: data.title,
           description: data.description || "",
           cover: "from-marine to-deep",
           group: data.targetGroup || data.target_group || "all",
-          progress: 0,
-          lessons: (data.lessons || []).map((l: any) => ({
+          progress: progressData.totalModules > 0
+            ? Math.round((progressData.completedCount / progressData.totalModules) * 100)
+            : 0,
+          lessons: rawLessons.map((l: any) => ({
             id: l.id,
             title: l.title,
             duration: l.duration || "10:00",
-            youtubeId: extractYoutubeId(l.videoUrl || l.video_url),
-            done: false,
+            youtubeId: extractYoutubeId(l.videoUrl || l.video_url || ""),
+            done: !!completedMap[l.id],
           })),
         };
+
         setCourse(mapped);
-        setCompleted(Object.fromEntries(mapped.lessons.map((l) => [l.id, !!l.done])));
-      })
-      .catch(() => {
+        setCompleted(completedMap);
+
+        const firstIncomplete = lessonIds.findIndex((id) => !completedMap[id]);
+        setActiveIdx(firstIncomplete >= 0 ? firstIncomplete : 0);
+      } catch {
         setCourse(null);
-      })
-      .finally(() => setLoading(false));
-  }, [courseId]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    load();
+  }, [courseId, user]);
+
+  const isLessonUnlocked = useCallback(
+    (index: number) => {
+      if (!course || index === 0) return true;
+      const prevId = course.lessons[index - 1]?.id;
+      return prevId ? !!completed[prevId] : false;
+    },
+    [course, completed]
+  );
 
   useEffect(() => {
     setVideoFinished(false);
-    
-    let player: any;
-    
-    const onPlayerStateChange = (event: any) => {
-      // YT.PlayerState.ENDED is 0
+
+    let player: { destroy?: () => void } | undefined;
+
+    const onPlayerStateChange = (event: { data: number }) => {
       if (event.data === 0) {
         setVideoFinished(true);
       }
     };
 
+    const win = window as Window & { YT?: { Player: new (id: string, opts: object) => { destroy?: () => void } }; onYouTubeIframeAPIReady?: () => void };
+
     const initPlayer = () => {
-      if (!window.YT) return;
-      player = new window.YT.Player('youtube-player', {
+      if (!win.YT) return;
+      player = new win.YT.Player("youtube-player", {
         events: {
-          'onStateChange': onPlayerStateChange
-        }
+          onStateChange: onPlayerStateChange,
+        },
       });
     };
 
-    if (!window.YT) {
-      const tag = document.createElement('script');
+    if (!win.YT) {
+      const tag = document.createElement("script");
       tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName('script')[0];
-      firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
-      window.onYouTubeIframeAPIReady = initPlayer;
+      const firstScriptTag = document.getElementsByTagName("script")[0];
+      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+      win.onYouTubeIframeAPIReady = initPlayer;
     } else {
       setTimeout(initPlayer, 500);
     }
 
     return () => {
-      if (player && player.destroy) {
-        try { player.destroy(); } catch {}
+      if (player?.destroy) {
+        try {
+          player.destroy();
+        } catch {
+          /* ignore */
+        }
       }
     };
   }, [activeIdx, courseId]);
@@ -124,42 +175,6 @@ export function CoursePlayerPage() {
     );
   }
 
-  const lesson = course.lessons[activeIdx];
-  const doneCount = Object.values(completed).filter(Boolean).length;
-  const pct = course.lessons.length > 0 ? Math.round((doneCount / course.lessons.length) * 100) : 0;
-
-  const finish = async () => {
-    if (!videoFinished && !completed[lesson.id]) {
-      toast.error("Assista o vídeo até o final para concluir a aula.");
-      return;
-    }
-    try {
-      await apiRequest(`/enrollments/lessons/${lesson.id}/complete`, { method: "POST" });
-    } catch { /* proceed anyway */ }
-    setCompleted((s) => ({ ...s, [lesson.id]: true }));
-    toast.success("Aula concluída! +50 XP");
-  };
-
-  const next = () => {
-    if (activeIdx < course.lessons.length - 1) setActiveIdx((i) => i + 1);
-  };
-  const prev = () => activeIdx > 0 && setActiveIdx((i) => i - 1);
-
-  const generateCertificate = async () => {
-    try {
-      setGeneratingCert(true);
-      const res = await apiRequest(`/certificates/${courseId}/generate`, { method: "POST" });
-      if (res.code) {
-        toast.success("Certificado gerado com sucesso!");
-        navigate(`/certificado/${res.code}`);
-      }
-    } catch (e: any) {
-      toast.error(e.message || "Erro ao gerar certificado");
-    } finally {
-      setGeneratingCert(false);
-    }
-  };
-
   if (course.lessons.length === 0) {
     return (
       <AppShell>
@@ -176,6 +191,75 @@ export function CoursePlayerPage() {
     );
   }
 
+  const lesson = course.lessons[activeIdx]!;
+  const doneCount = Object.values(completed).filter(Boolean).length;
+  const pct = course.lessons.length > 0 ? Math.round((doneCount / course.lessons.length) * 100) : 0;
+  const allLessonsCompleted = doneCount === course.lessons.length;
+
+  const selectLesson = (index: number) => {
+    if (!isLessonUnlocked(index)) {
+      toast.error("Conclua a aula anterior para desbloquear esta aula.");
+      return;
+    }
+    setActiveIdx(index);
+  };
+
+  const finish = async () => {
+    if (!videoFinished && !completed[lesson.id]) {
+      toast.error("Assista o vídeo até o final para concluir a aula.");
+      return;
+    }
+    if (completed[lesson.id]) return;
+
+    try {
+      const res = await apiRequest<{ message: string; courseCompleted?: boolean }>(
+        `/enrollments/lessons/${lesson.id}/complete`,
+        { method: "POST" }
+      );
+      setCompleted((s) => ({ ...s, [lesson.id]: true }));
+      toast.success(res.message || "Aula concluída!");
+      if (res.courseCompleted) {
+        toast.success("Parabéns! Você concluiu o curso.");
+      }
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Não foi possível concluir a aula.";
+      toast.error(message);
+    }
+  };
+
+  const next = () => {
+    if (!completed[lesson.id]) {
+      toast.error("Conclua a aula atual antes de avançar.");
+      return;
+    }
+    if (activeIdx < course.lessons.length - 1) {
+      const nextIdx = activeIdx + 1;
+      if (isLessonUnlocked(nextIdx)) {
+        setActiveIdx(nextIdx);
+      }
+    }
+  };
+
+  const prev = () => {
+    if (activeIdx > 0) setActiveIdx((i) => i - 1);
+  };
+
+  const generateCertificate = async () => {
+    try {
+      setGeneratingCert(true);
+      const res = await apiRequest<{ code?: string }>(`/certificates/${courseId}/generate`, { method: "POST" });
+      if (res.code) {
+        toast.success("Certificado gerado com sucesso!");
+        navigate(`/certificado/${res.code}`);
+      }
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : "Erro ao gerar certificado";
+      toast.error(message);
+    } finally {
+      setGeneratingCert(false);
+    }
+  };
+
   return (
     <AppShell>
       <div className="mb-6 flex items-center gap-3 text-sm text-muted-foreground fade-in-up">
@@ -184,7 +268,7 @@ export function CoursePlayerPage() {
         <span className="text-foreground">{course.title}</span>
       </div>
 
-      <div className="grid lg:grid-cols-[1fr_340px] gap-6">
+      <div className="grid lg:grid-cols-[1fr_320px] gap-4 lg:gap-6">
         <div className="fade-in-up">
           <Card className="bg-gradient-card border-border overflow-hidden shadow-elegant">
             <div className="aspect-video bg-black relative">
@@ -214,17 +298,17 @@ export function CoursePlayerPage() {
                 <Button variant="outline" onClick={prev} disabled={activeIdx === 0} className="border-border">
                   <ArrowLeft className="size-4 mr-1" /> Anterior
                 </Button>
-                <Button 
-                  variant="secondary" 
-                  onClick={finish} 
-                  disabled={completed[lesson.id] || (!videoFinished && !completed[lesson.id])} 
+                <Button
+                  variant="secondary"
+                  onClick={finish}
+                  disabled={completed[lesson.id] || (!videoFinished && !completed[lesson.id])}
                   className="bg-muted hover:bg-muted/80 text-foreground"
                 >
                   {completed[lesson.id] ? "✓ Concluída" : (!videoFinished ? "Assista até o fim..." : "Concluir aula")}
                 </Button>
-                <Button 
-                  onClick={next} 
-                  disabled={activeIdx === course.lessons.length - 1 || (!completed[lesson.id] && !videoFinished)} 
+                <Button
+                  onClick={next}
+                  disabled={activeIdx === course.lessons.length - 1 || !completed[lesson.id]}
                   className="bg-gradient-hero text-snow border border-border group"
                 >
                   Próxima aula <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
@@ -234,7 +318,6 @@ export function CoursePlayerPage() {
           </Card>
         </div>
 
-        {/* Sidebar de aulas */}
         <aside className="space-y-4">
           <Card className="bg-gradient-card border-border p-5 shadow-elegant">
             <div className="text-sm text-muted-foreground font-medium">Progresso do curso</div>
@@ -243,8 +326,8 @@ export function CoursePlayerPage() {
             <div className="text-xs text-muted-foreground mt-2 mb-4">
               {doneCount} de {course.lessons.length} aulas
             </div>
-            {pct === 100 && (
-              <Button onClick={generateCertificate} disabled={generatingCert} className="w-full bg-amber-500 hover:bg-amber-600 text-white shadow-glow group">
+            {allLessonsCompleted && (
+            <Button onClick={generateCertificate} disabled={generatingCert} className="w-full bg-secondary hover:bg-secondary/80 text-white shadow-glow group">
                 {generatingCert ? <Loader2 className="size-4 mr-2 animate-spin" /> : <Award className="size-4 mr-2 group-hover:scale-110 transition-transform" />} Emitir Certificado
               </Button>
             )}
@@ -253,14 +336,24 @@ export function CoursePlayerPage() {
             {course.lessons.map((l, i) => {
               const isActive = i === activeIdx;
               const isDone = completed[l.id];
+              const unlocked = isLessonUnlocked(i);
               return (
                 <button
                   key={l.id}
-                  onClick={() => setActiveIdx(i)}
+                  type="button"
+                  onClick={() => selectLesson(i)}
+                  disabled={!unlocked}
                   className={`w-full text-left p-3 flex items-center gap-3 transition-smooth border-l-2
-                    ${isActive ? "bg-primary/15 border-primary" : "hover:bg-muted/40 border-transparent"}`}
+                    ${!unlocked ? "opacity-50 cursor-not-allowed" : ""}
+                    ${isActive ? "bg-primary/15 border-primary" : unlocked ? "hover:bg-muted/40 border-transparent" : "border-transparent"}`}
                 >
-                  {isDone ? <CheckCircle2 className="size-4 text-success" /> : <Circle className="size-4 text-muted-foreground" />}
+                  {isDone ? (
+                    <CheckCircle2 className="size-4 text-success shrink-0" />
+                  ) : !unlocked ? (
+                    <Lock className="size-4 text-muted-foreground shrink-0" />
+                  ) : (
+                    <Circle className="size-4 text-muted-foreground shrink-0" />
+                  )}
                   <div className="flex-1 min-w-0">
                     <div className="text-sm truncate font-medium">{l.title}</div>
                     <div className="text-[11px] text-muted-foreground">{l.duration}</div>

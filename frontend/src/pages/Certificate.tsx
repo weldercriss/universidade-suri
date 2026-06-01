@@ -85,12 +85,12 @@ export function CertificatePage() {
             <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
 
             <div className="relative z-10 space-y-6">
-              <div className="mx-auto size-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 grid place-items-center">
+              <div className="mx-auto size-16 rounded-full bg-success/10 border border-success/20 grid place-items-center">
                 <ShieldCheck className="size-8 text-success" />
               </div>
 
               <div>
-                <Badge className="bg-emerald-500/10 text-success border-emerald-500/20 px-3 py-1 font-semibold text-xs">
+                <Badge className="bg-success/10 text-success border-success/20 px-3 py-1 font-semibold text-xs">
                   <Check className="size-3 mr-1 inline" /> Certificado Válido
                 </Badge>
                 <h1 className="text-2xl md:text-3xl font-bold mt-4 text-gradient font-display">

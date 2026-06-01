@@ -2,17 +2,23 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { GraduationCap, Eye, EyeOff, Sun, Moon, ArrowRight, Chrome, Hexagon } from "lucide-react";
-import { toast } from "sonner";
-import { apiRequest } from "@/lib/api";
+import {
+  Eye,
+  EyeOff,
+  Sun,
+  Moon,
+  ArrowRight,
+  Mail,
+  Lock,
+  Sparkles,
+  ShieldCheck,
+  Trophy,
+  GraduationCap,
+} from "lucide-react";
 
 export function LoginPage() {
   const { login } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,188 +31,210 @@ export function LoginPage() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/");
+      navigate("/dashboard");
     } catch {
       setLoading(false);
     }
   };
 
-  const loginWithGoogle = async () => {
-    // Simulated Google Login for demo purposes since no ClientID is available
-    // In production, use @react-oauth/google or similar to get the credential token
-    const email = window.prompt("Simulação Google Login: Digite seu e-mail do Google (ex: user@gmail.com)");
-    if (!email) return;
-    const name = email.split("@")[0];
-    
-    setLoading(true);
-    try {
-      const data = await apiRequest("/auth/google", {
-        method: "POST",
-        body: JSON.stringify({ token: "fake_google_token", name, email })
-      });
-      // Set auth context (simulated since useAuth doesn't expose a manual token setter yet, 
-      // wait, useAuth's `login` handles local storage, but for google we need to adapt it. 
-      // Actually, we can just use localstorage directly and refresh)
-      localStorage.setItem("suri_token", data.token);
-      localStorage.setItem("nimbus_user", JSON.stringify(data.user));
-      window.location.href = "/";
-    } catch (err: any) {
-      toast.error("Erro no login com Google");
-      setLoading(false);
-    }
-  };
-
-  const loginWithSuri = () => {
-    toast.info("Integração com Plataforma Suri (SSO) em desenvolvimento.");
-  };
-
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background relative overflow-hidden">
-      <img src="/src/assets/totvs.svg" className="watermark-bg" alt="" aria-hidden="true" />
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background px-4 py-10">
+      {/* Aurora background — adapts to both themes via design tokens */}
+      <div className="login-aurora" aria-hidden="true">
+        <span />
+      </div>
+      <div className="login-grid" aria-hidden="true" />
+      <img
+        src="/totvs.svg"
+        className="watermark-bg"
+        alt=""
+        aria-hidden="true"
+      />
 
-      {/* Brand panel - Inspired by RD Station login gradient */}
-      <div className="relative hidden lg:flex flex-col justify-between p-12 login-brand-gradient overflow-hidden border-r border-border">
-        <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'radial-gradient(circle at 80% 60%, hsl(180 85% 55% / 0.15), transparent 50%)'
-        }} />
-
-        {/* Theme toggle */}
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="size-10 rounded-xl bg-white/10 border border-white/20 grid place-items-center backdrop-blur-sm">
-              <img src="/src/assets/icons/totvs.svg" alt="Logo Totvs" />
-            </div>
-            <span className="font-display text-lg font-semibold text-foreground">Universidade Suri</span>
-          </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={toggleTheme}
-            className="text-foreground/70 hover:text-foreground"
+      {/* Theme switcher — top right */}
+      <div className="absolute top-5 right-5 z-20">
+        <div className="theme-pill" role="group" aria-label="Selecionar tema">
+          <button
+            type="button"
+            data-active={isLight}
+            onClick={() => setTheme("snow-blue")}
+            aria-label="Tema claro Snow Blue"
+            title="Snow Blue"
           >
-            {isLight ? <Moon className="size-4" /> : <Sun className="size-4" />}
-          </Button>
-        </div>
-
-        <div className="relative z-10">
-          <h1 className="font-display text-4xl xl:text-5xl font-bold leading-tight text-foreground">
-            Educação e prática de verdade, ao seu alcance.
-          </h1>
-          <p className="text-foreground/70 mt-4 max-w-md text-lg">
-            Inscreva-se e aprenda com quem lidera o mercado.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            {[
-              { icon: "✓", text: "Conteúdos práticos e atualizados" },
-              { icon: "✓", text: "Metodologia simples e eficiente" },
-              { icon: "✓", text: "Certificado com a marca Suri" },
-            ].map((item) => (
-              <div key={item.text} className="flex items-center gap-2 text-foreground/80">
-                <span className="size-6 rounded-full bg-cyan-accent/20 text-cyan-accent grid place-items-center text-xs font-bold">{item.icon}</span>
-                <span className="text-sm font-medium">{item.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative z-10 text-foreground/40 text-xs">
-          © Universidade Suri · Plataforma de educação
+            <Sun className="size-4" />
+          </button>
+          <button
+            type="button"
+            data-active={!isLight}
+            onClick={() => setTheme("night-blue")}
+            aria-label="Tema escuro Night Blue"
+            title="Night Blue"
+          >
+            <Moon className="size-4" />
+          </button>
         </div>
       </div>
 
-      {/* Form */}
-      <div className="flex items-center justify-center p-6 relative z-10">
-        <Card className="w-full max-w-md p-8 bg-gradient-card border-border shadow-elegant fade-in-up">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2 mb-6">
-            <div className="size-9 rounded-xl bg-gradient-hero shadow-glow grid place-items-center">
-              <GraduationCap className="size-5 text-snow" />
-            </div>
-            <span className="font-display text-lg font-semibold text-gradient">Universidade Suri</span>
+      {/* Brand mark — top left */}
+      <div className="absolute top-5 left-5 z-20 flex items-center gap-2">
+        <div className="size-9 rounded-xl grid place-items-center bg-gradient-brand shadow-glow">
+          <GraduationCap className="size-5 text-white" />
+        </div>
+        <div className="leading-tight">
+          <div className="text-sm font-semibold text-foreground">
+            Universidade <span className="text-gradient">Suri</span>
           </div>
+          <div className="text-[10px] uppercase tracking-[0.2em] text-foreground/50">
+            Plataforma educacional
+          </div>
+        </div>
+      </div>
 
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gradient">Entrar</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Use suas credenciais para acessar a plataforma.
+      {/* Floating decorative chips (md+) */}
+      <div className="hidden md:block">
+        <div
+          className="login-chip delay-1"
+          style={{ left: "10%", top: "22%" }}
+        >
+          <span className="chip-dot" />
+          <Sparkles className="size-3.5 text-foreground/70" />
+          +2.500 alunos certificados
+        </div>
+        <div
+          className="login-chip delay-2"
+          style={{ right: "9%", top: "28%" }}
+        >
+          <span className="chip-dot" />
+          <ShieldCheck className="size-3.5 text-foreground/70" />
+          Antifraude por aulas sequenciais
+        </div>
+        <div
+          className="login-chip delay-3"
+          style={{ left: "12%", bottom: "18%" }}
+        >
+          <span className="chip-dot" />
+          <Trophy className="size-3.5 text-foreground/70" />
+          Gamificação com XP &amp; Níveis
+        </div>
+      </div>
+
+      {/* Login Card */}
+      <div className="relative z-10 w-full max-w-md fade-in-up">
+        <div className="login-card p-7 sm:p-9">
+          <div className="mb-7">
+            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border/70 bg-background/40 text-[11px] uppercase tracking-[0.18em] text-foreground/60">
+              <span className="size-1.5 rounded-full bg-gradient-brand" />
+              Bem-vindo de volta
+            </div>
+            <h1 className="font-display text-3xl sm:text-[1.95rem] font-bold mt-3 leading-tight">
+              Entre na <span className="text-gradient">Universidade Suri</span>
+            </h1>
+            <p className="text-sm text-foreground/60 mt-2">
+              Acesse sua trilha, projetos e certificações com sua conta
+              corporativa.
             </p>
           </div>
 
-          <div className="flex flex-col gap-3 mb-6">
-            <Button variant="outline" className="w-full h-11 border-border bg-background/50 hover:bg-muted/50" onClick={loginWithGoogle}>
-              <Chrome className="size-4 mr-2 text-red-500" />
-              Continuar com Google
-            </Button>
-            <Button variant="outline" className="w-full h-11 border-border bg-background/50 hover:bg-muted/50" onClick={loginWithSuri}>
-              <Hexagon className="size-4 mr-2 text-blue-500" />
-              Entrar com Plataforma Suri
-            </Button>
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-border/50" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">ou acesse com e-mail</span>
-            <div className="flex-1 h-px bg-border/50" />
-          </div>
-
           <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="login-email">Email</Label>
-              <Input
-                id="login-email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="voce@empresa.com"
-                className="bg-muted/30 border-border h-11"
-              />
+            <div>
+              <label
+                htmlFor="login-email"
+                className="block text-xs font-medium text-foreground/70 mb-1.5"
+              >
+                E-mail corporativo
+              </label>
+              <div className="field-glass">
+                <Mail className="field-icon size-4" />
+                <input
+                  id="login-email"
+                  type="email"
+                  required
+                  autoComplete="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="voce@empresa.com"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="login-pw">Senha</Label>
-              <div className="relative">
-                <Input
+
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label
+                  htmlFor="login-pw"
+                  className="block text-xs font-medium text-foreground/70"
+                >
+                  Senha
+                </label>
+                <button
+                  type="button"
+                  className="text-[11px] text-foreground/55 hover:text-foreground transition-colors"
+                >
+                  Esqueceu sua senha?
+                </button>
+              </div>
+              <div className="field-glass">
+                <Lock className="field-icon size-4" />
+                <input
                   id="login-pw"
                   type={showPassword ? "text" : "password"}
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="bg-muted/30 border-border pr-10 h-11"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+                  className="field-action"
+                  onClick={() => setShowPassword((s) => !s)}
+                  aria-label={
+                    showPassword ? "Ocultar senha" : "Mostrar senha"
+                  }
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {showPassword ? (
+                    <EyeOff className="size-4" />
+                  ) : (
+                    <Eye className="size-4" />
+                  )}
                 </button>
               </div>
             </div>
 
-            <div className="flex justify-end">
-              <button type="button" className="text-xs text-muted-foreground hover:text-foreground transition-smooth">
-                Esqueceu sua senha?
-              </button>
-            </div>
-
-            <Button
+            <button
               type="submit"
-              className="w-full h-11 bg-gradient-hero text-snow border-border hover:shadow-glow font-semibold text-sm group"
               disabled={loading}
+              className="btn-aurora w-full inline-flex items-center justify-center gap-2 group"
             >
-              {loading ? "Entrando…" : (
-                <>Login <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" /></>
+              {loading ? (
+                <span className="inline-flex items-center gap-2">
+                  <span className="size-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                  Entrando…
+                </span>
+              ) : (
+                <>
+                  Entrar
+                  <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                </>
               )}
-            </Button>
+            </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            Não tem conta?{" "}
-            <Link to="/signup" className="text-foreground hover:underline font-medium hover:text-gradient">Criar conta</Link>
-          </div>
-        </Card>
+          <p className="mt-6 text-center text-sm text-foreground/60">
+            Ainda não tem conta?{" "}
+            <Link
+              to="/signup"
+              className="font-medium text-foreground hover:text-gradient"
+            >
+              Criar minha conta
+            </Link>
+          </p>
+        </div>
+
+        <div className="mt-5 text-center text-[11px] text-foreground/45">
+          © Universidade Suri ·{" "}
+          <span className="text-foreground/60">Padrão TOTVS</span> ·
+          Plataforma de educação corporativa
+        </div>
       </div>
     </div>
   );

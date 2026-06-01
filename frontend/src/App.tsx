@@ -12,14 +12,36 @@ import { AdminPanelPage } from "./pages/AdminPanel";
 import { LoginPage } from "./pages/Login";
 import { SignUpPage } from "./pages/SignUp";
 import { CertificatePage } from "./pages/Certificate";
+import { LandingPage } from "./pages/Landing";
 import { Toaster } from "@/components/ui/sonner";
-import { Sparkles } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useEffect, useRef } from "react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   if (!user) {
     return <Navigate to="/login" replace />;
+  }
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const deniedToastShown = useRef(false);
+
+  useEffect(() => {
+    if (user && !user.isAdmin && user.group !== "admin" && !deniedToastShown.current) {
+      toast.error("Acesso restrito a administradores.");
+      deniedToastShown.current = true;
+    }
+  }, [user]);
+
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+  if (!user.isAdmin && user.group !== "admin") {
+    return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
 }
@@ -49,13 +71,14 @@ export default function App() {
     <AuthProvider>
       <Routes>
         {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
         <Route path="/certificado/:codigo" element={<CertificatePage />} />
 
         {/* Protected Routes */}
         <Route
-          path="/"
+          path="/dashboard"
           element={
             <ProtectedRoute>
               <DashboardPage />
@@ -121,9 +144,9 @@ export default function App() {
         <Route
           path="/admin"
           element={
-            <ProtectedRoute>
+            <AdminRoute>
               <AdminPanelPage />
-            </ProtectedRoute>
+            </AdminRoute>
           }
         />
 

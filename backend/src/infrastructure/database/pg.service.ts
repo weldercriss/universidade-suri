@@ -7,7 +7,7 @@ dotenv.config();
 @Injectable()
 export class PgService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(PgService.name);
-  private pool: Pool;
+  private pool!: Pool;
   public isFallbackMode = false;
 
   async onModuleInit() {

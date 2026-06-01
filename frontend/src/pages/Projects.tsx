@@ -73,7 +73,7 @@ export function ProjectsPage() {
                   <p className="mt-1 text-sm text-muted-foreground line-clamp-3">{p.body}</p>
                 </div>
                 <div className="mt-4 flex gap-4 text-sm text-muted-foreground pt-4 border-t border-border/20">
-                  <span className="flex items-center gap-1"><Heart className="size-4 text-pink-500 fill-pink-500/20" /> {p.likes ?? 0}</span>
+                  <span className="flex items-center gap-1"><Heart className="size-4 text-secondary fill-secondary/20" /> {p.likes ?? 0}</span>
                   <span className="flex items-center gap-1"><MessageCircle className="size-4" /> {p.comments ?? 0}</span>
                 </div>
               </Card>

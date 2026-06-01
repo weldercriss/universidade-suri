@@ -51,7 +51,7 @@ export function LeaderboardPage() {
   const rest = list.slice(3);
 
   const podiumIcons = [Crown, Trophy, Medal];
-  const podiumColors = ["text-amber-400", "text-blue-400", "text-orange-400"];
+  const podiumColors = ["text-secondary", "text-primary", "text-secondary/80"];
 
   const filters = [
     { key: "all", label: "Todos" },

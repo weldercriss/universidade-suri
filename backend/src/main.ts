@@ -3,12 +3,17 @@ import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
+import * as express from 'express';
 
 dotenv.config();
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  // Aumenta limite de payload para suportar uploads de mídia em base64 (até ~6MB)
+  app.use(express.json({ limit: '8mb' }));
+  app.use(express.urlencoded({ limit: '8mb', extended: true }));
 
   // Ativa CORS para permitir chamadas do frontend SPA (Vite)
   app.enableCors({

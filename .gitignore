@@ -1,5 +1,21 @@
-# Logs
-logs
+# ============================================
+# Universidade Suri — .gitignore
+# ============================================
+
+# ---------- Dependências ----------
+node_modules/
+
+# ---------- Build / Output ----------
+dist/
+dist-ssr/
+.output/
+.vinxi/
+.tanstack/
+.nitro/
+*.local
+
+# ---------- Logs ----------
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,31 +23,45 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-.output
-.vinxi
-.tanstack/**
-.nitro
-*.local
+# ---------- Variáveis de Ambiente ----------
+# Ignora TODOS os .env, exceto os exemplos
+.env
+.env.local
+.env.development
+.env.production
+.env.staging
+!.env.example
+!.env.test
 
-# Wrangler / Cloudflare
-.wrangler/
-.dev.vars
+# ---------- Docker ----------
+docker-compose.override.yml
 
-# Editor directories and files
+# ---------- Testes e Cobertura ----------
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+
+# ---------- IDE / Editor ----------
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-.env*
-.env.production
-.env.development
-.env.test
-.env.local
+.DS_Store
+Thumbs.db
+
+# ---------- Wrangler / Cloudflare ----------
+.wrangler/
+.dev.vars
+
+# ---------- Vite ----------
+.vite/
+
+# ---------- Prisma ----------
+# Migrations são versionadas, mas o client gerado não
+# node_modules/.prisma/ já é coberto por node_modules/

@@ -1,73 +1,76 @@
-# Universidade Suri
+# 🎓 Universidade Suri
 
-Este é o repositório principal do projeto **Universidade Suri**, uma plataforma de ensino à distância (EAD) com recursos de gamificação e uma rede social (comunidade) integrada para os alunos (Embaixadores).
+[![CI](https://github.com/usuario/universidade-suri/actions/workflows/ci.yml/badge.svg)](https://github.com/usuario/universidade-suri/actions/workflows/ci.yml)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
+[![NestJS](https://img.shields.io/badge/NestJS-10.3-E0234E.svg)](https://nestjs.com/)
+[![React](https://img.shields.io/badge/React-19.2-61DAFB.svg)](https://react.dev/)
 
-O projeto é dividido em um frontend moderno (React) e uma API robusta (NestJS), ambos utilizando TypeScript.
+Plataforma de ensino à distância (EAD) focada em engajamento, com recursos integrados de **gamificação** e **comunidade social** para os alunos (Embaixadores).
 
-## 🚀 Tecnologias Utilizadas
+---
+
+## 📚 Documentação Principal
+
+A documentação técnica detalhada encontra-se na pasta `docs/`. Recomendamos a leitura na seguinte ordem:
+
+1. 🏛️ **[Arquitetura do Sistema](docs/architecture.md)** — Fluxo de dados, diagramas e Clean Architecture.
+2. 🔒 **[Segurança](docs/security.md)** — Práticas adotadas e gestão de tokens JWT.
+3. 🚀 **[Guia de Deploy](docs/deploy-guide.md)** — Como colocar o sistema em produção com Docker.
+4. 🧠 **[Decisões de Arquitetura (ADRs)](docs/adr/)** — Registro do porquê certas tecnologias foram escolhidas.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+O projeto é um monorepo dividido em duas aplicações principais:
 
 ### Frontend (`/frontend`)
-*   **Framework:** React 19 com Vite
-*   **Linguagem:** TypeScript
-*   **Estilização:** Tailwind CSS v4, `shadcn/ui` (Radix UI) para componentes acessíveis.
-*   **Roteamento:** React Router (v6)
-*   **Formulários & Validação:** React Hook Form + Zod
-*   **Gráficos:** Recharts
+- **React 19** + **Vite 7**
+- **Tailwind CSS v4** + **shadcn/ui** (Acessibilidade)
+- **Zustand** (State management de auth)
 
 ### Backend (`/backend`)
-*   **Framework:** NestJS (Node.js) com foco em Clean Architecture
-*   **Linguagem:** TypeScript
-*   **Banco de Dados:** PostgreSQL
-*   **ORM:** Prisma ORM
-*   **Autenticação:** JWT (JSON Web Tokens) e bcrypt para senhas.
-*   **Documentação da API:** Swagger (`@nestjs/swagger`)
+- **NestJS 10** estruturado em **Clean Architecture**
+- **Prisma ORM** para abstração e migrations type-safe
+- **PostgreSQL 16** via Docker
 
-### Infraestrutura
-*   **Docker:** O projeto inclui um arquivo `docker-compose.yml` para subir rapidamente um banco de dados PostgreSQL local na porta 5431.
+---
 
-## 🧩 Principais Funcionalidades (Modelos de Dados)
+## 💻 Como Rodar Localmente
 
-Baseado no schema do banco de dados, o sistema engloba:
+### 1. Pré-requisitos
+- Node.js v20+
+- Docker e Docker Compose
+- Git
 
-*   **Perfis e Gamificação (`Profile`):** Usuários possuem perfis detalhados, controle de XP (experiência), Níveis e Tiers (ex: "Embaixador Voice").
-*   **Cursos e Módulos (`Course`, `Module`):** Criação de cursos com módulos, carga horária e recompensa de XP.
-*   **Matrículas e Progresso (`Enrollment`, `ModuleProgress`):** Rastreamento de matrículas de usuários em cursos e o progresso aula a aula.
-*   **Certificados (`Certificate`):** Emissão de certificados de conclusão gerados com códigos de verificação únicos.
-*   **Comunidade (`Post`, `PostLike`, `PostComment`):** Um feed social onde os usuários podem criar postagens, curtir e comentar, interagindo com outros alunos.
-
-## 💻 Como Rodar o Projeto Localmente
-
-### 1. Subir o Banco de Dados
-Certifique-se de ter o Docker instalado e rodando. Na raiz do projeto, execute:
+### 2. Banco de Dados
+Na raiz do projeto, suba o container PostgreSQL de desenvolvimento (roda na porta `5431` para não conflitar com bancos locais):
 ```bash
 docker-compose up -d
 ```
-*Isso vai iniciar um container do PostgreSQL (chamado `unisuri`) rodando na porta 5431.*
 
-### 2. Backend
-Abra um terminal e acesse a pasta do backend:
+### 3. Backend
 ```bash
 cd backend
 npm install
-```
-Configure as variáveis de ambiente copiando o arquivo de exemplo:
-```bash
-cp .env.example .env
-```
-*(Verifique se a variável `DATABASE_URL` no `.env` aponta para `postgresql://postgres:postgres@localhost:5431/unisuri_db?schema=public`)*
-
-Rode as migrações do banco e inicie o servidor:
-```bash
-npx prisma migrate dev
+cp .env.example .env  # O DATABASE_URL já vem configurado para o docker local
+npx prisma migrate dev # Cria as tabelas no banco de dados
 npm run start:dev
 ```
-A API estará rodando (geralmente em `http://localhost:3000`).
+A API estará em `http://localhost:3000` (e o Swagger em `/api/docs`).
 
-### 3. Frontend
-Em um novo terminal, acesse a pasta do frontend:
+### 4. Frontend
+Abra um novo terminal:
 ```bash
 cd frontend
 npm install
+cp .env.example .env
 npm run dev
 ```
-A aplicação abrirá no seu navegador (geralmente em `http://localhost:5173`).
+O SPA estará em `http://localhost:5175`.
+
+---
+
+## 🤝 Como Contribuir
+
+Consulte nosso guia de contribuição em **[CONTRIBUTING.md](CONTRIBUTING.md)** para detalhes sobre padronização de código, regras de TypeScript estrito e workflow de Pull Requests.

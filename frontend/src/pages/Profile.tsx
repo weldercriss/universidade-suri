@@ -105,7 +105,7 @@ export function ProfilePage() {
                 </Badge>
               )}
               {isAdmin && (
-                <Badge className="bg-blue-500/20 text-blue-100 border-blue-500/30 flex items-center gap-1 w-max">
+                <Badge className="bg-primary/20 text-primary border-primary/30 flex items-center gap-1 w-max">
                   <ShieldCheck className="size-3" />
                   ADMINISTRADOR
                 </Badge>
@@ -114,7 +114,7 @@ export function ProfilePage() {
               <div className="text-snow/70 text-sm">{user.email}</div>
               {!isAdmin && (
                 <div className="mt-4 flex gap-6 text-sm text-snow/80 flex-wrap">
-                  <span className="flex items-center gap-1"><Sparkles className="size-3 text-amber-400" /><b className="text-snow">{user.xp.toLocaleString()}</b> XP</span>
+                  <span className="flex items-center gap-1"><Sparkles className="size-3 text-secondary" /><b className="text-snow">{user.xp.toLocaleString()}</b> XP</span>
                   <span className="flex items-center gap-1"><GraduationCap className="size-3" /><b className="text-snow font-bold">Nv {user.level}</b></span>
                   <span className="flex items-center gap-1"><Award className="size-3" /><b className="text-snow">{user.projectsSent}</b> projetos</span>
                 </div>

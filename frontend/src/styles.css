@@ -42,73 +42,67 @@
   --color-sidebar-primary: hsl(var(--primary));
   --color-sidebar-border: hsl(var(--border));
 
-  /* Custom extra colors */
-  --color-snow: #e8f4fd;
+  /* Custom extra colors (Style.md) */
+  --color-snow: hsl(205 100% 95%);
   --color-deep: hsl(233 87% 5%);
   --color-marine: hsl(234 100% 30%);
   --color-suri: hsl(237 100% 65%);
-  --color-cyan-accent: hsl(180 85% 60%);
 }
 
 /* =============================================
-   NIGHT BLUE (Dark Mode) - Refined
+   NIGHT BLUE (Dark Mode — padrão)
+   Baseado em design-system.md: fundo ultra profundo,
+   azul elétrico como primary, neon green como secondary
    ============================================= */
 :root {
   --radius: 1rem;
 
-  /* Deep slate navy background (less saturated, more premium) */
-  --background: 236 20% 8%;
-  --foreground: 210 20% 98%;
-  
-  /* Electric blue for play buttons / actions */
-  --primary: 245 85% 60%;
-  
-  /* Vibrant neon green for WhatsApp / SURI SHOP */
-  --secondary: 130 90% 45%;
+  --background: 236 100% 5%;
+  --foreground: 0 0% 100%;
+  --primary: 245 100% 55%;
+  --secondary: 130 100% 45%;
+  --card: 236 80% 10%;
+  --muted: 236 60% 15%;
+  --border: 240 70% 30%;
+  --success: 127 100% 36%;
+  /* aliases para utilitários legados (login, etc.) */
+  --accent: var(--primary);
+  --accent-cyan: var(--secondary);
 
-  /* NEW: Accents to break the single color feeling */
-  --accent: 280 85% 60%; /* Neon Purple */
-  --accent-cyan: 190 90% 50%; /* Neon Cyan */
-  
-  /* Translucent glass card base */
-  --card: 236 15% 12%;
-  --muted: 236 15% 20%;
-  --border: 236 15% 22%;
-  --success: 130 90% 45%;
+  --gradient-hero: linear-gradient(135deg, hsl(245 100% 55% / 0.30) 0%, hsl(130 100% 45% / 0.08) 60%, hsl(236 100% 5%) 100%);
+  --gradient-glow: radial-gradient(circle at 80% -20%, hsl(245 100% 55% / 0.15), transparent 50%);
+  --gradient-card: linear-gradient(145deg, hsl(236 80% 13% / 0.85) 0%, hsl(236 80% 10% / 0.95) 100%);
+  --gradient-whats: linear-gradient(135deg, hsl(127 100% 40%), hsl(127 100% 30%));
+  --gradient-brand: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
 
-  /* Gradients mixing Blue, Purple and Cyan */
-  --gradient-hero: linear-gradient(135deg, hsl(245 60% 15%) 0%, hsl(280 40% 12%) 50%, hsl(236 20% 8%) 100%);
-  --gradient-glow: radial-gradient(circle at 80% -20%, hsl(var(--accent) / 0.15), transparent 50%);
-  --gradient-card: linear-gradient(145deg, hsl(240 20% 18% / 0.2) 0%, hsl(280 20% 15% / 0.05) 50%, hsl(236 20% 10% / 0.4) 100%);
-  --gradient-whats: linear-gradient(135deg, hsl(130 90% 50%), hsl(130 90% 35%));
-  --gradient-brand: linear-gradient(90deg, hsl(var(--accent-cyan)) 0%, hsl(var(--primary)) 50%, hsl(var(--accent)) 100%);
-  
-  --shadow-elegant: 0 30px 60px -20px rgba(0,0,0, 0.8);
-  --shadow-glow: 0 0 30px hsl(var(--accent) / 0.25);
+  --shadow-elegant: 0 30px 60px -20px hsl(236 100% 2% / 0.85);
+  --shadow-glow: 0 0 30px hsl(var(--primary) / 0.25);
   --transition-smooth: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* =============================================
-   SNOW BLUE (Light Mode) - Refined
+   SNOW BLUE (Light Mode)
+   Baseado em design-system.md: azul gélido suave,
+   ciano luminoso como secondary
    ============================================= */
 :root.light {
-  --background: 210 20% 98%;
+  --background: 205 60% 97%;
   --foreground: 220 30% 15%;
-  --primary: 220 80% 50%;
-  --secondary: 130 70% 40%;
-  --accent: 280 70% 55%;
-  --accent-cyan: 190 85% 45%;
+  --primary: 200 90% 36%;
+  --secondary: 200 85% 50%;
   --card: 0 0% 100%;
-  --muted: 210 20% 94%;
-  --border: 210 20% 90%;
-  --success: 127 80% 40%;
+  --muted: 210 40% 94%;
+  --border: 210 25% 87%;
+  --success: 127 100% 36%;
+  --accent: var(--primary);
+  --accent-cyan: var(--secondary);
 
-  --gradient-hero: linear-gradient(135deg, hsl(220 80% 50% / 0.05) 0%, hsl(280 70% 55% / 0.05) 50%, hsl(210 20% 98%) 100%);
-  --gradient-glow: radial-gradient(circle at 30% 20%, hsl(var(--accent) / 0.08), transparent 60%);
-  --gradient-card: linear-gradient(160deg, hsl(0 0% 100% / 0.95), hsl(210 20% 98% / 0.95));
-  --gradient-brand: linear-gradient(135deg, hsl(var(--accent-cyan)) 0%, hsl(var(--primary)) 50%, hsl(var(--accent)) 100%);
-  --shadow-elegant: 0 20px 60px -20px hsl(var(--accent) / 0.08);
-  --shadow-glow: 0 0 40px hsl(var(--accent) / 0.15);
+  --gradient-hero: linear-gradient(135deg, hsl(200 90% 36% / 0.07) 0%, hsl(200 85% 50% / 0.10) 50%, hsl(205 60% 97%) 100%);
+  --gradient-glow: radial-gradient(circle at 30% 20%, hsl(200 85% 50% / 0.12), transparent 60%);
+  --gradient-card: linear-gradient(160deg, hsl(0 0% 100% / 0.97), hsl(205 60% 98% / 0.97));
+  --gradient-brand: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+  --shadow-elegant: 0 20px 60px -20px hsl(200 90% 36% / 0.10);
+  --shadow-glow: 0 0 40px hsl(var(--secondary) / 0.18);
 }
 
 @layer base {
@@ -134,8 +128,8 @@
 
   body {
     background-image:
-      radial-gradient(1200px 800px at top right, hsl(var(--accent) / 0.12), transparent 60%),
-      radial-gradient(1000px 600px at bottom left, hsl(var(--accent-cyan) / 0.10), transparent 60%);
+      radial-gradient(1200px 800px at top right, hsl(var(--primary) / 0.15), transparent 60%),
+      radial-gradient(1000px 600px at bottom left, hsl(var(--secondary) / 0.05), transparent 60%);
     background-attachment: fixed;
     overflow-x: hidden;
   }
@@ -177,28 +171,14 @@
   .shadow-glow { box-shadow: var(--shadow-glow); }
 
   .text-gradient {
-    background: linear-gradient(90deg, hsl(var(--accent-cyan)) 0%, hsl(var(--primary)) 50%, hsl(var(--accent)) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  :root.light .text-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--accent)));
+    background: linear-gradient(90deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .text-gradient-brand {
-    background: linear-gradient(90deg, hsl(130 100% 50%) 0%, hsl(130 100% 40%) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
-
-  :root.light .text-gradient-brand {
-    background: linear-gradient(90deg, hsl(130 100% 35%) 0%, hsl(130 100% 25%) 100%);
+    background: linear-gradient(90deg, hsl(var(--success)) 0%, hsl(var(--primary)) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -281,6 +261,311 @@
     background: linear-gradient(160deg, hsl(200 90% 10%) 0%, hsl(220 60% 12%) 40%, hsl(233 87% 5%) 100%);
   }
 
+  /* =============================================
+     LOGIN — Aurora Glass (Snow Blue & Night Blue)
+     ============================================= */
+  .login-aurora {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+  }
+  .login-aurora::before,
+  .login-aurora::after,
+  .login-aurora > span {
+    content: "";
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(80px);
+    opacity: 0.55;
+    will-change: transform;
+  }
+  .login-aurora::before {
+    width: 42rem;
+    height: 42rem;
+    left: -10rem;
+    top: -12rem;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.55), transparent 60%);
+    animation: aurora-drift-a 18s ease-in-out infinite;
+  }
+  .login-aurora::after {
+    width: 38rem;
+    height: 38rem;
+    right: -10rem;
+    bottom: -10rem;
+    background: radial-gradient(circle, hsl(var(--accent) / 0.55), transparent 60%);
+    animation: aurora-drift-b 22s ease-in-out infinite;
+  }
+  .login-aurora > span {
+    width: 32rem;
+    height: 32rem;
+    left: 38%;
+    top: 35%;
+    background: radial-gradient(circle, hsl(var(--accent-cyan) / 0.45), transparent 60%);
+    animation: aurora-drift-c 26s ease-in-out infinite;
+  }
+
+  :root.light .login-aurora::before { opacity: 0.35; }
+  :root.light .login-aurora::after { opacity: 0.35; }
+  :root.light .login-aurora > span { opacity: 0.32; }
+
+  /* Subtle grid overlay (different per theme) */
+  .login-grid {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.06) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.06) 1px, transparent 1px);
+    background-size: 56px 56px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+  }
+  :root.light .login-grid {
+    background-image:
+      linear-gradient(hsl(var(--foreground) / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--foreground) / 0.04) 1px, transparent 1px);
+  }
+
+  /* Glass card for login */
+  .login-card {
+    position: relative;
+    background: linear-gradient(155deg,
+      hsl(var(--card) / 0.85) 0%,
+      hsl(var(--card) / 0.55) 100%);
+    backdrop-filter: blur(28px) saturate(140%);
+    -webkit-backdrop-filter: blur(28px) saturate(140%);
+    border: 1px solid hsl(var(--border) / 0.7);
+    border-top-color: hsl(var(--foreground) / 0.10);
+    border-radius: 1.75rem;
+    box-shadow:
+      0 30px 80px -30px hsl(var(--accent) / 0.45),
+      0 1px 0 hsl(var(--foreground) / 0.04) inset;
+  }
+  :root.light .login-card {
+    box-shadow:
+      0 25px 70px -28px hsl(var(--primary) / 0.30),
+      0 1px 0 hsl(0 0% 100% / 0.6) inset;
+  }
+
+  /* Animated outer glow ring around card */
+  .login-card::before {
+    content: "";
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg,
+      hsl(var(--accent-cyan) / 0.55),
+      hsl(var(--primary) / 0.0) 35%,
+      hsl(var(--accent) / 0.0) 65%,
+      hsl(var(--accent) / 0.55));
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    opacity: 0.65;
+  }
+
+  /* Modern input wrapper: glass + focus ring */
+  .field-glass {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: hsl(var(--background) / 0.55);
+    border: 1px solid hsl(var(--border) / 0.8);
+    border-radius: 0.875rem;
+    transition: border-color .25s ease, box-shadow .25s ease, background-color .25s ease;
+  }
+  .field-glass:focus-within {
+    border-color: hsl(var(--accent-cyan) / 0.85);
+    background: hsl(var(--background) / 0.85);
+    box-shadow:
+      0 0 0 4px hsl(var(--accent-cyan) / 0.15),
+      0 8px 24px -12px hsl(var(--accent-cyan) / 0.45);
+  }
+  .field-glass > svg.field-icon {
+    margin-left: 0.85rem;
+    color: hsl(var(--foreground) / 0.55);
+    flex-shrink: 0;
+  }
+  .field-glass:focus-within > svg.field-icon {
+    color: hsl(var(--accent-cyan));
+  }
+  .field-glass > input {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    height: 2.85rem;
+    width: 100%;
+    padding: 0 0.85rem;
+    color: hsl(var(--foreground));
+    outline: none;
+    font-size: 0.92rem;
+  }
+  .field-glass > input::placeholder {
+    color: hsl(var(--foreground) / 0.4);
+  }
+  .field-glass > .field-action {
+    margin-right: 0.5rem;
+    padding: 0.25rem;
+    color: hsl(var(--foreground) / 0.55);
+    background: transparent;
+    border: 0;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: color .2s ease, background-color .2s ease;
+  }
+  .field-glass > .field-action:hover {
+    color: hsl(var(--foreground));
+    background: hsl(var(--foreground) / 0.06);
+  }
+
+  /* Primary CTA with gradient + shimmer */
+  .btn-aurora {
+    position: relative;
+    overflow: hidden;
+    height: 2.85rem;
+    border-radius: 0.875rem;
+    color: hsl(0 0% 100%);
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    background:
+      linear-gradient(115deg,
+        hsl(var(--accent-cyan)) 0%,
+        hsl(var(--primary)) 45%,
+        hsl(var(--accent)) 100%);
+    background-size: 220% 220%;
+    box-shadow:
+      0 12px 30px -12px hsl(var(--primary) / 0.55),
+      0 0 0 1px hsl(var(--foreground) / 0.06) inset;
+    transition: transform .25s ease, box-shadow .25s ease, background-position .6s ease;
+    animation: aurora-cta 6s ease infinite;
+  }
+  .btn-aurora:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 18px 40px -14px hsl(var(--accent) / 0.55),
+      0 0 0 1px hsl(var(--foreground) / 0.08) inset;
+  }
+  .btn-aurora::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, hsl(0 0% 100% / 0.18), transparent);
+    transform: translateX(-100%);
+    transition: transform .9s ease;
+  }
+  .btn-aurora:hover::after { transform: translateX(100%); }
+  .btn-aurora:disabled { opacity: 0.7; cursor: progress; transform: none; }
+
+  /* Secondary glass button (SSO) */
+  .btn-glass {
+    height: 2.6rem;
+    border-radius: 0.75rem;
+    background: hsl(var(--background) / 0.55);
+    border: 1px solid hsl(var(--border) / 0.8);
+    color: hsl(var(--foreground));
+    transition: background-color .2s ease, border-color .2s ease, transform .2s ease;
+  }
+  .btn-glass:hover {
+    background: hsl(var(--background) / 0.85);
+    border-color: hsl(var(--accent-cyan) / 0.5);
+    transform: translateY(-1px);
+  }
+
+  /* Floating chips around card (decorative) */
+  .login-chip {
+    position: absolute;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 9999px;
+    background: hsl(var(--card) / 0.7);
+    border: 1px solid hsl(var(--border) / 0.7);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: hsl(var(--foreground) / 0.85);
+    font-size: 0.78rem;
+    font-weight: 500;
+    box-shadow: 0 10px 30px -16px hsl(var(--accent) / 0.4);
+    animation: chip-float 7s ease-in-out infinite;
+  }
+  .login-chip > .chip-dot {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, hsl(var(--accent-cyan)), hsl(var(--primary)));
+    box-shadow: 0 0 12px hsl(var(--accent-cyan) / 0.7);
+  }
+  .login-chip.delay-1 { animation-delay: -1.4s; }
+  .login-chip.delay-2 { animation-delay: -3.0s; }
+  .login-chip.delay-3 { animation-delay: -4.6s; }
+
+  /* Theme toggle pill */
+  .theme-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    border-radius: 9999px;
+    background: hsl(var(--card) / 0.7);
+    border: 1px solid hsl(var(--border) / 0.8);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .theme-pill > button {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 9999px;
+    display: grid;
+    place-items: center;
+    color: hsl(var(--foreground) / 0.6);
+    transition: background-color .2s ease, color .2s ease;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+  }
+  .theme-pill > button:hover { color: hsl(var(--foreground)); }
+  .theme-pill > button[data-active="true"] {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.25), hsl(var(--accent) / 0.25));
+    color: hsl(var(--foreground));
+    box-shadow: 0 0 0 1px hsl(var(--accent-cyan) / 0.45) inset;
+  }
+
+  /* Breakpoint xs customizado (abaixo de sm=640px) */
+  @media (max-width: 479px) {
+    html {
+      font-size: 13px;
+    }
+
+    .login-chip {
+      display: none;
+    }
+
+    .login-card {
+      border-radius: 1.25rem;
+    }
+  }
+
+  /* Melhora botões e cards em telas pequenas */
+  @media (max-width: 639px) {
+    .btn-aurora {
+      height: 2.65rem;
+      font-size: 0.9rem;
+    }
+
+    .field-glass > input {
+      height: 2.65rem;
+      font-size: 0.88rem;
+    }
+  }
+
   @media print {
     .no-print {
       display: none !important;
@@ -318,4 +603,25 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+@keyframes aurora-drift-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(60px, 40px, 0) scale(1.08); }
+}
+@keyframes aurora-drift-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(-50px, -30px, 0) scale(1.1); }
+}
+@keyframes aurora-drift-c {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(40px, -30px, 0) scale(1.06); }
+}
+@keyframes aurora-cta {
+  0%, 100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+@keyframes chip-float {
+  0%, 100% { transform: translateY(0px); }
+  50%      { transform: translateY(-6px); }
 }

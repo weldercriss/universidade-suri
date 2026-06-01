@@ -124,6 +124,31 @@ export class CertificateController {
     return { message: 'Certificado emitido manualmente pelo Administrador', code: verificationCode };
   }
 
+  @Get('user')
+  @UseGuards(AuthGuard('jwt'))
+  async getUserCertificates(@Req() req: any) {
+    const user = req.user;
+    const userId = user.id;
+
+    const certificates = await this.prisma.certificate.findMany({
+      where: { userId },
+      include: {
+        course: true,
+      },
+      orderBy: { issuedAt: 'desc' },
+    });
+
+    return {
+      count: certificates.length,
+      certificates: certificates.map((cert) => ({
+        id: cert.id,
+        courseTitle: cert.course?.title,
+        verificationCode: cert.verificationCode,
+        issuedAt: cert.issuedAt,
+      })),
+    };
+  }
+
   @Get('validate/:code')
   async validate(@Param('code') code: string) {
     const targetCode = code.toUpperCase();

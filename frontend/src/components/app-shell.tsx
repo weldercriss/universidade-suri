@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 const nav = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
+  { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/cursos", label: "Cursos", icon: GraduationCap },
   { to: "/comunidade", label: "Comunidade", icon: Users },
   { to: "/projetos", label: "Projetos", icon: FolderKanban },
@@ -80,7 +80,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         <nav className={`${sidebarCollapsed ? "px-1.5" : "px-3"} flex-1 space-y-0.5`}>
           {filteredNav.map((item) => {
-            const active = pathname === item.to || (item.to !== "/" && pathname.startsWith(item.to));
+            const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
             const Icon = item.icon;
             return (
               <Link
@@ -129,11 +129,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
               <span className="absolute -bottom-1 -right-1 size-5 bg-card border border-border rounded-full flex items-center justify-center z-10">
                 {isAdmin ? (
-                  <ShieldCheck className="size-3 text-blue-500 fill-blue-500" />
+                  <ShieldCheck className="size-3 text-primary fill-primary" />
                 ) : isVip ? (
-                  <Sparkles className="size-3 text-yellow-500 fill-yellow-500" />
+                  <Sparkles className="size-3 text-secondary fill-secondary" />
                 ) : (
-                  <Shield className="size-3 text-emerald-500 fill-emerald-500" />
+                  <Shield className="size-3 text-success fill-success" />
                 )}
               </span>
             </div>
@@ -154,42 +154,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <div className={`flex-1 flex flex-col min-w-0 relative z-10 ${mainPadding} transition-all duration-300`}>
-        <header className="h-16 px-4 md:px-8 flex items-center justify-between sticky top-0 z-30 bg-background/80 backdrop-blur-md">
-          <div className="flex items-center gap-3">
+        <header className="h-14 md:h-16 px-3 md:px-8 flex items-center justify-between sticky top-0 z-30 bg-background/80 backdrop-blur-md border-b border-border/30">
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
             {/* Mobile hamburger */}
             <Button
               size="icon"
               variant="ghost"
-              className="md:hidden"
+              className="md:hidden shrink-0"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
               {mobileMenuOpen ? <X className="size-5" /> : <Menu className="size-5" />}
             </Button>
 
             {isAdmin ? (
-              <Badge variant="outline" className="border-border bg-transparent flex items-center gap-1 text-blue-400">
+              <Badge variant="outline" className="border-border bg-transparent flex items-center gap-1 text-primary shrink-0">
                 <ShieldCheck className="size-3" />
                 ADMIN
               </Badge>
             ) : (
               <>
-                <Badge variant="outline" className={`border-border bg-transparent flex items-center gap-1 ${isVip ? 'text-amber-400' : 'text-emerald-400'}`}>
+                <Badge variant="outline" className={`border-border bg-transparent flex items-center gap-1 shrink-0 ${isVip ? 'text-secondary' : 'text-success'}`}>
                   {isVip ? <Sparkles className="size-3" /> : <Shield className="size-3" />}
-                  {isVip ? "VIP" : "Embaixador"} {user.tier && `· ${user.tier}`}
+                  <span className="hidden xs:inline">{isVip ? "VIP" : "Embaixador"}</span>
+                  {user.tier && <span className="hidden sm:inline">· {user.tier}</span>}
                 </Badge>
-                <span className="text-xs text-muted-foreground hidden sm:inline">
-                  Nível {user.level} - {user.xp.toLocaleString()} XP
+                <span className="text-xs text-muted-foreground hidden sm:inline truncate">
+                  Nível {user.level} · {user.xp.toLocaleString()} XP
                 </span>
               </>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            {/* Theme toggle button */}
+          <div className="flex items-center gap-2 shrink-0">
             <Button
               size="icon"
               variant="outline"
               onClick={toggleTheme}
-              className="border-border relative overflow-hidden group"
+              className="border-border relative overflow-hidden group size-8 md:size-9"
               aria-label={isLight ? "Mudar para Night Blue" : "Mudar para Snow Blue"}
             >
               {isLight ? (
@@ -200,7 +200,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Button>
           </div>
         </header>
-        <main className="flex-1 px-4 md:px-8 py-8 max-w-7xl w-full mx-auto">{children}</main>
+        <main className="flex-1 px-3 sm:px-4 md:px-8 py-5 md:py-8 max-w-7xl w-full mx-auto">{children}</main>
       </div>
     </div>
   );

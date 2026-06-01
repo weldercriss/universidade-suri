@@ -34,6 +34,14 @@ export class PostController {
       body.title,
       body.body,
       new Date(),
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      body.media?.type,
+      body.media?.url,
     );
     return this.postRepository.create(post);
   }

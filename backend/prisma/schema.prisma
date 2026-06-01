@@ -119,6 +119,8 @@ model Post {
   authorId  String   @map("author_id") @db.Uuid
   title     String
   body      String
+  mediaType String?  @map("media_type")
+  mediaUrl  String?  @map("media_url")
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   author    Profile  @relation(fields: [authorId], references: [id], onDelete: Cascade)

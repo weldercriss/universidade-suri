@@ -188,10 +188,10 @@ export function AdminPanelPage() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 stagger-children">
         {[
-          { label: "Usuários", value: allUsers.length, icon: Users, color: "text-blue-400" },
-          { label: "Cursos", value: courses.length, icon: GraduationCap, color: "text-cyan-400" },
-          { label: "Projetos", value: projects.length, icon: FolderKanban, color: "text-emerald-400" },
-          { label: "Pendentes", value: 3, icon: ShieldCheck, color: "text-amber-400" },
+          { label: "Usuários", value: allUsers.length, icon: Users, color: "text-primary" },
+          { label: "Cursos", value: courses.length, icon: GraduationCap, color: "text-secondary" },
+          { label: "Projetos", value: projects.length, icon: FolderKanban, color: "text-success" },
+          { label: "Pendentes", value: 3, icon: ShieldCheck, color: "text-secondary" },
         ].map((s) => {
           const Icon = s.icon;
           return (
@@ -331,7 +331,7 @@ export function AdminPanelPage() {
                       }}>
                         <Edit className="size-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" className={u.isActive ? "text-destructive hover:text-destructive hover:bg-destructive/10" : "text-emerald-500 hover:text-emerald-500 hover:bg-emerald-500/10"} onClick={() => handleToggleUserActive(u.id, u.isActive)}>
+                      <Button variant="ghost" size="icon" className={u.isActive ? "text-destructive hover:text-destructive hover:bg-destructive/10" : "text-success hover:text-success hover:bg-success/10"} onClick={() => handleToggleUserActive(u.id, u.isActive)}>
                         {u.isActive ? <Lock className="size-4" /> : <Unlock className="size-4" />}
                       </Button>
                     </div>
@@ -441,7 +441,7 @@ export function AdminPanelPage() {
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <div className="font-semibold hover:text-gradient transition-smooth">{c.title}</div>
-                          <Badge variant="outline" className={c.isPublished ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" : "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"}>
+                          <Badge variant="outline" className={c.isPublished ? "bg-success/10 text-success border-success/20" : "bg-muted/30 text-muted-foreground border-border"}>
                             {c.isPublished ? "Liberado" : "Bloqueado"}
                           </Badge>
                         </div>
@@ -466,7 +466,7 @@ export function AdminPanelPage() {
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleTogglePublish(c.id, !!c.isPublished)}
-                          className={c.isPublished ? "border-amber-500/20 text-amber-500 hover:bg-amber-500/10" : "border-emerald-500/20 text-emerald-500 hover:bg-emerald-500/10"}
+                          className={c.isPublished ? "border-secondary/20 text-secondary hover:bg-secondary/10" : "border-success/20 text-success hover:bg-success/10"}
                         >
                           {c.isPublished ? "Bloquear" : "Liberar"}
                         </Button>

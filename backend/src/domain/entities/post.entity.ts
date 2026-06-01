@@ -11,5 +11,7 @@ export class Post {
     public groupType?: string,
     public likes?: number,
     public comments?: number,
+    public mediaType?: string,
+    public mediaUrl?: string,
   ) {}
 }

@@ -8,38 +8,71 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { PlayCircle, Lock, CheckCircle2, Search, Filter } from "lucide-react";
+import { PlayCircle, Lock, CheckCircle2, Search } from "lucide-react";
 import { toast } from "sonner";
+
+interface EnrollmentProgress {
+  courseId: string;
+  completedCount: number;
+  totalModules: number;
+}
 
 export function CoursesListPage() {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
+  const [courseProgress, setCourseProgress] = useState<Record<string, EnrollmentProgress>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "newest" | "popular" | "free">("all");
 
   useEffect(() => {
     if (!user) return;
-    apiRequest<any[]>("/courses")
-      .then((data) => {
-        const mapped: Course[] = data.map((c: any) => ({
-          id: c.id,
-          title: c.title,
-          description: c.description || "",
-          cover: "from-marine to-deep",
-          group: c.targetGroup || c.target_group || "all",
-          progress: 0,
-          lessons: (c.lessons || []).map((l: any) => ({
-            id: l.id,
-            title: l.title,
-            duration: "10:00",
-            youtubeId: l.videoUrl || "",
-            done: false,
-          })),
-        }));
+
+    const isAdminUser = user.group === "admin" || user.isAdmin;
+
+    Promise.all([
+      apiRequest<any[]>("/courses"),
+      isAdminUser ? Promise.resolve([] as EnrollmentProgress[]) : apiRequest<EnrollmentProgress[]>("/enrollments/progress"),
+    ])
+      .then(([data, progressList]) => {
+        const progressMap: Record<string, EnrollmentProgress> = {};
+        for (const p of progressList) {
+          progressMap[p.courseId] = p;
+        }
+        setCourseProgress(progressMap);
+
+        const mapped: Course[] = data.map((c: any) => {
+          const totalLessons = (c.lessons || []).length;
+          const prog = progressMap[c.id];
+          const completedCount = prog?.completedCount ?? 0;
+          const progressPct = totalLessons > 0
+            ? Math.round((completedCount / totalLessons) * 100)
+            : prog && prog.totalModules > 0
+              ? Math.round((prog.completedCount / prog.totalModules) * 100)
+              : 0;
+
+          return {
+            id: c.id,
+            title: c.title,
+            description: c.description || "",
+            cover: "from-marine to-deep",
+            group: c.targetGroup || c.target_group || "all",
+            progress: progressPct,
+            lessons: (c.lessons || []).map((l: any) => ({
+              id: l.id,
+              title: l.title,
+              duration: "10:00",
+              youtubeId: l.videoUrl || "",
+              done: false,
+            })),
+          };
+        });
         setCourses(mapped);
       })
-      .catch(() => setCourses([]))
+      .catch(() => {
+        setCourses([]);
+        setCourseProgress({});
+      })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -51,8 +84,27 @@ export function CoursesListPage() {
     .filter((c) => c.group === "all" || c.group === user.group)
     .filter((c) => !search || c.title.toLowerCase().includes(search.toLowerCase()));
 
-  const completed = 0;
-  const journeySteps = courses.map((c) => ({
+  const isCourseFullyComplete = (courseId: string, lessonCount: number) => {
+    const prog = courseProgress[courseId];
+    const total = prog?.totalModules ?? lessonCount;
+    const done = prog?.completedCount ?? 0;
+    return total > 0 && done >= total;
+  };
+
+  const journeyCourses = courses.filter((c) => c.group === "all" || c.group === user.group);
+
+  let completedJourneySteps = 0;
+  for (let i = 0; i < journeyCourses.length; i++) {
+    const jc = journeyCourses[i];
+    if (!jc) break;
+    if (isCourseFullyComplete(jc.id, jc.lessons.length)) {
+      completedJourneySteps++;
+    } else {
+      break;
+    }
+  }
+
+  const journeySteps = journeyCourses.map((c) => ({
     id: c.id,
     title: c.title,
     type: "curso",
@@ -80,10 +132,11 @@ export function CoursesListPage() {
           <h2 className="text-lg font-semibold mb-4">Sua trilha</h2>
           <div className="space-y-2 stagger-children">
             {journeySteps.map((step, i) => {
-              const done = i < completed;
-              const current = i === completed;
-              return (
-                <Card key={step.id} className="bg-gradient-card border-border p-4 flex items-center gap-4 shadow-elegant hover-lift">
+              const done = i < completedJourneySteps;
+              const current = i === completedJourneySteps;
+              const locked = i > completedJourneySteps;
+              const stepCard = (
+                <Card className={`bg-gradient-card border-border p-4 flex items-center gap-4 shadow-elegant hover-lift ${locked ? "opacity-60" : ""}`}>
                   <div className={`size-10 rounded-full grid place-items-center
                     ${done ? "bg-success/20 text-success" : current ? "bg-primary/30 text-snow shadow-glow" : "bg-muted text-muted-foreground"}`}>
                     {done ? <CheckCircle2 className="size-5" /> : current ? <PlayCircle className="size-5" /> : <Lock className="size-4" />}
@@ -94,6 +147,13 @@ export function CoursesListPage() {
                   </div>
                   <Badge variant="outline" className="capitalize border-border">{step.type}</Badge>
                 </Card>
+              );
+              return locked ? (
+                <div key={step.id}>{stepCard}</div>
+              ) : (
+                <Link key={step.id} to={`/cursos/${step.id}`} className="block">
+                  {stepCard}
+                </Link>
               );
             })}
           </div>
@@ -187,7 +247,7 @@ export function CoursesListPage() {
                         </div>
                       ) : (
                         <div className="flex items-center gap-4 w-full md:w-auto">
-                          <span className="text-sm font-medium text-amber-500 whitespace-nowrap">Modo Admin</span>
+                          <span className="text-sm font-medium text-secondary whitespace-nowrap">Modo Admin</span>
                           <button disabled className="flex-1 md:flex-none cursor-not-allowed opacity-50 rounded-lg font-bold bg-muted text-muted-foreground px-4 py-2.5 text-sm whitespace-nowrap">
                             Detalhes
                           </button>

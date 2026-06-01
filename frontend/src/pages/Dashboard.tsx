@@ -18,6 +18,7 @@ export function DashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [courses, setCourses] = useState<Course[]>([]);
+  const [certificates, setCertificates] = useState(0);
   const [loadingCourses, setLoadingCourses] = useState(true);
 
   useEffect(() => {
@@ -25,6 +26,18 @@ export function DashboardPage() {
       navigate("/login");
       return;
     }
+
+    // Fetch certificates
+    apiRequest<{ count?: number; certificates?: unknown[] } | unknown[]>("/certificates/user")
+      .then((data) => {
+        const count = Array.isArray(data)
+          ? data.length
+          : (data.count ?? data.certificates?.length ?? 0);
+        setCertificates(count);
+      })
+      .catch(() => {
+        setCertificates(0);
+      });
 
     // Fetch real courses from API
     apiRequest<any[]>("/courses")
@@ -65,17 +78,48 @@ export function DashboardPage() {
     title: c.title,
   }));
 
-  const completedSteps = 0; // In a real app, this would be calculated based on user progress
+  const completedSteps = 0;
+
+  const stats = [
+    {
+      label: "Aulas Concluídas",
+      value: completedSteps,
+      icon: PlayCircle,
+      color: "bg-primary/10 text-primary",
+    },
+    {
+      label: "Certificados",
+      value: certificates,
+      icon: Award,
+      color: "bg-success/10 text-success",
+    },
+    {
+      label: "XP Acumulado",
+      value: user.xp.toLocaleString(),
+      icon: Sparkles,
+      color: "bg-secondary/10 text-secondary",
+    },
+    {
+      label: "Nível",
+      value: user.level,
+      icon: Flame,
+      color: "bg-secondary/10 text-secondary",
+    },
+  ];
 
   return (
     <AppShell>
       {/* Hero & Stats */}
-      <div className="mb-8 fade-in-up">
-        <h1 className="text-3xl font-bold text-foreground mb-1">
-          Bem-vindo de volta, <span className="text-gradient" data-ph-mask="true">{user.name.split(" ")[0]}</span>!
+      <div className="mb-6 fade-in-up">
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
+          Bem-vindo de volta,{" "}
+          <span className="text-gradient" data-ph-mask="true">
+            {user.name.split(" ")[0]}
+          </span>
+          !
         </h1>
-        <p className="text-muted-foreground">
-          {isAdmin 
+        <p className="text-sm text-muted-foreground">
+          {isAdmin
             ? "Painel de Administração da Plataforma Suri."
             : "Bora aprender novas coisas hoje?"}
         </p>
@@ -83,54 +127,29 @@ export function DashboardPage() {
 
       {!isAdmin && (
         <div className="mb-8 stagger-children">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <article className="bg-gradient-card rounded-lg p-5 border border-border shadow-elegant hover-lift transition-smooth">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-primary/10">
-                  <PlayCircle className="w-5 h-5 text-primary" />
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+            {stats.map((s) => (
+              <article
+                key={s.label}
+                className="bg-gradient-card rounded-xl p-4 sm:p-5 border border-border shadow-elegant hover-lift transition-smooth"
+              >
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div
+                    className={`w-10 h-10 sm:w-11 sm:h-11 rounded-lg flex items-center justify-center shrink-0 ${s.color}`}
+                  >
+                    <s.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-xs font-medium text-muted-foreground uppercase tracking-wide leading-tight">
+                      {s.label}
+                    </p>
+                    <p className="text-xl sm:text-2xl font-bold text-foreground mt-0.5">
+                      {s.value}
+                    </p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Aulas Concluídas</p>
-                  <p className="text-2xl font-bold text-foreground mt-0.5">{completedSteps}</p>
-                </div>
-              </div>
-            </article>
-
-            <article className="bg-gradient-card rounded-lg p-5 border border-border shadow-elegant hover-lift transition-smooth">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-success/10 text-success">
-                  <Award className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Certificados</p>
-                  <p className="text-2xl font-bold text-foreground mt-0.5">0</p>
-                </div>
-              </div>
-            </article>
-
-            <article className="bg-gradient-card rounded-lg p-5 border border-border shadow-elegant hover-lift transition-smooth">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-secondary/10 text-secondary">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">XP Acumulado</p>
-                  <p className="text-2xl font-bold text-foreground mt-0.5">{user.xp.toLocaleString()}</p>
-                </div>
-              </div>
-            </article>
-
-            <article className="bg-gradient-card rounded-lg p-5 border border-border shadow-elegant hover-lift transition-smooth">
-              <div className="flex items-start gap-4">
-                <div className="w-11 h-11 rounded-lg flex items-center justify-center shrink-0 bg-amber-500/10 text-amber-500">
-                  <Flame className="w-5 h-5" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Nível</p>
-                  <p className="text-2xl font-bold text-foreground mt-0.5">{user.level}</p>
-                </div>
-              </div>
-            </article>
+              </article>
+            ))}
           </div>
         </div>
       )}
@@ -198,14 +217,14 @@ export function DashboardPage() {
                   <Card className="group bg-gradient-card border-border overflow-hidden hover:shadow-glow transition-smooth hover-lift h-full flex flex-col justify-between">
                     <div>
                       <div className={`aspect-video bg-gradient-to-br ${c.cover} relative grid place-items-center`}>
-                        {/* Play Button matching image: solid electric blue with white triangle */}
-                        <div className="size-14 rounded-full bg-[#1E00FF] shadow-glow flex items-center justify-center group-hover:scale-110 transition-smooth border-2 border-[#1E00FF]/50 backdrop-blur-md">
+                        {/* Play Button matching image: solid primary blue with white triangle */}
+                        <div className="size-14 rounded-full bg-primary shadow-glow flex items-center justify-center group-hover:scale-110 transition-smooth border-2 border-primary/50 backdrop-blur-md">
                           <svg viewBox="0 0 24 24" fill="white" className="size-6 ml-1">
                             <path d="M8 5v14l11-7z" />
                           </svg>
                         </div>
                         {c.lessons.length > 0 && (
-                          <Badge className="absolute top-3 right-3 bg-black/50 text-white border-0 text-[10px]">
+                          <Badge className="absolute top-3 right-3 bg-muted text-foreground border-0 text-[10px]">
                             {c.lessons.length} aulas
                           </Badge>
                         )}
@@ -221,7 +240,7 @@ export function DashboardPage() {
                           <div className="text-xs text-muted-foreground mt-2">{c.progress}% concluído</div>
                         </>
                       ) : (
-                        <div className="text-xs text-amber-500 font-semibold mt-1">Modo Admin (Sem progresso)</div>
+                        <div className="text-xs text-secondary font-semibold mt-1">Modo Admin (Sem progresso)</div>
                       )}
                     </div>
                   </Card>
@@ -252,7 +271,7 @@ export function DashboardPage() {
                 <div className={`size-7 rounded-full grid place-items-center text-xs font-bold
                   ${idx === 0 ? "bg-gradient-whats text-white" :
                     idx === 1 ? "bg-secondary/20 text-secondary" :
-                    idx === 2 ? "bg-amber-500/20 text-amber-500" :
+                    idx === 2 ? "bg-primary/20 text-primary" :
                     "bg-muted/80 text-foreground"}`}>
                   {idx + 1}
                 </div>

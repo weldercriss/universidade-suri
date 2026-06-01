@@ -28,7 +28,7 @@ export function SignUpPage() {
     setLoading(true);
     try {
       await signup({ ...form, group: "vip", tier: "VIP PLUS" });
-      navigate("/");
+      navigate("/dashboard");
     } catch {
       setLoading(false);
     }

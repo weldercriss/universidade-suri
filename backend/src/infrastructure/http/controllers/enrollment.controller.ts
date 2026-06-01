@@ -1,4 +1,4 @@
-import { Controller, Post, Param, UseGuards, Req, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post, Param, UseGuards, Req, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { PrismaService } from '../../database/prisma.service';
 import { IUserRepository } from '../../../domain/repositories/user.repository.interface';
@@ -11,6 +11,67 @@ export class EnrollmentController {
     @Inject(IUserRepository)
     private readonly userRepository: IUserRepository,
   ) {}
+
+  @Get('progress')
+  async listMyProgress(@Req() req: any) {
+    if (req.user.isAdmin) {
+      return [];
+    }
+    const userId = req.user.id;
+
+    const enrollments = await this.prisma.enrollment.findMany({
+      where: { userId },
+      include: {
+        progress: { where: { isCompleted: true }, select: { moduleId: true } },
+        course: { include: { modules: { select: { id: true } } } },
+      },
+    });
+
+    return enrollments.map((e) => ({
+      courseId: e.courseId,
+      enrollmentId: e.id,
+      completedModuleIds: e.progress.map((p) => p.moduleId),
+      totalModules: e.course?.modules.length ?? 0,
+      completedCount: e.progress.length,
+    }));
+  }
+
+  @Get('courses/:courseId/progress')
+  async getCourseProgress(@Param('courseId') courseId: string, @Req() req: any) {
+    if (req.user.isAdmin) {
+      throw new ForbiddenException('Administradores não podem fazer cursos');
+    }
+    const userId = req.user.id;
+
+    const totalModules = await this.prisma.module.count({ where: { courseId } });
+
+    const enrollment = await this.prisma.enrollment.findUnique({
+      where: {
+        userId_courseId: { userId, courseId },
+      },
+      include: {
+        progress: { where: { isCompleted: true }, select: { moduleId: true } },
+      },
+    });
+
+    if (!enrollment) {
+      return {
+        enrollmentId: null,
+        completedModuleIds: [] as string[],
+        totalModules,
+        completedCount: 0,
+      };
+    }
+
+    const completedModuleIds = enrollment.progress.map((p) => p.moduleId);
+
+    return {
+      enrollmentId: enrollment.id,
+      completedModuleIds,
+      totalModules,
+      completedCount: completedModuleIds.length,
+    };
+  }
 
   @Post(':courseId/join')
   async join(@Param('courseId') courseId: string, @Req() req: any) {
@@ -87,6 +148,32 @@ export class EnrollmentController {
     });
 
     if (!progress) {
+      const allModules = await this.prisma.module.findMany({
+        where: { courseId: courseId! },
+        orderBy: { sortOrder: 'asc' },
+      });
+
+      const lessonIndex = allModules.findIndex((m) => m.id === lessonId);
+      if (lessonIndex === -1) {
+        throw new NotFoundException('Aula não encontrada neste curso');
+      }
+
+      if (lessonIndex > 0) {
+        const previousModule = allModules[lessonIndex - 1]!;
+        const previousProgress = await this.prisma.moduleProgress.findUnique({
+          where: {
+            enrollmentId_moduleId: {
+              enrollmentId: enrollment.id,
+              moduleId: previousModule.id,
+            },
+          },
+        });
+
+        if (!previousProgress?.isCompleted) {
+          throw new ForbiddenException('Conclua a aula anterior antes de avançar');
+        }
+      }
+
       await this.prisma.moduleProgress.create({
         data: {
           enrollmentId: enrollment.id,
@@ -97,9 +184,6 @@ export class EnrollmentController {
       });
 
       // Check if all lessons are completed
-      const allModules = await this.prisma.module.findMany({
-        where: { courseId: courseId! },
-      });
       
       const completedModules = await this.prisma.moduleProgress.count({
         where: { enrollmentId: enrollment.id, isCompleted: true },
