@@ -4,80 +4,87 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { GraduationCap, Award, Sparkles, ShieldCheck, Edit2, X, Image as ImageIcon } from "lucide-react";
-import { toast } from "sonner";
-
+import {
+  GraduationCap,
+  Award,
+  Sparkles,
+  ShieldCheck,
+  FileText,
+  Clock,
+  ExternalLink,
+  CheckCircle2,
+  XCircle,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, API_BASE_URL } from "@/lib/api";
 
-const allBadges = [
-  { id: "b_first", label: "Primeiro Login", icon: "👋" },
-  { id: "b_course_1", label: "Curso Concluído", icon: "🎓" },
-  { id: "b_proj_1", label: "Projeto Enviado", icon: "🚀" }
-];
+interface QuizAttemptRecord {
+  id: string;
+  courseId: string;
+  courseTitle: string;
+  score: number;
+  passed: boolean;
+  attemptNumber: number;
+  createdAt: string;
+}
+
+interface MyPost {
+  id: string;
+  title: string;
+  body: string;
+  courseId: string | null;
+  courseTitle: string | null;
+  createdAt: string;
+}
 
 export function ProfilePage() {
-  const { user, refreshProfile } = useAuth();
+  const { user } = useAuth();
   const [courses, setCourses] = useState<any[]>([]);
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editAvatar, setEditAvatar] = useState("");
-  const [saving, setSaving] = useState(false);
-  
+  const [certificates, setCertificates] = useState<any[]>([]);
+  const [quizAttempts, setQuizAttempts] = useState<QuizAttemptRecord[]>([]);
+  const [myPosts, setMyPosts] = useState<MyPost[]>([]);
+
   useEffect(() => {
     if (user) {
       apiRequest<any[]>("/courses")
         .then((data) => setCourses(data))
         .catch(() => setCourses([]));
+
+      apiRequest<{ count?: number; certificates?: any[] } | any[]>("/certificates/user")
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setCertificates(data);
+          } else {
+            setCertificates(data.certificates || []);
+          }
+        })
+        .catch(() => setCertificates([]));
+
+      apiRequest<QuizAttemptRecord[]>("/quiz/my-attempts")
+        .then(setQuizAttempts)
+        .catch(() => setQuizAttempts([]));
+
+      apiRequest<MyPost[]>("/posts/mine")
+        .then(setMyPosts)
+        .catch(() => setMyPosts([]));
     }
   }, [user]);
 
   if (!user) return null;
 
   const isAdmin = user.group === "admin" || user.isAdmin;
-  const mine: any[] = [];
-  const journeySteps = courses.map((c) => ({
-    id: c.id,
-    title: c.title,
-  }));
-  const completed = 0;
+  const journeySteps = courses.map((c) => ({ id: c.id, title: c.title }));
+  const completed = certificates.length;
 
-  const handleEditClick = () => {
-    setEditName(user.name);
-    setEditAvatar(user.avatar || "");
-    setIsEditing(true);
-  };
-
-  const handleAvatarFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setEditAvatar(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await apiRequest("/auth/me", {
-        method: "PUT",
-        body: JSON.stringify({ name: editName, avatar: editAvatar }),
-      });
-      await refreshProfile();
-      toast.success("Perfil atualizado com sucesso!");
-      setIsEditing(false);
-    } catch (err: any) {
-      toast.error(err.message || "Erro ao atualizar perfil");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const avatarUrl = user.profileImage
+    ? (user.profileImage.startsWith("http") ? user.profileImage : `${API_BASE_URL}${user.profileImage}`)
+    : null;
+  const initials = user.name
+    .split(" ")
+    .map((p: string) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
 
   return (
     <AppShell>
@@ -86,26 +93,29 @@ export function ProfilePage() {
         <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
-            <div className="size-24 rounded-2xl bg-snow/10 border border-snow/20 grid place-items-center text-3xl font-bold text-snow overflow-hidden shrink-0">
-              {user.avatar && user.avatar.startsWith('data:image/') ? (
-                <img src={user.avatar} alt="Avatar" className="size-full object-cover" />
-              ) : user.avatar && user.avatar.includes('<svg') ? (
-                <div 
-                  className="w-full h-full"
-                  dangerouslySetInnerHTML={{ __html: user.avatar }}
-                />
-              ) : (
-                user.avatar?.match(/^[A-Z]{2}$/) ? user.avatar.substring(0,2) : (user.avatar || "👤")
-              )}
+            {/* Avatar */}
+            <div className="relative shrink-0 group">
+              <div className="size-24 rounded-2xl bg-snow/10 border border-snow/20 overflow-hidden">
+                {avatarUrl ? (
+                  <img
+                    src={avatarUrl}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full grid place-items-center text-3xl font-bold text-snow">
+                    {initials}
+                  </div>
+                )}
+              </div>
             </div>
+
             <div className="flex-1">
               {!isAdmin && (
-                <Badge className="bg-snow/10 text-snow border-snow/20">
-                  {user.tier}
-                </Badge>
+                <Badge className="bg-snow/10 text-snow border-snow/20">{user.tier}</Badge>
               )}
               {isAdmin && (
-                <Badge className="bg-primary/20 text-primary border-primary/30 flex items-center gap-1 w-max">
+                <Badge className="bg-snow/20 text-snow border-snow/30 flex items-center gap-1 w-max">
                   <ShieldCheck className="size-3" />
                   ADMINISTRADOR
                 </Badge>
@@ -114,51 +124,48 @@ export function ProfilePage() {
               <div className="text-snow/70 text-sm">{user.email}</div>
               {!isAdmin && (
                 <div className="mt-4 flex gap-6 text-sm text-snow/80 flex-wrap">
-                  <span className="flex items-center gap-1"><Sparkles className="size-3 text-secondary" /><b className="text-snow">{user.xp.toLocaleString()}</b> XP</span>
-                  <span className="flex items-center gap-1"><GraduationCap className="size-3" /><b className="text-snow font-bold">Nv {user.level}</b></span>
-                  <span className="flex items-center gap-1"><Award className="size-3" /><b className="text-snow">{user.projectsSent}</b> projetos</span>
+                  <span className="flex items-center gap-1">
+                    <Sparkles className="size-3 text-secondary" />
+                    <b className="text-snow">{user.xp.toLocaleString()}</b> XP
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <GraduationCap className="size-3" />
+                    <b className="text-snow font-bold">Nv {user.level}</b>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Award className="size-3" />
+                    <b className="text-snow">{certificates.length}</b> certificados
+                  </span>
                 </div>
               )}
             </div>
           </div>
-          <Button onClick={handleEditClick} variant="outline" className="bg-snow/10 text-snow border-snow/20 hover:bg-snow/20 shrink-0">
-            <Edit2 className="size-4 mr-2" /> Editar Perfil
-          </Button>
         </div>
       </Card>
 
-      {/* Progress and badges - Only for non-admin */}
+      {/* Progress - Only for non-admin */}
       {!isAdmin && (
-        <div className="grid lg:grid-cols-3 gap-6 mt-6 stagger-children">
-          <Card className="bg-gradient-card border-border p-5 lg:col-span-2 shadow-elegant">
+        <div className="grid gap-6 mt-6 stagger-children">
+          <Card className="bg-gradient-card border-border p-5 shadow-elegant">
             <div className="text-sm font-semibold mb-3 text-gradient">Progresso da jornada</div>
             <Progress value={journeySteps.length > 0 ? (completed / journeySteps.length) * 100 : 0} />
-            <div className="text-xs text-muted-foreground mt-2">{completed} de {journeySteps.length} etapas</div>
-
+            <div className="text-xs text-muted-foreground mt-2">
+              {completed} de {journeySteps.length} etapas
+            </div>
             <div className="mt-6 space-y-2">
               {journeySteps.slice(0, 6).map((s, i) => (
-                <div key={s.id} className="flex justify-between text-sm py-1 border-b border-border/40 last:border-0">
-                  <span className={i < completed ? "text-foreground font-medium" : "text-muted-foreground"}>{s.title}</span>
+                <div
+                  key={s.id}
+                  className="flex justify-between text-sm py-1 border-b border-border/40 last:border-0"
+                >
+                  <span className={i < completed ? "text-foreground font-medium" : "text-muted-foreground"}>
+                    {s.title}
+                  </span>
                   <span className={i < completed ? "text-success font-bold" : "text-muted-foreground"}>
                     {i < completed ? "✓ Concluído" : "— Bloqueado"}
                   </span>
                 </div>
               ))}
-            </div>
-          </Card>
-
-          <Card className="bg-gradient-card border-border p-5 shadow-elegant">
-            <div className="text-sm font-semibold mb-3 text-gradient">Conquistas</div>
-            <div className="grid grid-cols-3 gap-3">
-              {allBadges.map((b) => {
-                const owned = user.badges.includes(b.id);
-                return (
-                  <div key={b.id} className={`rounded-xl p-3 text-center border transition-smooth hover-lift ${owned ? "border-primary/40 bg-primary/10" : "border-border bg-background/30 opacity-50"}`}>
-                    <div className="text-2xl">{b.icon}</div>
-                    <div className="text-[10px] mt-1 text-muted-foreground leading-tight font-medium">{b.label}</div>
-                  </div>
-                );
-              })}
             </div>
           </Card>
         </div>
@@ -183,20 +190,56 @@ export function ProfilePage() {
         </div>
       )}
 
-      {/* My projects - Only for non-admin */}
+      {/* Certificados - Only for non-admin */}
       {!isAdmin && (
         <div className="mt-6 fade-in-up">
-          <h2 className="text-lg font-semibold mb-3">Meus projetos</h2>
-          {mine.length === 0 ? (
-            <Card className="bg-gradient-card border-border p-8 text-center text-muted-foreground shadow-elegant">
-              Você ainda não enviou projetos. Compartilhe seu primeiro na comunidade.
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <FileText className="size-5 text-primary" />
+              Meus Certificados
+            </h2>
+            <Badge variant="outline" className="border-border text-muted-foreground">
+              {certificates.length} emitido{certificates.length !== 1 ? "s" : ""}
+            </Badge>
+          </div>
+          {certificates.length === 0 ? (
+            <Card className="bg-gradient-card border-border p-8 text-center shadow-elegant">
+              <div className="text-4xl mb-3">🎓</div>
+              <div className="text-muted-foreground text-sm">
+                Você ainda não possui certificados. Conclua um curso para receber o seu!
+              </div>
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 gap-4">
-              {mine.map((p) => (
-                <Card key={p.id} className="bg-gradient-card border-border p-5 shadow-elegant hover-lift">
-                  <div className="font-medium hover:text-gradient transition-smooth">{p.title}</div>
-                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.body}</p>
+              {certificates.map((cert: any) => (
+                <Card
+                  key={cert.id}
+                  className="bg-gradient-card border-border p-5 shadow-elegant hover-lift flex items-center gap-4"
+                >
+                  <div className="size-12 rounded-xl bg-primary/15 grid place-items-center shrink-0">
+                    <Award className="size-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">
+                      {cert.courseTitle || cert.course?.title || "Curso"}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                      <Clock className="size-3" />
+                      {new Date(cert.issuedAt).toLocaleDateString("pt-BR")}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground/70 mt-0.5 font-mono">
+                      #{cert.verificationCode}
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0 text-primary hover:bg-primary/10"
+                    title="Ver certificado"
+                    onClick={() => window.open(`/certificado/${cert.verificationCode}`, "_blank")}
+                  >
+                    <ExternalLink className="size-4" />
+                  </Button>
                 </Card>
               ))}
             </div>
@@ -204,64 +247,84 @@ export function ProfilePage() {
         </div>
       )}
 
-      {/* Edit Profile Modal */}
-      {isEditing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-          <Card className="w-full max-w-md bg-gradient-card border-border shadow-elegant overflow-hidden animate-in zoom-in-95">
-            <div className="flex items-center justify-between p-4 border-b border-border">
-              <h3 className="font-semibold text-lg">Editar Perfil</h3>
-              <Button size="icon" variant="ghost" onClick={() => setIsEditing(false)}>
-                <X className="size-4" />
-              </Button>
+      {/* Histórico de Provas - Only for non-admin */}
+      {!isAdmin && (
+        <div className="mt-6 fade-in-up">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Clock className="size-5 text-secondary" />
+              Histórico de Provas
+            </h2>
+            <Badge variant="outline" className="border-border text-muted-foreground">
+              {quizAttempts.length} tentativa{quizAttempts.length !== 1 ? "s" : ""}
+            </Badge>
+          </div>
+          {quizAttempts.length === 0 ? (
+            <Card className="bg-gradient-card border-border p-8 text-center shadow-elegant">
+              <div className="text-4xl mb-3">📝</div>
+              <div className="text-muted-foreground text-sm">
+                Você ainda não realizou nenhuma prova.
+              </div>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {quizAttempts.map((a) => (
+                <Card key={a.id} className="bg-gradient-card border-border p-4 shadow-elegant flex items-center gap-4">
+                  <div className={`size-10 rounded-xl grid place-items-center shrink-0 ${a.passed ? "bg-success/15" : "bg-destructive/15"}`}>
+                    {a.passed
+                      ? <CheckCircle2 className="size-5 text-success" />
+                      : <XCircle className="size-5 text-destructive" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="font-medium truncate">{a.courseTitle}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      Tentativa {a.attemptNumber} · {new Date(a.createdAt).toLocaleDateString("pt-BR")}
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <div className={`text-lg font-bold ${a.passed ? "text-success" : "text-destructive"}`}>
+                      {a.score.toFixed(1)}%
+                    </div>
+                    <div className={`text-xs font-semibold ${a.passed ? "text-success" : "text-destructive"}`}>
+                      {a.passed ? "APROVADO" : "REPROVADO"}
+                    </div>
+                  </div>
+                </Card>
+              ))}
             </div>
-            <form onSubmit={handleSaveProfile} className="p-4 space-y-4">
-              <div className="space-y-2">
-                <Label>Avatar / Foto (Base64 ou Link)</Label>
-                <div className="flex items-center gap-3">
-                  <div className="size-12 rounded-lg bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                    {editAvatar && editAvatar.startsWith('data:image/') ? (
-                      <img src={editAvatar} alt="Preview" className="size-full object-cover" />
-                    ) : editAvatar && editAvatar.includes('<svg') ? (
-                      <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: editAvatar }} />
-                    ) : (
-                      editAvatar?.match(/^[A-Z]{2}$/) ? editAvatar : <ImageIcon className="size-5 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <Input 
-                      placeholder="Link da imagem, SVG ou Iniciais"
-                      value={editAvatar}
-                      onChange={(e) => setEditAvatar(e.target.value)}
-                    />
-                    <Input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleAvatarFile}
-                      className="text-xs file:mr-4 file:py-1 file:px-3 file:rounded-full file:border-0 file:text-xs file:bg-primary/10 file:text-primary hover:file:bg-primary/20 cursor-pointer"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <Label>Nome</Label>
-                <Input 
-                  required
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
-              </div>
-
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="ghost" onClick={() => setIsEditing(false)}>Cancelar</Button>
-                <Button type="submit" disabled={saving}>
-                  {saving ? "Salvando..." : "Salvar Alterações"}
-                </Button>
-              </div>
-            </form>
-          </Card>
+          )}
         </div>
       )}
+
+      {/* Meus projetos - Only for non-admin */}
+      {!isAdmin && (
+        <div className="mt-6 fade-in-up">
+          <h2 className="text-lg font-semibold mb-3">Meus projetos na comunidade</h2>
+          {myPosts.length === 0 ? (
+            <Card className="bg-gradient-card border-border p-8 text-center text-muted-foreground shadow-elegant">
+              Você ainda não publicou projetos. Compartilhe seu primeiro na comunidade.
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-4">
+              {myPosts.map((p) => (
+                <Card key={p.id} className="bg-gradient-card border-border p-5 shadow-elegant hover-lift">
+                  <div className="font-medium hover:text-gradient transition-smooth">{p.title}</div>
+                  {p.courseTitle && (
+                    <div className="text-xs text-primary font-medium mt-1 flex items-center gap-1">
+                      <GraduationCap className="size-3" /> {p.courseTitle}
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{p.body}</p>
+                  <div className="text-xs text-muted-foreground/60 mt-2">
+                    {new Date(p.createdAt).toLocaleDateString("pt-BR")}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
     </AppShell>
   );
 }

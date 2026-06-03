@@ -45,6 +45,16 @@ export class CertificateController {
       throw new ForbiddenException(`Curso incompleto. Concluiu ${completedCount} de ${totalLessons} aulas.`);
     }
 
+    const questionCount = await this.prisma.question.count({ where: { courseId } });
+    if (questionCount > 0) {
+      const passed = await this.prisma.quizAttempt.findFirst({
+        where: { userId, courseId, passed: true },
+      });
+      if (!passed) {
+        throw new ForbiddenException('Você precisa passar na prova do curso para obter o certificado.');
+      }
+    }
+
     const existingCert = await this.prisma.certificate.findFirst({
       where: {
         userId,

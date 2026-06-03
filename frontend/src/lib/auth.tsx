@@ -9,7 +9,6 @@ export interface MockUser {
   id: string;
   name: string;
   email: string;
-  avatar: string;
   group: Group;
   tier: Tier;
   xp: number;
@@ -18,6 +17,9 @@ export interface MockUser {
   badges: string[];
   projectsSent: number;
   isAdmin?: boolean;
+  profileImage?: string | null;
+  business?: string;
+  isFirstLogin?: boolean;
 }
 
 interface AuthCtx {
@@ -57,7 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: realUser.id,
         name: realUser.name,
         email: realUser.email,
-        avatar: realUser.avatar || realUser.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase(),
         group: realUser.group,
         tier: realUser.tier,
         xp: realUser.xp,
@@ -66,6 +67,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         badges: realUser.badges || ["b1"],
         projectsSent: realUser.projectsSent || 0,
         isAdmin: realUser.isAdmin,
+        profileImage: realUser.profileImage || null,
+        business: realUser.business || "",
+        isFirstLogin: realUser.isFirstLogin ?? false,
       };
       
       setUser(mappedUser);
@@ -93,7 +97,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
-        avatar: data.user.avatar || data.user.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase(),
         group: data.user.group,
         tier: data.user.tier,
         xp: data.user.xp,
@@ -102,6 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         badges: data.user.badges || ["b1"],
         projectsSent: data.user.projectsSent || 0,
         isAdmin: data.user.isAdmin,
+        profileImage: data.user.profileImage || null,
+        business: data.user.business || "",
       };
 
       setUser(mappedUser);
@@ -113,11 +118,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async ({ name, email, password, group, tier }: any) => {
+  const signup = async ({ name, email, password, group, tier, business, phone }: any) => {
     try {
       const data = await apiRequest("/auth/signup", {
         method: "POST",
-        body: JSON.stringify({ name, email, password, group, tier }),
+        body: JSON.stringify({ name, email, password, group, tier, business, phone }),
       });
 
       localStorage.setItem(TOKEN_KEY, data.token);
@@ -126,7 +131,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: data.user.id,
         name: data.user.name,
         email: data.user.email,
-        avatar: data.user.avatar || data.user.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase(),
         group: data.user.group,
         tier: data.user.tier,
         xp: data.user.xp,
@@ -135,6 +139,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         badges: [],
         projectsSent: 0,
         isAdmin: data.user.isAdmin,
+        profileImage: data.user.profileImage || null,
+        business: data.user.business || "",
       };
 
       setUser(mappedUser);

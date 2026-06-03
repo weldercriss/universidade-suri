@@ -7,11 +7,11 @@ export class Post {
     public createdAt: Date,
     public authorName?: string,
     public authorTier?: string,
-    public authorAvatar?: string,
     public groupType?: string,
     public likes?: number,
     public comments?: number,
     public mediaType?: string,
     public mediaUrl?: string,
+    public courseId?: string,
   ) {}
 }

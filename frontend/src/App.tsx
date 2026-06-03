@@ -1,22 +1,31 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { AuthProvider, useAuth } from "./lib/auth";
+import { usePlatformSettings } from "./lib/settings";
 import { DashboardPage } from "./pages/Dashboard";
 import { CoursesListPage } from "./pages/CoursesList";
 import { CoursePlayerPage } from "./pages/CoursePlayer";
-import { CommunityPage } from "./pages/Community";
-import { ProjectsPage } from "./pages/Projects";
 import { LeaderboardPage } from "./pages/Leaderboard";
 import { ProfilePage } from "./pages/Profile";
 import { SettingsPage } from "./pages/Settings";
 import { AdminPanelPage } from "./pages/AdminPanel";
+import { AdminCoursesPage } from "./pages/AdminCourses";
+import { AdminTrailsPage } from "./pages/AdminTrails";
 import { LoginPage } from "./pages/Login";
 import { SignUpPage } from "./pages/SignUp";
 import { CertificatePage } from "./pages/Certificate";
 import { LandingPage } from "./pages/Landing";
+import { TrailsListPage } from "./pages/TrailsList";
+import { RoadmapPage } from "./pages/Roadmap";
+import { AdminGroupsPage } from "./pages/AdminGroups";
+import { AdminReportsPage } from "./pages/AdminReports";
+import { AdminLogosPage } from "./pages/AdminLogos";
+import { AdminQuizzesPage } from "./pages/AdminQuizzes";
+import { AdminRoadmapPage } from "./pages/AdminRoadmap";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useEffect, useRef } from "react";
+import { useTheme } from "@/lib/theme";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -47,9 +56,19 @@ function AdminRoute({ children }: { children: React.ReactNode }) {
 }
 
 function NotFound() {
+  const { theme } = useTheme();
+  const { settings } = usePlatformSettings();
+  const isLight = theme === "snow-blue";
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4 relative overflow-hidden">
-      <img src="/totvs.svg" className="watermark-bg" alt="" aria-hidden="true" />
+      <img 
+        src={isLight 
+          ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : "/totvs-dark.svg") 
+          : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : "/totvs.svg")} 
+        className="watermark-bg" 
+        alt="" 
+        aria-hidden="true" 
+      />
       <div className="max-w-md text-center relative z-10">
         <h1 className="text-7xl font-bold text-gradient">404</h1>
         <h2 className="mt-4 text-xl font-semibold">Página não encontrada</h2>
@@ -58,7 +77,7 @@ function NotFound() {
         </p>
         <div className="mt-6">
           <Button asChild className="bg-gradient-hero text-snow border border-border hover:shadow-glow">
-            <a href="/">Voltar ao início</a>
+            <Link to="/dashboard">Voltar ao início</Link>
           </Button>
         </div>
       </div>
@@ -102,22 +121,6 @@ export default function App() {
           }
         />
         <Route
-          path="/comunidade"
-          element={
-            <ProtectedRoute>
-              <CommunityPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/projetos"
-          element={
-            <ProtectedRoute>
-              <ProjectsPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
           path="/ranking"
           element={
             <ProtectedRoute>
@@ -142,10 +145,82 @@ export default function App() {
           }
         />
         <Route
+          path="/trilhas"
+          element={
+            <ProtectedRoute>
+              <TrailsListPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/roadmap"
+          element={
+            <ProtectedRoute>
+              <RoadmapPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin"
           element={
             <AdminRoute>
               <AdminPanelPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/cursos"
+          element={
+            <AdminRoute>
+              <AdminCoursesPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/trilhas"
+          element={
+            <AdminRoute>
+              <AdminTrailsPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/grupos"
+          element={
+            <AdminRoute>
+              <AdminGroupsPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/relatorios"
+          element={
+            <AdminRoute>
+              <AdminReportsPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/logotipos"
+          element={
+            <AdminRoute>
+              <AdminLogosPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/provas"
+          element={
+            <AdminRoute>
+              <AdminQuizzesPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/roadmap"
+          element={
+            <AdminRoute>
+              <AdminRoadmapPage />
             </AdminRoute>
           }
         />

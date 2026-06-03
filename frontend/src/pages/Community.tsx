@@ -14,7 +14,6 @@ interface ProjectPost {
   id: string;
   authorName: string;
   authorTier: string;
-  authorAvatar: string;
   groupType: string;
   title: string;
   body: string;
@@ -173,13 +172,7 @@ export function CommunityPage() {
             <Card className="bg-gradient-card border-border p-5 shadow-elegant">
               <div className="flex items-start gap-3">
                 <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden">
-                  {user.avatar && user.avatar.startsWith('data:image/') ? (
-                    <img src={user.avatar} alt="Avatar" className="size-full object-cover" />
-                  ) : user.avatar && user.avatar.includes('<svg') ? (
-                    <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: user.avatar }} />
-                  ) : (
-                    user.avatar?.match(/^[A-Z]{2,}$/) ? user.avatar.substring(0, 2) : (user.avatar || "👤")
-                  )}
+                  {user.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase()}
                 </div>
                 <div className="flex-1 space-y-3">
                   <Input placeholder="Título do projeto" value={title} onChange={(e) => setTitle(e.target.value)} className="bg-muted/30 border-border h-10" />
@@ -209,13 +202,7 @@ export function CommunityPage() {
           ) : (
             <Card className="bg-gradient-card border-border p-5 shadow-elegant flex items-center gap-3">
               <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden">
-                  {user.avatar && user.avatar.startsWith('data:image/') ? (
-                    <img src={user.avatar} alt="Avatar" className="size-full object-cover" />
-                  ) : user.avatar && user.avatar.includes('<svg') ? (
-                    <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: user.avatar }} />
-                  ) : (
-                    user.avatar?.match(/^[A-Z]{2,}$/) ? user.avatar.substring(0, 2) : (user.avatar || "👤")
-                  )}
+                  {user.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase()}
                 </div>
               <p className="text-sm text-muted-foreground">
                 Administradores acompanham a comunidade. Você pode interagir curtindo e visualizando os projetos!
@@ -232,13 +219,7 @@ export function CommunityPage() {
             <Card key={p.id} className="bg-gradient-card border-border p-5 shadow-elegant hover-lift">
               <div className="flex items-center gap-3">
                 <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden">
-                  {p.authorAvatar && p.authorAvatar.startsWith('data:image/') ? (
-                    <img src={p.authorAvatar} alt="Avatar" className="size-full object-cover" />
-                  ) : p.authorAvatar && p.authorAvatar.includes('<svg') ? (
-                    <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: p.authorAvatar }} />
-                  ) : (
-                    (p.authorAvatar || p.authorName?.substring(0,2).toUpperCase())?.match(/^[A-Z]{2,}$/) ? (p.authorAvatar || p.authorName?.substring(0,2).toUpperCase()).substring(0, 2) : (p.authorAvatar || p.authorName?.substring(0,2).toUpperCase() || "👤")
-                  )}
+                  {p.authorName.substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1">
                   <div className="text-sm font-medium">{p.authorName}</div>
@@ -302,13 +283,7 @@ export function CommunityPage() {
                 <div className="mt-3 p-4 rounded-xl bg-muted/20 border border-border space-y-3">
                   <div className="flex items-start gap-3">
                     <div className="size-8 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden shrink-0">
-                      {user.avatar && user.avatar.startsWith('data:image/') ? (
-                        <img src={user.avatar} alt="Avatar" className="size-full object-cover" />
-                      ) : user.avatar && user.avatar.includes('<svg') ? (
-                        <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: user.avatar }} />
-                      ) : (
-                        user.avatar?.match(/^[A-Z]{2,}$/) ? user.avatar.substring(0, 2) : (user.avatar || "👤")
-                      )}
+                      {user.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase()}
                     </div>
                     <div className="flex-1">
                       <Textarea

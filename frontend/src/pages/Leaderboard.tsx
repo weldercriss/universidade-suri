@@ -8,7 +8,6 @@ import { Trophy, Crown, Medal, Sparkles, Loader2, Filter } from "lucide-react";
 interface LeaderboardEntry {
   id: string;
   name: string;
-  avatar: string;
   group: string;
   tier: string;
   xp: number;
@@ -103,18 +102,12 @@ export function LeaderboardPage() {
         <>
           <div className="grid md:grid-cols-3 gap-4 mb-8 stagger-children">
             {podium.map((r, i) => {
-              const Icon = podiumIcons[i];
+              const Icon = podiumIcons[i] as any;
               return (
                 <Card key={r.id} className={`bg-gradient-card border-border p-6 text-center shadow-elegant hover-lift ${i === 0 ? "pulse-glow border-primary/40 md:order-2 md:-mt-4" : i === 1 ? "md:order-1" : "md:order-3"}`}>
                   <Icon className={`mx-auto size-8 ${podiumColors[i]}`} />
                   <div className="mt-3 size-16 rounded-full bg-gradient-hero grid place-items-center mx-auto text-lg font-bold text-snow overflow-hidden">
-                    {r.avatar && r.avatar.startsWith('data:image/') ? (
-                      <img src={r.avatar} alt="Avatar" className="size-full object-cover" />
-                    ) : r.avatar && r.avatar.includes('<svg') ? (
-                      <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: r.avatar }} />
-                    ) : (
-                      r.avatar?.match(/^[A-Z]{2,}$/) ? r.avatar.substring(0, 2) : (r.avatar || "👤")
-                    )}
+                    {r.name.substring(0, 2).toUpperCase()}
                   </div>
                   <div className="mt-3 font-bold text-gradient">{r.name}</div>
                   <div className="text-xs text-muted-foreground">{r.tier}</div>
@@ -131,13 +124,7 @@ export function LeaderboardPage() {
                 <div key={r.id} className="flex items-center gap-4 p-4 hover:bg-muted/10 transition-smooth">
                   <div className="w-8 text-center text-muted-foreground font-bold">#{i + 4}</div>
                   <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden">
-                    {r.avatar && r.avatar.startsWith('data:image/') ? (
-                      <img src={r.avatar} alt="Avatar" className="size-full object-cover" />
-                    ) : r.avatar && r.avatar.includes('<svg') ? (
-                      <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: r.avatar }} />
-                    ) : (
-                      r.avatar?.match(/^[A-Z]{2,}$/) ? r.avatar.substring(0, 2) : (r.avatar || "👤")
-                    )}
+                    {r.name.substring(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1">
                     <div className="font-medium">{r.name}</div>

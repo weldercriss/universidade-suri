@@ -9,6 +9,12 @@ import { CourseController } from './infrastructure/http/controllers/course.contr
 import { EnrollmentController } from './infrastructure/http/controllers/enrollment.controller';
 import { CertificateController } from './infrastructure/http/controllers/certificate.controller';
 import { PostController } from './infrastructure/http/controllers/post.controller';
+import { TrailController } from './infrastructure/http/controllers/trail.controller';
+import { QuizController } from './infrastructure/http/controllers/quiz.controller';
+import { AdminGroupsController } from './infrastructure/http/controllers/admin-groups.controller';
+import { AdminReportsController } from './infrastructure/http/controllers/admin-reports.controller';
+import { SettingsController } from './infrastructure/http/controllers/settings.controller';
+import { RoadmapController } from './infrastructure/http/controllers/roadmap.controller';
 
 // Repository Implementations
 import { PrismaUserRepository } from './infrastructure/database/repositories/prisma-user.repository';
@@ -17,6 +23,8 @@ import { IUserRepository } from './domain/repositories/user.repository.interface
 import { ICourseRepository } from './domain/repositories/course.repository.interface';
 import { IPostRepository } from './domain/repositories/post.repository.interface';
 import { PrismaPostRepository } from './infrastructure/database/repositories/prisma-post.repository';
+import { PrismaRoadmapRepository } from './infrastructure/database/repositories/prisma-roadmap.repository';
+import { IRoadmapRepository } from './domain/repositories/roadmap.repository.interface';
 
 // Strategies & Guards
 import { JwtStrategy } from './infrastructure/http/strategies/jwt.strategy';
@@ -35,6 +43,12 @@ import { JwtStrategy } from './infrastructure/http/strategies/jwt.strategy';
     EnrollmentController,
     CertificateController,
     PostController,
+    TrailController,
+    QuizController,
+    AdminGroupsController,
+    AdminReportsController,
+    SettingsController,
+    RoadmapController,
   ],
   providers: [
     PrismaService,
@@ -50,6 +64,10 @@ import { JwtStrategy } from './infrastructure/http/strategies/jwt.strategy';
     {
       provide: IPostRepository,
       useClass: PrismaPostRepository,
+    },
+    {
+      provide: IRoadmapRepository,
+      useClass: PrismaRoadmapRepository,
     },
   ],
   exports: [PrismaService],

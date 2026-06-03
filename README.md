@@ -1,76 +1,93 @@
-# 🎓 Universidade Suri
+# Universidade Suri
 
-[![CI](https://github.com/usuario/universidade-suri/actions/workflows/ci.yml/badge.svg)](https://github.com/usuario/universidade-suri/actions/workflows/ci.yml)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-10.3-E0234E.svg)](https://nestjs.com/)
-[![React](https://img.shields.io/badge/React-19.2-61DAFB.svg)](https://react.dev/)
-
-Plataforma de ensino à distância (EAD) focada em engajamento, com recursos integrados de **gamificação** e **comunidade social** para os alunos (Embaixadores).
+Plataforma EAD corporativa (padrão TOTVS) com gamificação, comunidade social e certificação digital.  
+Monorepo: **backend NestJS** (Clean Architecture + Prisma + PostgreSQL) e **frontend React** (Vite + Tailwind CSS + shadcn/ui).
 
 ---
 
-## 📚 Documentação Principal
+## Stack
 
-A documentação técnica detalhada encontra-se na pasta `docs/`. Recomendamos a leitura na seguinte ordem:
-
-1. 🏛️ **[Arquitetura do Sistema](docs/architecture.md)** — Fluxo de dados, diagramas e Clean Architecture.
-2. 🔒 **[Segurança](docs/security.md)** — Práticas adotadas e gestão de tokens JWT.
-3. 🚀 **[Guia de Deploy](docs/deploy-guide.md)** — Como colocar o sistema em produção com Docker.
-4. 🧠 **[Decisões de Arquitetura (ADRs)](docs/adr/)** — Registro do porquê certas tecnologias foram escolhidas.
-
----
-
-## 🛠️ Stack Tecnológico
-
-O projeto é um monorepo dividido em duas aplicações principais:
-
-### Frontend (`/frontend`)
-- **React 19** + **Vite 7**
-- **Tailwind CSS v4** + **shadcn/ui** (Acessibilidade)
-- **Zustand** (State management de auth)
-
-### Backend (`/backend`)
-- **NestJS 10** estruturado em **Clean Architecture**
-- **Prisma ORM** para abstração e migrations type-safe
-- **PostgreSQL 16** via Docker
+| Camada | Tecnologia |
+|---|---|
+| Frontend | React 19, Vite 7, Tailwind CSS 4, shadcn/ui, React Router 6 |
+| Backend | NestJS 10, Prisma ORM 5, PostgreSQL 16, JWT (Passport.js) |
+| Infra | Docker Compose (dev), Docker multi-stage (prod), GitHub Actions CI |
+| API Docs | Swagger (`/api/docs`) |
 
 ---
 
-## 💻 Como Rodar Localmente
+## Início Rápido
 
-### 1. Pré-requisitos
-- Node.js v20+
-- Docker e Docker Compose
-- Git
+### Pré-requisitos
+- Node.js 20+
+- Docker + Docker Compose
 
-### 2. Banco de Dados
-Na raiz do projeto, suba o container PostgreSQL de desenvolvimento (roda na porta `5431` para não conflitar com bancos locais):
+### 1. Banco de dados
 ```bash
 docker-compose up -d
 ```
 
-### 3. Backend
+### 2. Backend
 ```bash
 cd backend
 npm install
-cp .env.example .env  # O DATABASE_URL já vem configurado para o docker local
-npx prisma migrate dev # Cria as tabelas no banco de dados
-npm run start:dev
+cp .env.example .env
+npx prisma migrate dev
+npm run db:seed          # cria admin: admin@suri.com / SuriAdmin123
+npm run start:dev        # http://localhost:3000
 ```
-A API estará em `http://localhost:3000` (e o Swagger em `/api/docs`).
 
-### 4. Frontend
-Abra um novo terminal:
+### 3. Frontend
 ```bash
 cd frontend
 npm install
 cp .env.example .env
-npm run dev
+npm run dev              # http://localhost:5173
 ```
-O SPA estará em `http://localhost:5175`.
 
 ---
 
-## 🤝 Como Contribuir
+## Estrutura
 
-Consulte nosso guia de contribuição em **[CONTRIBUTING.md](CONTRIBUTING.md)** para detalhes sobre padronização de código, regras de TypeScript estrito e workflow de Pull Requests.
+```
+universidade-suri/
+├── backend/
+│   ├── src/
+│   │   ├── domain/           # Entidades e interfaces de repositório
+│   │   └── infrastructure/   # Controllers, Prisma repos, JWT strategy
+│   ├── prisma/schema.prisma  # Modelo de dados
+│   └── scripts/              # Utilitários de banco (migrate, seed, backup)
+├── frontend/
+│   └── src/
+│       ├── pages/            # Uma página por rota
+│       ├── components/ui/    # Componentes shadcn/ui (16 ativos)
+│       ├── lib/              # api.ts, auth.tsx, theme.tsx, utils.ts
+│       └── styles.css        # Tokens de tema (Night Blue / Snow Blue)
+├── docs/                     # Documentação técnica e ADRs
+├── skills/rules/             # Regras de negócio e design system (fonte primária)
+├── CLAUDE.md                 # Guia de desenvolvimento para Claude Code
+└── CONTRIBUTING.md           # Workflow de PR e padrões de código
+```
+
+---
+
+## Perfis de Usuário
+
+| Grupo | Tiers | Acesso |
+|---|---|---|
+| `embaixador` | Voice / Elite / Icon | Feed de Embaixadores, cursos do grupo |
+| `vip` | Blue / Core / Plus | Feed de VIPs, cursos do grupo |
+| `admin` | — | Painel administrativo, visão total |
+
+---
+
+## Documentação
+
+- [Arquitetura](docs/architecture.md) — diagramas, Clean Architecture, rotas
+- [Deploy em Produção](docs/deploy-guide.md) — Docker, SSL, migrações
+- [Segurança](docs/security.md) — JWT, CORS, bcrypt
+- [ADRs](docs/adr/) — decisões técnicas registradas
+- [Regras de Negócio](skills/rules/business-rules.md) — gamificação, certificação, feed
+- [Design System](skills/rules/design-system.md) — paleta HSL, tipografia, classes utilitárias
+- [CLAUDE.md](CLAUDE.md) — guia completo de desenvolvimento (para Claude Code)
+- [CONTRIBUTING.md](CONTRIBUTING.md) — workflow de contribuição

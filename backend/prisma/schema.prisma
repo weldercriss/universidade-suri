@@ -18,8 +18,9 @@ model Profile {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
   email        String   @unique
+  business     String   @default("")
+  phone        String?
   passwordHash String   @map("password_hash")
-  avatarUrl    String?  @map("avatar_url")
   groupType    String   @default("embaixador") @map("group_type")
   tier         String   @default("Embaixador Voice")
   xp           Int      @default(0)
@@ -34,6 +35,7 @@ model Profile {
   posts        Post[]
   postLikes    PostLike[]
   postComments PostComment[]
+  quizAttempts QuizAttempt[]
 
   @@map("profiles")
 }
@@ -52,6 +54,10 @@ model Course {
   modules       Module[]
   enrollments   Enrollment[]
   certificates  Certificate[]
+  trails        TrailCourse[]
+  posts         Post[]
+  questions     Question[]
+  quizAttempts  QuizAttempt[]
 
   @@map("courses")
 }
@@ -117,6 +123,7 @@ model Certificate {
 model Post {
   id        String   @id @default(uuid()) @db.Uuid
   authorId  String   @map("author_id") @db.Uuid
+  courseId  String?  @map("course_id") @db.Uuid
   title     String
   body      String
   mediaType String?  @map("media_type")
@@ -124,6 +131,7 @@ model Post {
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   author    Profile  @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   likes     PostLike[]
   comments  PostComment[]
 
@@ -154,4 +162,132 @@ model PostComment {
   user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("post_comments")
+}
+
+model Trail {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  targetGroup String       @default("all") @map("target_group")
+  sortOrder   Int          @default(0) @map("sort_order")
+  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  courses     TrailCourse[]
+
+  @@map("trails")
+}
+
+model TrailCourse {
+  id        String  @id @default(uuid()) @db.Uuid
+  trailId   String  @map("trail_id") @db.Uuid
+  courseId  String  @map("course_id") @db.Uuid
+  sortOrder Int     @default(0) @map("sort_order")
+
+  trail     Trail   @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([trailId, courseId])
+  @@map("trail_courses")
+}
+
+model Question {
+  id        String   @id @default(uuid()) @db.Uuid
+  courseId  String   @map("course_id") @db.Uuid
+  text      String
+  options   Json
+  answer    String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  course         Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attemptAnswers QuizAttemptAnswer[]
+
+  @@map("questions")
+}
+
+model QuizAttempt {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  courseId      String   @map("course_id") @db.Uuid
+  score         Float
+  passed        Boolean
+  attemptNumber Int      @map("attempt_number")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user    Profile             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course  Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  answers QuizAttemptAnswer[]
+
+  @@map("quiz_attempts")
+}
+
+model QuizAttemptAnswer {
+  id             String      @id @default(uuid()) @db.Uuid
+  attemptId      String      @map("attempt_id") @db.Uuid
+  questionId     String      @map("question_id") @db.Uuid
+  selectedOption String      @map("selected_option")
+  isCorrect      Boolean     @map("is_correct")
+
+  attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_attempt_answers")
+}
+
+model QuizExtraAttempt {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  courseId  String   @map("course_id") @db.Uuid
+  grantedBy String   @map("granted_by") @db.Uuid
+  used      Boolean  @default(false)
+  grantedAt DateTime @default(now()) @map("granted_at") @db.Timestamptz(6)
+
+  @@map("quiz_extra_attempts")
+}
+
+model GroupRule {
+  id        String   @id @default(uuid()) @db.Uuid
+  groupType String   @map("group_type")
+  tier      String
+  minXp     Int      @map("min_xp")
+  maxXp     Int?     @map("max_xp")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("group_rules")
+}
+
+model SystemSetting {
+  id        String   @id @default(uuid()) @db.Uuid
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("system_settings")
+}
+
+model Roadmap {
+  id          String        @id @default(uuid()) @db.Uuid
+  title       String
+  description String?
+  isActive    Boolean       @default(true) @map("is_active")
+  sortOrder   Int           @default(0) @map("sort_order")
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  items       RoadmapItem[]
+
+  @@map("roadmaps")
+}
+
+model RoadmapItem {
+  id          String   @id @default(uuid()) @db.Uuid
+  roadmapId   String   @map("roadmap_id") @db.Uuid
+  type        String
+  title       String
+  url         String
+  description String?
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  roadmap     Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
+
+  @@map("roadmap_items")
 }

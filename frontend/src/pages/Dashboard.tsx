@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, API_BASE_URL } from "@/lib/api";
 import { AppShell } from "@/components/app-shell";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ export function DashboardPage() {
           id: c.id,
           title: c.title,
           description: c.description || "",
-          cover: "from-marine to-deep",
+          cover: c.coverUrl || "from-marine to-deep",
           group: c.targetGroup || c.target_group || "all",
           progress: 0,
           lessons: (c.lessons || []).map((l: any) => ({
@@ -69,8 +69,9 @@ export function DashboardPage() {
 
   const isVip = user.group === "vip";
   const isAdmin = user.group === "admin" || user.isAdmin;
+  const isFirstLogin = user.isFirstLogin === true;
   const visibleCourses = courses.filter((c) => c.group === "all" || c.group === user.group);
-  const feed: any[] = [];
+
   const groupRanking: any[] = [];
 
   const journeySteps = courses.map((c) => ({
@@ -78,7 +79,7 @@ export function DashboardPage() {
     title: c.title,
   }));
 
-  const completedSteps = 0;
+  const completedSteps = certificates;
 
   const stats = [
     {
@@ -112,7 +113,7 @@ export function DashboardPage() {
       {/* Hero & Stats */}
       <div className="mb-6 fade-in-up">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
-          Bem-vindo de volta,{" "}
+          {isFirstLogin ? "Bem-vindo," : "Bem-vindo de volta,"}{" "}
           <span className="text-gradient" data-ph-mask="true">
             {user.name.split(" ")[0]}
           </span>
@@ -121,6 +122,8 @@ export function DashboardPage() {
         <p className="text-sm text-muted-foreground">
           {isAdmin
             ? "Painel de Administração da Plataforma Suri."
+            : isFirstLogin
+            ? "Comece sua jornada explorando os cursos disponíveis."
             : "Bora aprender novas coisas hoje?"}
         </p>
       </div>
@@ -159,7 +162,12 @@ export function DashboardPage() {
         <section className="mt-10">
           <div className="flex items-end justify-between mb-4">
             <h2 className="text-xl font-semibold">Jornada educacional</h2>
-            <Link to="/cursos" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">ver tudo →</Link>
+            <div className="flex items-center gap-3">
+              <Link to="/roadmap" className="text-sm text-primary hover:text-primary/80 transition-smooth font-medium">
+                🗺️ Ver Roadmap
+              </Link>
+              <Link to="/cursos" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">ver tudo →</Link>
+            </div>
           </div>
           <Card className="bg-gradient-card border-border p-2">
             <div className="grid grid-cols-2 md:grid-cols-5 gap-2 stagger-children">
@@ -195,7 +203,9 @@ export function DashboardPage() {
       <section className="grid lg:grid-cols-3 gap-6 mt-10">
         <div className="lg:col-span-2">
           <div className="flex items-end justify-between mb-4">
-            <h2 className="text-xl font-semibold">{isAdmin ? "Explorar Cursos" : "Continue assistindo"}</h2>
+            <h2 className="text-xl font-semibold">
+              {isAdmin ? "Explorar Cursos" : isFirstLogin ? "Comece por aqui" : "Continue assistindo"}
+            </h2>
             <Link to="/cursos" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">ver tudo →</Link>
           </div>
           {loadingCourses ? (
@@ -216,15 +226,20 @@ export function DashboardPage() {
                 const cardContent = (
                   <Card className="group bg-gradient-card border-border overflow-hidden hover:shadow-glow transition-smooth hover-lift h-full flex flex-col justify-between">
                     <div>
-                      <div className={`aspect-video bg-gradient-to-br ${c.cover} relative grid place-items-center`}>
+                      <div className={`aspect-video bg-gradient-to-br from-marine to-deep relative grid place-items-center overflow-hidden`}>
+                        {c.cover && (c.cover.startsWith("http") || c.cover.startsWith("/")) ? (
+                          <img src={c.cover.startsWith("http") ? c.cover : `${API_BASE_URL}${c.cover}`} alt={c.title} className="absolute inset-0 w-full h-full object-cover opacity-80" />
+                        ) : (
+                          <div className={`absolute inset-0 bg-gradient-to-br ${c.cover} opacity-80`} />
+                        )}
                         {/* Play Button matching image: solid primary blue with white triangle */}
-                        <div className="size-14 rounded-full bg-primary shadow-glow flex items-center justify-center group-hover:scale-110 transition-smooth border-2 border-primary/50 backdrop-blur-md">
+                        <div className="size-14 rounded-full bg-primary shadow-glow flex items-center justify-center group-hover:scale-110 transition-smooth border-2 border-primary/50 backdrop-blur-md relative z-10">
                           <svg viewBox="0 0 24 24" fill="white" className="size-6 ml-1">
                             <path d="M8 5v14l11-7z" />
                           </svg>
                         </div>
                         {c.lessons.length > 0 && (
-                          <Badge className="absolute top-3 right-3 bg-muted text-foreground border-0 text-[10px]">
+                          <Badge className="absolute top-3 right-3 bg-muted text-foreground border-0 text-[10px] relative z-10">
                             {c.lessons.length} aulas
                           </Badge>
                         )}
@@ -276,13 +291,7 @@ export function DashboardPage() {
                   {idx + 1}
                 </div>
                 <div className="size-9 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden">
-                  {r.avatar && r.avatar.startsWith('data:image/') ? (
-                    <img src={r.avatar} alt="Avatar" className="size-full object-cover" />
-                  ) : r.avatar && r.avatar.includes('<svg') ? (
-                    <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: r.avatar }} />
-                  ) : (
-                    r.avatar?.match(/^[A-Z]{2,}$/) ? r.avatar.substring(0, 2) : (r.avatar || "👤")
-                  )}
+                  {r.name.substring(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">{r.name}</div>
@@ -295,32 +304,7 @@ export function DashboardPage() {
         </div>
       </section>
 
-      {/* Feed preview */}
-      <section className="mt-10">
-        <div className="flex items-end justify-between mb-4">
-          <h2 className="text-xl font-semibold">Projetos da comunidade</h2>
-          <Link to="/projetos" className="text-sm text-muted-foreground hover:text-foreground transition-smooth">ir ao feed →</Link>
-        </div>
-        <div className="grid md:grid-cols-2 gap-4 stagger-children">
-          {feed.map((p) => (
-            <Card key={p.id} className="bg-gradient-card border-border p-5 shadow-elegant hover-lift">
-              <div className="flex items-center gap-3">
-                <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow">{p.author.avatar}</div>
-                <div>
-                  <div className="text-sm font-medium">{p.author.name}</div>
-                  <div className="text-[11px] text-muted-foreground">{p.author.tier} · {p.createdAt}</div>
-                </div>
-              </div>
-              <div className="mt-4 font-semibold hover:text-gradient transition-smooth">{p.title}</div>
-              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{p.body}</p>
-              <div className="mt-4 text-xs text-muted-foreground flex gap-4">
-                <span>♡ {p.likes}</span>
-                <span>💬 {p.comments}</span>
-              </div>
-            </Card>
-          ))}
-        </div>
-      </section>
+
     </AppShell>
   );
 }

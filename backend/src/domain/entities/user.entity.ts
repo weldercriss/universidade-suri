@@ -4,7 +4,6 @@ export class User {
     public name: string,
     public readonly email: string,
     public passwordHash: string,
-    public avatarUrl: string,
     public groupType: 'vip' | 'embaixador' | 'admin',
     public tier: string,
     public xp: number,
@@ -13,6 +12,8 @@ export class User {
     public readonly createdAt: Date,
     public isActive: boolean = true,
     public profileImage: string | null = null,
+    public business: string = '',
+    public phone: string | null = null,
   ) {}
 
   addXp(amount: number): void {

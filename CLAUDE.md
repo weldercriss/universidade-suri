@@ -9,7 +9,7 @@ universidade-suri/
 ├── frontend/          # SPA React 19 + Vite + Tailwind CSS
 ├── backend/           # API NestJS (Clean Architecture) + Prisma ORM
 ├── plan/              # Notas de desenvolvimento e histórico de issues
-├── skills/rules/      # Regras de negócio, design system e arquitetura (FONTE PRIMÁRIA)
+├── skills/      # Regras de negócio, design system e arquitetura (FONTE PRIMÁRIA)
 └── docker-compose.yml # PostgreSQL local
 ```
 
@@ -30,9 +30,9 @@ npm run dev          # servidor Vite (porta 5173)
 npm run build        # build de produção
 ```
 
-## Regras do Projeto (SEMPRE consultar `skills/rules/`)
+## Regras do Projeto (SEMPRE consultar `skills/`)
 
-As regras em `skills/rules/` são a **fonte primária** de verdade. Em caso de conflito com comentários inline, prevalecem as regras.
+As regras em `skills/` são a **fonte primária** de verdade. Em caso de conflito com comentários inline, prevalecem as regras.
 
 ### Autenticação
 - Apenas e-mail + senha corporativo. Sem Google OAuth, sem SSO.
@@ -41,14 +41,24 @@ As regras em `skills/rules/` são a **fonte primária** de verdade. Em caso de c
 
 ### Perfis de Usuário
 - `groupType`: `"vip"` | `"embaixador"`
-- `tier` VIP: `"VIP BLUE"`, `"VIP CORE"`, `"VIP PLUS"`
+- `tier` VIP: `"VIP PLUS"`, `"VIP GOLD"`, `"VIP PLATINUM"`
 - `tier` Embaixador: `"Embaixador Voice"`, `"Embaixador Elite"`, `"Embaixador Icon"`
 - `isAdmin: true` → acesso ao painel admin, sem acesso a cursos/comunidade como aluno
+- `company`: empresa do usuário (campo opcional, gerenciado pelo admin)
+- `isFirstLogin`: `true` se o usuário não possui nenhum `ModuleProgress` — controla saudação e seção "Continue assistindo"
 
 ### Cursos e Progresso
 - Aulas são sequenciais (antifraude): módulo N só disponível após N-1 concluído.
 - Progresso rastreado em `module_progress` via `enrollment_id + module_id`.
 - Conclusão de 100% → emissão automática de certificado (`SURI-AC-[HEX]`).
+
+### Roadmap
+- Conteúdos curados pelo admin (ex: "Dev Full Stack") com links de vídeos, documentos e referências.
+- Visível para **todos** os usuários autenticados, sem filtro de grupo.
+- Admin acessa via `/admin/roadmap`; o item "Roadmap" no nav redireciona automaticamente para lá.
+- `isActive: false` oculta o roadmap dos usuários (toggle no painel admin).
+- Itens têm `type`: `"video"` | `"document"` | `"reference"`, `title`, `url`, `description` (opcional).
+- `GET /roadmaps` → ativos para usuário, todos para admin (branch por `req.user.isAdmin`).
 
 ### Comunidade
 - Feed segmentado por `groupType`: VIPs veem apenas posts de VIPs, Embaixadores de Embaixadores.

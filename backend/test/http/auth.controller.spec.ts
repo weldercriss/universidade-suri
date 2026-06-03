@@ -75,8 +75,6 @@ describe('AuthController', () => {
       expect(out.user.group).toBe('embaixador');
       expect(out.user.tier).toBe('Embaixador Voice');
       expect(out.user.isAdmin).toBe(false);
-      // avatar é gerado das iniciais
-      expect(out.user.avatar).toBe('JO');
 
       // garante hash bcrypt salvo (não a senha em claro)
       const saved = userRepo.create.mock.calls[0][0];
@@ -145,9 +143,8 @@ describe('AuthController', () => {
     it('atualiza nome/avatar/profileImage do próprio usuário (não-admin não muda level)', async () => {
       const user = makeUser({ level: 1 });
       userRepo.update.mockImplementation(async (u) => u);
-      const out = await controller.updateProfile({ user }, { name: 'Novo', avatar: 'NV', profileImage: 'http://img', level: 99 });
+      const out = await controller.updateProfile({ user }, { name: 'Novo', profileImage: 'http://img', level: 99 });
       expect(out.name).toBe('Novo');
-      expect(out.avatar).toBe('NV');
       expect(out.profileImage).toBe('http://img');
       expect(out.level).toBe(1); // ignorado
     });

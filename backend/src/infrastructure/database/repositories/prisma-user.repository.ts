@@ -77,7 +77,6 @@ export class PrismaUserRepository implements IUserRepository {
           name: user.name,
           email: user.email,
           passwordHash: user.passwordHash,
-          avatarUrl: user.avatarUrl,
           groupType: user.groupType,
           tier: user.tier,
           xp: user.xp,
@@ -85,6 +84,8 @@ export class PrismaUserRepository implements IUserRepository {
           isAdmin: user.isAdmin,
           isActive: user.isActive,
           profileImage: user.profileImage,
+          business: user.business,
+          phone: user.phone,
           createdAt: user.createdAt,
         },
       });
@@ -103,7 +104,6 @@ export class PrismaUserRepository implements IUserRepository {
           name: user.name,
           email: user.email,
           passwordHash: user.passwordHash,
-          avatarUrl: user.avatarUrl,
           groupType: user.groupType,
           tier: user.tier,
           xp: user.xp,
@@ -111,6 +111,8 @@ export class PrismaUserRepository implements IUserRepository {
           isAdmin: user.isAdmin,
           isActive: user.isActive,
           profileImage: user.profileImage,
+          business: user.business,
+          phone: user.phone,
         },
       });
       return this.mapRowToEntity(row);
@@ -126,7 +128,6 @@ export class PrismaUserRepository implements IUserRepository {
       row.name,
       row.email,
       row.passwordHash,
-      row.avatarUrl,
       row.groupType,
       row.tier,
       row.xp,
@@ -135,6 +136,8 @@ export class PrismaUserRepository implements IUserRepository {
       new Date(row.createdAt),
       row.isActive ?? true,
       row.profileImage ?? null,
+      row.business || '',
+      row.phone || null,
     );
   }
 }

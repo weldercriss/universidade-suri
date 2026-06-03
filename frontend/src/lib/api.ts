@@ -35,3 +35,26 @@ export async function apiRequest<T = any>(
 
   return response.json() as Promise<T>;
 }
+
+/** Upload de arquivo via multipart/form-data */
+export async function apiUpload<T = any>(
+  path: string,
+  formData: FormData
+): Promise<T> {
+  const token = localStorage.getItem("suri_token");
+  const headers = new Headers();
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`);
+  }
+  // NÃO setar Content-Type: o browser define com o boundary do multipart
+
+  const url = `${API_BASE_URL}${path}`;
+  const response = await fetch(url, { method: "POST", headers, body: formData });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.message || "Erro no upload");
+  }
+
+  return response.json() as Promise<T>;
+}

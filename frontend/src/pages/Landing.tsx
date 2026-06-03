@@ -3,64 +3,172 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTheme } from "@/lib/theme";
-import { PlayCircle, ArrowRight, CheckCircle2, ChevronRight, GraduationCap, Users, Layout, Moon, Sun } from "lucide-react";
+import { usePlatformSettings } from "@/lib/settings";
+import { PlayCircle, ArrowRight, CheckCircle2, ChevronRight, Users, Layout, Moon, Sun, GraduationCap, FileText, MessageSquare, BookOpen, Link as LinkIcon, ArrowUp, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { API_BASE_URL } from "@/lib/api";
 
-// Cursos mockados para exibir no preview da página inicial
-const PREVIEW_COURSES = [
-  {
-    id: "1",
-    title: "Gestão Ágil de Projetos",
-    description: "Aprenda a aplicar Scrum e Kanban no dia a dia da sua equipe de forma prática e direta.",
-    cover: "from-cyan-500 to-blue-500",
-    lessons: 12,
-  },
-  {
-    id: "2",
-    title: "Liderança na Prática",
-    description: "Desenvolva habilidades essenciais para liderar equipes de alta performance no mundo corporativo.",
-    cover: "from-indigo-500 to-purple-500",
-    lessons: 8,
-  },
-  {
-    id: "3",
-    title: "Transformação Digital",
-    description: "Entenda o impacto da tecnologia e como modernizar processos e modelos de negócio.",
-    cover: "from-orange-500 to-red-500",
-    lessons: 15,
-  },
-  {
-    id: "4",
-    title: "Comunicação Efetiva",
-    description: "Técnicas de oratória e comunicação interpessoal para se destacar no ambiente de trabalho.",
-    cover: "from-emerald-500 to-teal-500",
-    lessons: 10,
-  },
+// Gradientes de fallback usados quando o curso não possui capa cadastrada
+const GRADIENT_COVERS = [
+  "from-cyan-500 to-blue-500",
+  "from-indigo-500 to-purple-500",
+  "from-orange-500 to-red-500",
+  "from-emerald-500 to-teal-500",
+  "from-rose-500 to-pink-500",
+  "from-amber-500 to-yellow-500",
 ];
+
+interface PreviewCourse {
+  id: string;
+  title: string;
+  description: string;
+  coverUrl?: string | null;
+  lessons: number;
+}
 
 export function LandingPage() {
   const { theme, toggleTheme } = useTheme();
+  const { settings } = usePlatformSettings();
   const isLight = theme === "snow-blue";
+  const [courses, setCourses] = useState<PreviewCourse[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(true);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/courses/public`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: PreviewCourse[]) => setCourses(Array.isArray(data) ? data : []))
+      .catch(() => setCourses([]))
+      .finally(() => setLoadingCourses(false));
+  }, []);
 
   return (
     <div className="min-h-screen bg-background font-sans overflow-x-hidden">
       {/* Navbar */}
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="fixed top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="size-8 rounded-lg bg-gradient-hero shadow-glow grid place-items-center">
-                <GraduationCap className="size-4 text-snow" />
-              </div>
-              <span className="font-display text-xl font-bold text-gradient tracking-tight">
-                Universidade Suri
-              </span>
+            <div className="flex items-center">
+              <img
+                src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : "/src/assets/icons/suri-blue.svg") : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : "/src/assets/icons/suri-white.svg")}
+                alt="Universidade Suri"
+                className="h-8 w-auto"
+              />
             </div>
             
             <div className="hidden md:flex items-center gap-6">
-              <a href="#solucoes" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Soluções</a>
               <a href="#cursos" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Cursos</a>
-              <a href="#plataforma" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">A Plataforma</a>
+              <a href="#sobre" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Sobre</a>
+              <a href="#instrutores" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Instrutores</a>
+              
+              {/* Dropdown Soluções */}
+              <div className="relative group">
+                <button className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-4">
+                  Soluções <ChevronDown className="ml-1 size-4 opacity-50 group-hover:rotate-180 transition-transform duration-200" />
+                </button>
+                <div className="absolute top-[calc(100%-1rem)] left-1/2 -translate-x-1/2 w-[600px] xl:w-[700px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pt-6 z-50">
+                  <Card className="flex flex-col md:flex-row overflow-hidden border-border bg-card shadow-elegant">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+                      <a href="https://www.suri.ai/plataforma" target="_blank" rel="noopener noreferrer" className="group/item block space-y-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="aspect-[4/3] rounded-lg bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-900/40 flex items-center justify-center border border-border/50 group-hover/item:border-primary/50 transition-colors shadow-sm">
+                          <Layout className="size-10 text-primary/60 group-hover/item:scale-110 transition-transform" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm mb-1 group-hover/item:text-primary transition-colors">Plataforma</h4>
+                          <p className="text-xs text-muted-foreground mb-2">Uma única ferramenta para centralizar e automatizar seu atendimento</p>
+                          <span className="text-xs text-primary font-medium flex items-center">Saiba mais <ArrowRight className="size-3 ml-1" /></span>
+                        </div>
+                      </a>
+
+                      <a href="https://www.suri.ai/integracoes" target="_blank" rel="noopener noreferrer" className="group/item block space-y-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="aspect-[4/3] rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center border border-border/50 group-hover/item:shadow-glow transition-all shadow-sm">
+                          <LinkIcon className="size-10 text-white/80 group-hover/item:scale-110 transition-transform" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm mb-1 group-hover/item:text-primary transition-colors">Integrações</h4>
+                          <p className="text-xs text-muted-foreground mb-2">A Suri se uniu às melhores plataformas do mercado.</p>
+                          <span className="text-xs text-primary font-medium flex items-center">Saiba mais <ArrowRight className="size-3 ml-1" /></span>
+                        </div>
+                      </a>
+                    </div>
+                    <div className="w-full md:w-56 bg-muted/20 p-6 flex flex-col justify-center border-t md:border-t-0 md:border-l border-border/50">
+                      <div className="space-y-4">
+                        <a href="https://www.suri.ai/varejo" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between text-sm font-medium hover:text-primary transition-colors">
+                          Varejo <ChevronRight className="size-4" />
+                        </a>
+                        <a href="https://www.suri.ai/servicos" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between text-sm font-medium hover:text-primary transition-colors">
+                          Serviços <ChevronRight className="size-4" />
+                        </a>
+                      </div>
+                      <Button variant="outline" size="sm" className="mt-8 w-full bg-background border-border hover:bg-muted" asChild>
+                        <a href="https://www.suri.ai" target="_blank" rel="noopener noreferrer">Acessar Site</a>
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Dropdown Conteúdo */}
+              <div className="relative group">
+                <button className="flex items-center text-sm font-medium text-muted-foreground hover:text-foreground transition-colors py-4">
+                  Conteúdo <ChevronDown className="ml-1 size-4 opacity-50 group-hover:rotate-180 transition-transform duration-200" />
+                </button>
+                <div className="absolute top-[calc(100%-1rem)] left-1/2 -translate-x-1/2 w-[600px] xl:w-[700px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 pt-6 z-50">
+                  <Card className="flex flex-col md:flex-row overflow-hidden border-border bg-card shadow-elegant">
+                    <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
+                      <a href="https://www.suri.ai/blog" target="_blank" rel="noopener noreferrer" className="group/item block space-y-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="aspect-[4/3] rounded-lg bg-gradient-to-br from-slate-100 to-gray-50 dark:from-slate-900 dark:to-gray-900 flex items-center justify-center border border-border/50 group-hover/item:border-primary/50 transition-colors shadow-sm relative overflow-hidden">
+                          <div className="absolute top-2 right-2 bg-green-500 rounded-full p-1"><MessageSquare className="size-3 text-white" /></div>
+                          <BookOpen className="size-10 text-muted-foreground/60 group-hover/item:scale-110 transition-transform" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm mb-1 group-hover/item:text-primary transition-colors">Blog</h4>
+                          <p className="text-xs text-muted-foreground mb-2">Fique por dentro das dicas, estratégias e tendências em Chatbots e IA</p>
+                          <span className="text-xs text-primary font-medium flex items-center">Saiba mais <ArrowRight className="size-3 ml-1" /></span>
+                        </div>
+                      </a>
+
+                      <a href="https://www.suri.ai/materiais" target="_blank" rel="noopener noreferrer" className="group/item block space-y-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="aspect-[4/3] rounded-lg bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-900/30 flex items-center justify-center border border-border/50 group-hover/item:border-primary/50 transition-colors shadow-sm">
+                          <FileText className="size-10 text-orange-500/60 group-hover/item:scale-110 transition-transform" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-sm mb-1 group-hover/item:text-primary transition-colors">Materiais</h4>
+                          <p className="text-xs text-muted-foreground mb-2">Materiais gratuitos para você aprender tudo sobre vendas e IA</p>
+                          <span className="text-xs text-primary font-medium flex items-center">Saiba mais <ArrowRight className="size-3 ml-1" /></span>
+                        </div>
+                      </a>
+                    </div>
+                    <div className="w-full md:w-48 bg-muted/20 p-6 flex flex-col justify-center border-t md:border-t-0 md:border-l border-border/50">
+                      <div className="space-y-4">
+                        <a href="https://www.suri.ai/midia" target="_blank" rel="noopener noreferrer" className="flex items-center justify-between text-sm font-medium hover:text-primary transition-colors">
+                          Saiu na mídia <ChevronRight className="size-4" />
+                        </a>
+                      </div>
+                      <Button variant="outline" size="sm" className="mt-8 w-full bg-background border-border hover:bg-muted" asChild>
+                        <a href="https://www.suri.ai/conteudo" target="_blank" rel="noopener noreferrer">Ver todos</a>
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+              
             </div>
 
             <div className="flex items-center gap-4">
@@ -85,8 +193,17 @@ export function LandingPage() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 overflow-hidden">
-          <img src="/src/assets/totvs.svg" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 opacity-5 w-full max-w-[1200px] pointer-events-none" alt="" aria-hidden="true" />
+        <section className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
+          <img
+            src={settings?.logo_collapsed_dark ? `${API_BASE_URL}${settings.logo_collapsed_dark}` : "/totvs.svg"}
+            className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full pointer-events-none select-none rotate-[20deg] ${
+              isLight
+                ? "opacity-[0.12] max-w-[1400px]"
+                : "opacity-[0.04] max-w-[1200px]"
+            }`}
+            alt=""
+            aria-hidden="true"
+          />
           <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="mx-auto max-w-3xl fade-in-up">
               <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-8">
@@ -108,16 +225,12 @@ export function LandingPage() {
                   <Link to="/login">Já tenho uma conta</Link>
                 </Button>
               </div>
-              <div className="mt-10 flex items-center justify-center gap-6 text-sm text-muted-foreground font-medium">
-                <div className="flex items-center gap-2"><CheckCircle2 className="size-4 text-primary" /> Sem cartão de crédito</div>
-                <div className="flex items-center gap-2"><CheckCircle2 className="size-4 text-primary" /> Certificado incluso</div>
-              </div>
             </div>
           </div>
         </section>
 
         {/* Tabs - Platform Information */}
-        <section id="plataforma" className="py-24 bg-muted/30 border-y border-border/50">
+        <section id="sobre" className="py-24 bg-muted/30 border-y border-border/50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-16 fade-in-up">
               <h2 className="text-3xl font-bold text-foreground mb-4">Tudo o que você precisa em um só lugar</h2>
@@ -211,40 +324,95 @@ export function LandingPage() {
               </Button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 fade-in-up" style={{ animationDelay: '0.2s' }}>
-              {PREVIEW_COURSES.map((course) => (
-                <Card key={course.id} className="group flex flex-col h-full overflow-hidden border-border bg-card shadow-elegant hover:shadow-glow transition-all duration-300">
-                  <div className={`h-40 w-full bg-gradient-to-br ${course.cover} relative flex items-center justify-center p-6`}>
-                    <PlayCircle className="size-12 text-white/90 drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
-                  </div>
-                  <div className="p-6 flex flex-col flex-1">
-                    <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors line-clamp-1">{course.title}</h3>
-                    <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
-                      {course.description}
-                    </p>
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{course.lessons} Aulas</span>
-                      <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/10 -mr-2" asChild>
-                        <Link to="/signup">Acessar</Link>
-                      </Button>
+
+            {loadingCourses ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {[1, 2, 3, 4].map((i) => (
+                  <Card key={i} className="flex flex-col h-full overflow-hidden border-border bg-card shadow-elegant animate-pulse">
+                    <div className="h-40 w-full bg-muted/40" />
+                    <div className="p-6 flex flex-col flex-1 gap-3">
+                      <div className="h-4 bg-muted/40 rounded w-3/4" />
+                      <div className="h-3 bg-muted/30 rounded w-full" />
+                      <div className="h-3 bg-muted/30 rounded w-2/3" />
                     </div>
+                  </Card>
+                ))}
+              </div>
+            ) : courses.length === 0 ? (
+              <div className="text-center text-muted-foreground py-12">
+                <PlayCircle className="size-12 mx-auto mb-3 opacity-30" />
+                <p className="font-medium">Nenhum curso disponível no momento.</p>
+                <p className="text-sm mt-1">Em breve novos conteúdos serão publicados.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 fade-in-up" style={{ animationDelay: '0.2s' }}>
+                {courses.map((course, index) => (
+                  <Card key={course.id} className="group flex flex-col h-full overflow-hidden border-border bg-card shadow-elegant hover:shadow-glow transition-all duration-300">
+                    <div className={`h-40 w-full relative flex items-center justify-center p-6 ${course.coverUrl ? "" : `bg-gradient-to-br ${GRADIENT_COVERS[index % GRADIENT_COVERS.length]}`}`}>
+                      {course.coverUrl ? (
+                        <img src={`${API_BASE_URL}${course.coverUrl}`} alt={course.title} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : null}
+                      <PlayCircle className="relative size-12 text-white/90 drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
+                    </div>
+                    <div className="p-6 flex flex-col flex-1">
+                      <h3 className="text-lg font-bold mb-2 group-hover:text-primary transition-colors line-clamp-1">{course.title}</h3>
+                      <p className="text-sm text-muted-foreground mb-4 line-clamp-3 flex-1">
+                        {course.description || "Conteúdo exclusivo da Universidade Suri."}
+                      </p>
+                      <div className="flex items-center justify-between mt-auto pt-4 border-t border-border/50">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{course.lessons} Aulas</span>
+                        <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/10 -mr-2" asChild>
+                          <Link to="/signup">Acessar</Link>
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+
+          </div>
+        </section>
+
+        {/* Instrutores */}
+        <section id="instrutores" className="py-24 bg-muted/20 border-t border-border/50">
+          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center max-w-2xl mx-auto mb-16 fade-in-up">
+              <h2 className="text-3xl font-bold text-foreground mb-4">Conheça nossos Instrutores</h2>
+              <p className="text-muted-foreground text-lg">
+                Aprenda com especialistas que vivenciam na prática os desafios do mercado de atendimento e IA.
+              </p>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="p-6 text-center border-border bg-card shadow-elegant hover:shadow-glow transition-all">
+                  <div className="size-24 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 mb-4 overflow-hidden border-2 border-primary/20">
+                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=Instrutor${i+10}`} alt="Instrutor" className="w-full h-full object-cover" />
                   </div>
+                  <h3 className="text-lg font-bold mb-1">Instrutor {i}</h3>
+                  <p className="text-xs text-primary font-medium mb-3 uppercase tracking-wider">Especialista</p>
+                  <p className="text-sm text-muted-foreground line-clamp-3">
+                    Profissional com vasta experiência em estruturação de processos de vendas e suporte utilizando inteligência artificial.
+                  </p>
                 </Card>
               ))}
             </div>
           </div>
         </section>
 
+
+
         {/* CTA Section */}
         <section className="py-24 bg-gradient-to-b from-transparent to-primary/5 border-t border-border">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto bg-gradient-hero rounded-3xl p-8 md:p-16 text-center shadow-glow overflow-hidden relative">
+            <div className={`max-w-4xl mx-auto rounded-3xl p-8 md:p-16 text-center shadow-glow overflow-hidden relative ${isLight ? "bg-deep" : "bg-snow"}`}>
               <div className="absolute inset-0 bg-[url('/src/assets/noise.png')] opacity-10 mix-blend-overlay"></div>
-              <h2 className="text-3xl md:text-5xl font-bold text-snow mb-6 relative z-10">Pronto para dar o próximo passo?</h2>
-              <p className="text-snow/80 text-lg md:text-xl mb-10 max-w-2xl mx-auto relative z-10">
+              <h2 className={`text-3xl md:text-5xl font-bold mb-6 relative z-10 ${isLight ? "text-snow" : "text-deep"}`}>Pronto para dar o próximo passo?</h2>
+              <p className={`text-lg md:text-xl mb-10 max-w-2xl mx-auto relative z-10 ${isLight ? "text-snow/80" : "text-deep/80"}`}>
                 Junte-se a milhares de profissionais que já transformaram suas carreiras com a Universidade Suri.
               </p>
-              <Button asChild size="lg" className="bg-background text-foreground hover:bg-muted font-bold text-lg h-14 px-10 relative z-10 shadow-lg">
+              <Button asChild size="lg" className={`font-bold text-lg h-14 px-10 relative z-10 shadow-lg border-0 ${isLight ? "bg-snow text-deep hover:bg-snow/90" : "bg-deep text-snow hover:bg-deep/90"}`}>
                 <Link to="/signup">Comece a aprender agora</Link>
               </Button>
             </div>
@@ -257,11 +425,12 @@ export function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div className="col-span-1 md:col-span-2">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="size-6 rounded bg-primary/20 grid place-items-center">
-                  <GraduationCap className="size-3 text-primary" />
-                </div>
-                <span className="font-display font-semibold text-foreground">Universidade Suri</span>
+              <div className="flex items-center mb-4">
+                <img
+                  src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : "/src/assets/icons/suri-blue.svg") : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : "/src/assets/icons/suri-white.svg")}
+                  alt="Universidade Suri"
+                  className="h-7 w-auto opacity-80"
+                />
               </div>
               <p className="text-sm text-muted-foreground max-w-sm">
                 A plataforma de educação corporativa pensada para resultados reais.
@@ -288,6 +457,18 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Botão de voltar ao topo */}
+      <Button
+        size="icon"
+        onClick={scrollToTop}
+        className={`fixed bottom-8 right-8 z-50 rounded-full shadow-glow bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 ${
+          showScrollTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
+        }`}
+        aria-label="Voltar ao topo"
+      >
+        <ArrowUp className="size-5" />
+      </Button>
     </div>
   );
 }

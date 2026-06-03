@@ -4,12 +4,24 @@ import { Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as dotenv from 'dotenv';
 import * as express from 'express';
+import * as path from 'path';
+import * as fs from 'fs';
 
 dotenv.config();
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
+
+  // Garante que a pasta de uploads existe
+  const uploadsPath = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsPath)) {
+    fs.mkdirSync(uploadsPath, { recursive: true });
+  }
+
   const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  // Serve arquivos estáticos da pasta uploads (avatares, capas de curso)
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Aumenta limite de payload para suportar uploads de mídia em base64 (até ~6MB)
   app.use(express.json({ limit: '8mb' }));

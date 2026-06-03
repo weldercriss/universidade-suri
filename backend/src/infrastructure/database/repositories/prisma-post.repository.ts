@@ -24,12 +24,13 @@ export class PrismaPostRepository implements IPostRepository {
   private mapRow(d: {
     id: string;
     authorId: string;
+    courseId?: string | null;
     title: string;
     body: string;
     createdAt: Date;
     mediaType?: string | null;
     mediaUrl?: string | null;
-    author: { name: string; tier: string; avatarUrl: string | null; groupType: string };
+    author: { name: string; tier: string; groupType: string };
     likes: { user: { name: string; email: string } }[];
     comments: { content: string; createdAt: Date; user: { name: string; email: string } }[];
     _count: { likes: number; comments: number };
@@ -42,12 +43,12 @@ export class PrismaPostRepository implements IPostRepository {
       d.createdAt,
       d.author.name,
       d.author.tier,
-      d.author.avatarUrl ?? undefined,
       d.author.groupType,
       d._count.likes,
       d._count.comments,
       d.mediaType ?? undefined,
       d.mediaUrl ?? undefined,
+      d.courseId ?? undefined,
     );
 
     (post as any).likedBy = d.likes.map((l) => ({ name: l.user.name, email: l.user.email }));
@@ -69,6 +70,7 @@ export class PrismaPostRepository implements IPostRepository {
       data: {
         id: post.id,
         authorId: post.authorId,
+        courseId: post.courseId,
         title: post.title,
         body: post.body,
         mediaType: post.mediaType,
@@ -96,6 +98,16 @@ export class PrismaPostRepository implements IPostRepository {
           groupType: groupType,
         },
       },
+      orderBy: { createdAt: 'desc' },
+      include: postInclude,
+    });
+
+    return data.map((d) => this.mapRow(d));
+  }
+
+  async listByCourse(courseId: string): Promise<Post[]> {
+    const data = await this.prisma.post.findMany({
+      where: { courseId },
       orderBy: { createdAt: 'desc' },
       include: postInclude,
     });

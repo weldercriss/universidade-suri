@@ -2,26 +2,33 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { GraduationCap, Eye, EyeOff, Sun, Moon, ArrowRight, Phone } from "lucide-react";
-const AMB_TIERS = [
-  "Embaixador Voice", "Embaixador Elite", "Embaixador Icon",
-  "VIP BLUE", "VIP CORE", "VIP PLUS"
-] as const;
-type AmbTier = typeof AMB_TIERS[number];
+import {
+  Eye,
+  EyeOff,
+  Sun,
+  Moon,
+  ArrowRight,
+  ArrowLeft,
+  Mail,
+  Lock,
+  User,
+  Phone,
+  CheckCircle2,
+} from "lucide-react";
 
 export function SignUpPage() {
   const { signup } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
+  const { settings } = usePlatformSettings();
   const navigate = useNavigate();
-  const [tier, setTier] = useState<AmbTier>("Embaixador Voice");
-  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", phone: "", business: "" });
   const [showPassword, setShowPassword] = useState(false);
+  const [newsletter, setNewsletter] = useState(false);
   const [loading, setLoading] = useState(false);
   const isLight = theme === "snow-blue";
+
+  const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
+    setForm((f) => ({ ...f, [key]: e.target.value }));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,154 +42,259 @@ export function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-background relative overflow-hidden">
-      <img src="/totvs.svg" className="watermark-bg" alt="" aria-hidden="true" />
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-background px-4 py-10">
+      {/* Aurora background */}
+      <div className="login-aurora" aria-hidden="true">
+        <span />
+      </div>
+      <div className="login-grid" aria-hidden="true" />
+      <img 
+        src={isLight 
+          ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : "/totvs-dark.svg") 
+          : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : "/totvs.svg")} 
+        className="watermark-bg" 
+        alt="" 
+        aria-hidden="true" 
+      />
 
-      {/* Brand panel */}
-      <div className="relative hidden lg:flex flex-col justify-between p-12 login-brand-gradient overflow-hidden border-r border-border">
-        <div className="absolute inset-0 pointer-events-none" style={{
-          backgroundImage: 'radial-gradient(circle at 80% 60%, hsl(180 85% 55% / 0.15), transparent 50%)'
-        }} />
-
-        <div className="relative z-10 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="size-10 rounded-xl bg-white/10 border border-white/20 grid place-items-center backdrop-blur-sm">
-              <GraduationCap className="size-5 text-foreground" />
-            </div>
-            <span className="font-display text-lg font-semibold text-foreground">Universidade Suri</span>
-          </div>
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={toggleTheme}
-            className="text-foreground/70 hover:text-foreground"
-          >
-            {isLight ? <Moon className="size-4" /> : <Sun className="size-4" />}
-          </Button>
-        </div>
-
-        <div className="relative z-10">
-          <h1 className="font-display text-4xl xl:text-5xl font-bold leading-tight text-foreground">
-            Educação e prática de verdade, ao seu alcance.
-          </h1>
-          <p className="text-foreground/70 mt-4 max-w-md text-lg">
-            Inscreva-se e aprenda com quem lidera o mercado.
-          </p>
-        </div>
-
-        <div className="relative z-10 text-foreground/40 text-xs">© Universidade Suri · Plataforma de educação</div>
+      {/* Back to home — top left */}
+      <div className="absolute top-5 left-5 z-20">
+        <Link
+          to="/"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-medium text-foreground/60 hover:text-foreground border border-border/60 bg-background/40 backdrop-blur-sm hover:bg-background/70 hover:border-border transition-all duration-200"
+        >
+          <ArrowLeft className="size-3" />
+          Início
+        </Link>
       </div>
 
-      {/* Form */}
-      <div className="flex items-center justify-center p-6 relative z-10 overflow-y-auto">
-        <Card className="w-full max-w-md p-8 bg-gradient-card border-border shadow-elegant fade-in-up">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-2 mb-6">
-            <div className="size-9 rounded-xl bg-gradient-hero shadow-glow grid place-items-center">
-              <GraduationCap className="size-5 text-snow" />
+      {/* Theme switcher */}
+      <div className="absolute top-5 right-5 z-20">
+        <div className="theme-pill" role="group" aria-label="Selecionar tema">
+          <button
+            type="button"
+            data-active={isLight}
+            onClick={() => setTheme("snow-blue")}
+            aria-label="Tema claro"
+            title="Snow Blue"
+          >
+            <Sun className="size-4" />
+          </button>
+          <button
+            type="button"
+            data-active={!isLight}
+            onClick={() => setTheme("night-blue")}
+            aria-label="Tema escuro"
+            title="Night Blue"
+          >
+            <Moon className="size-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Card horizontal */}
+      <div className="relative z-10 w-full max-w-3xl fade-in-up">
+        <div className="login-card p-8 sm:p-10">
+          {/* Horizontal layout: info left | form right */}
+          <div className="flex flex-col md:flex-row md:gap-10 lg:gap-14">
+
+            {/* ── LEFT: branding / copy ── */}
+            <div className="md:w-[40%] md:border-r md:border-border/40 md:pr-10 lg:pr-14 flex flex-col justify-center mb-8 md:mb-0">
+              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border/70 bg-background/40 text-[11px] uppercase tracking-[0.18em] text-foreground/60 mb-5 self-start">
+                <span className="size-1.5 rounded-full bg-gradient-brand" />
+                Crie sua conta
+              </div>
+              <h1 className="font-display text-3xl sm:text-[1.85rem] font-bold leading-tight mb-3">
+                Entre na{" "}
+                <span className="text-gradient">Universidade Suri</span>
+              </h1>
+              <p className="text-sm text-foreground/55 leading-relaxed mb-6">
+                Preencha seus dados e comece sua jornada de aprendizado.
+              </p>
+              <ul className="space-y-2.5">
+                {[
+                  "Trilhas personalizadas por perfil",
+                  "Certificados com validação oficial",
+                  "Experiência gamificada com XP",
+                ].map((item) => (
+                  <li key={item} className="flex items-center gap-2.5 text-xs text-foreground/60">
+                    <CheckCircle2 className="size-3.5 text-primary shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
-            <span className="font-display text-lg font-semibold text-gradient">Universidade Suri</span>
-          </div>
 
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-gradient">Criar conta</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Preencha seus dados para acessar a plataforma.
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground">cadastre-se com email</span>
-            <div className="flex-1 h-px bg-border" />
-          </div>
-
-          <form onSubmit={submit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nome</Label>
-              <Input
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Seu nome completo"
-                className="bg-muted/30 border-border h-11"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="voce@empresa.com"
-                className="bg-muted/30 border-border h-11"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Senha</Label>
-              <div className="relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  placeholder="••••••••"
-                  className="bg-muted/30 border-border pr-10 h-11"
+            {/* ── RIGHT: form ── */}
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="flex justify-center mb-8">
+                <img 
+                  src={isLight 
+                    ? (settings?.logo_expanded_light ? `http://localhost:3000${settings.logo_expanded_light}` : "/suri-blue.svg") 
+                    : (settings?.logo_expanded_dark ? `http://localhost:3000${settings.logo_expanded_dark}` : "/suri-white.svg")} 
+                  alt="SURI" 
+                  className="h-10 w-auto" 
                 />
+              </div>
+              <form onSubmit={submit} className="space-y-3.5">
+                {/* Nome */}
+                <div>
+                  <label htmlFor="signup-name" className="block text-xs font-medium text-foreground/70 mb-1.5">
+                    Nome completo
+                  </label>
+                  <div className="field-glass">
+                    <User className="field-icon size-4" />
+                    <input
+                      id="signup-name"
+                      type="text"
+                      required
+                      autoComplete="name"
+                      value={form.name}
+                      onChange={set("name")}
+                      placeholder="Seu nome completo"
+                    />
+                  </div>
+                </div>
+
+                {/* Empresa */}
+                <div>
+                  <label htmlFor="signup-business" className="block text-xs font-medium text-foreground/70 mb-1.5">
+                    Empresa
+                  </label>
+                  <div className="field-glass">
+                    <User className="field-icon size-4" />
+                    <input
+                      id="signup-business"
+                      type="text"
+                      required
+                      autoComplete="organization"
+                      value={form.business}
+                      onChange={set("business")}
+                      placeholder="Nome da sua empresa"
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label htmlFor="signup-email" className="block text-xs font-medium text-foreground/70 mb-1.5">
+                    E-mail corporativo
+                  </label>
+                  <div className="field-glass">
+                    <Mail className="field-icon size-4" />
+                    <input
+                      id="signup-email"
+                      type="email"
+                      required
+                      autoComplete="email"
+                      value={form.email}
+                      onChange={set("email")}
+                      placeholder="voce@empresa.com"
+                    />
+                  </div>
+                </div>
+
+                {/* Senha */}
+                <div>
+                  <label htmlFor="signup-pw" className="block text-xs font-medium text-foreground/70 mb-1.5">
+                    Senha
+                  </label>
+                  <div className="field-glass">
+                    <Lock className="field-icon size-4" />
+                    <input
+                      id="signup-pw"
+                      type={showPassword ? "text" : "password"}
+                      required
+                      autoComplete="new-password"
+                      value={form.password}
+                      onChange={set("password")}
+                      placeholder="••••••••"
+                    />
+                    <button
+                      type="button"
+                      className="field-action"
+                      onClick={() => setShowPassword((s) => !s)}
+                      aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                    >
+                      {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Telefone */}
+                <div>
+                  <label htmlFor="signup-phone" className="block text-xs font-medium text-foreground/70 mb-1.5">
+                    Telefone{" "}
+                    <span className="text-foreground/40">(WhatsApp)</span>
+                  </label>
+                  <div className="field-glass">
+                    <Phone className="field-icon size-4" />
+                    <input
+                      id="signup-phone"
+                      type="tel"
+                      autoComplete="tel"
+                      value={form.phone}
+                      onChange={set("phone")}
+                      placeholder="(11) 99123-4567"
+                    />
+                  </div>
+                </div>
+
+                {/* Newsletter */}
+                <label className="flex items-start gap-2.5 cursor-pointer pt-0.5">
+                  <span className="relative mt-0.5 shrink-0">
+                    <input
+                      type="checkbox"
+                      id="signup-newsletter"
+                      checked={newsletter}
+                      onChange={(e) => setNewsletter(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <span className="flex size-4 rounded border border-border/70 bg-background/40 peer-checked:bg-primary peer-checked:border-primary transition-colors items-center justify-center">
+                      {newsletter && (
+                        <svg viewBox="0 0 10 8" className="size-2.5 fill-none stroke-white stroke-[2] stroke-linecap-round stroke-linejoin-round">
+                          <polyline points="1 4 4 7 9 1" />
+                        </svg>
+                      )}
+                    </span>
+                  </span>
+                  <span className="text-[11px] text-foreground/55 leading-snug">
+                    Quero receber notícias, dicas e materiais da Universidade Suri.
+                  </span>
+                </label>
+
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground cursor-pointer focus:outline-none"
+                  type="submit"
+                  disabled={loading}
+                  className="btn-aurora w-full inline-flex items-center justify-center gap-2 group"
                 >
-                  {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {loading ? (
+                    <span className="inline-flex items-center gap-2">
+                      <span className="size-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                      Criando conta…
+                    </span>
+                  ) : (
+                    <>
+                      Criar conta
+                      <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" />
+                    </>
+                  )}
                 </button>
-              </div>
+
+                <p className="text-center text-sm text-foreground/60 pt-0.5">
+                  Já tem conta?{" "}
+                  <Link to="/login" className="font-medium text-foreground hover:text-gradient">
+                    Entrar
+                  </Link>
+                </p>
+              </form>
             </div>
-
-            <div className="space-y-2">
-              <Label>Telefone (de preferência WhatsApp)</Label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                <Input
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="(11) 99123-4567"
-                  className="bg-muted/30 border-border pl-10 h-11"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 pt-1">
-              <input type="checkbox" id="signup-newsletter" className="mt-1 accent-primary" />
-              <label htmlFor="signup-newsletter" className="text-xs text-muted-foreground leading-tight">
-                Eu gostaria de receber notícias, dicas e materiais promocionais.
-              </label>
-            </div>
-
-            <Button
-              type="submit"
-              className="w-full h-11 bg-gradient-hero text-snow border-border hover:shadow-glow font-semibold text-sm group"
-              disabled={loading}
-            >
-              {loading ? "Criando conta…" : (
-                <>Criar conta <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" /></>
-              )}
-            </Button>
-
-            <p className="text-[10px] text-muted-foreground text-center leading-tight mt-2">
-              Ao preencher o formulário, você aceita receber conteúdos de acordo com seus interesses.
-            </p>
-          </form>
-
-          <div className="mt-6 text-center text-sm text-muted-foreground">
-            Já tem conta?{" "}
-            <Link to="/login" className="text-foreground hover:underline font-medium hover:text-gradient">Entrar</Link>
           </div>
-        </Card>
+        </div>
+
+        <div className="mt-5 text-center text-[11px] text-foreground/45">
+          © Universidade Suri · Plataforma educacional da Suri
+        </div>
       </div>
     </div>
   );

@@ -4,6 +4,7 @@ export interface IPostRepository {
   create(post: Post): Promise<Post>;
   listAllByGroup(groupType: string): Promise<Post[]>;
   listAll(): Promise<Post[]>;
+  listByCourse(courseId: string): Promise<Post[]>;
   likePost(postId: string, userId: string): Promise<void>;
   commentPost(postId: string, userId: string, content: string): Promise<void>;
 }

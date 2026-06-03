@@ -5,7 +5,7 @@ export interface ICourseRepository {
   create(course: Course): Promise<Course>;
   update(course: Course): Promise<Course>;
   delete(id: string): Promise<boolean>;
-  listAllPublished(groupType: 'vip' | 'embaixador'): Promise<Course[]>;
+  listAllPublished(groupType: 'vip' | 'embaixador' | 'all'): Promise<Course[]>;
   listAll(): Promise<Course[]>;
 
   // Module/Lesson operations

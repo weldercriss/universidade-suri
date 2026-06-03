@@ -47,8 +47,8 @@ export function ProjectsPage() {
       ) : (
         <div className="grid md:grid-cols-2 gap-4 stagger-children">
           {list.map((p) => {
-            const authorAvatar = p.authorAvatar || p.author?.avatar || p.authorName?.substring(0, 2).toUpperCase() || p.author?.name?.substring(0, 2).toUpperCase() || "👤";
             const authorName = p.authorName || p.author?.name || "Usuário";
+            const authorInitials = authorName.substring(0, 2).toUpperCase();
             const authorTier = p.authorTier || p.author?.tier || "Membro";
             const dateStr = p.createdAt ? new Date(p.createdAt).toLocaleDateString() : "";
             
@@ -57,11 +57,7 @@ export function ProjectsPage() {
                 <div>
                   <div className="flex items-center gap-3">
                     <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden">
-                      {authorAvatar.includes("<svg") ? (
-                        <div className="w-full h-full" dangerouslySetInnerHTML={{ __html: authorAvatar }} />
-                      ) : (
-                        authorAvatar
-                      )}
+                        {authorInitials}
                     </div>
                     <div className="flex-1">
                       <div className="text-sm font-medium">{authorName}</div>

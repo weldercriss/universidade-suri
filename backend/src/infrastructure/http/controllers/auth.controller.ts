@@ -1,9 +1,14 @@
-import { Controller, Post, Body, Get, Put, Patch, Param, Query, UseGuards, Req, Inject, UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Put, Patch, Param, Query, UseGuards, Req, Inject, UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException, UseInterceptors, UploadedFile } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { IUserRepository } from '../../../domain/repositories/user.repository.interface';
 import { User } from '../../../domain/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import * as fs from 'fs';
+import { PrismaService } from '../../database/prisma.service';
 
 @Controller('auth')
 export class AuthController {
@@ -11,6 +16,7 @@ export class AuthController {
     @Inject(IUserRepository)
     private readonly userRepository: IUserRepository,
     private readonly jwtService: JwtService,
+    private readonly prisma: PrismaService,
   ) {}
 
   @Post('login')
@@ -37,7 +43,6 @@ export class AuthController {
         id: user.id,
         name: user.name,
         email: user.email,
-        avatar: user.avatarUrl,
         group: user.isAdmin ? 'admin' : user.groupType,
         tier: user.tier,
         xp: user.xp,
@@ -51,7 +56,7 @@ export class AuthController {
 
   @Post('signup')
   async signup(@Body() body: any) {
-    const { name, email, password, group, tier } = body;
+    const { name, email, password, group, tier, business, phone } = body;
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
       throw new BadRequestException('E-mail já cadastrado');
@@ -69,7 +74,6 @@ export class AuthController {
       name,
       email,
       passwordHash,
-      name.substring(0, 2).toUpperCase(),
       resolvedGroup,
       resolvedTier,
       0,
@@ -78,6 +82,8 @@ export class AuthController {
       new Date(),
       true,
       null,
+      business || '',
+      phone || null,
     );
 
     const saved = await this.userRepository.create(newUser);
@@ -89,7 +95,6 @@ export class AuthController {
         id: saved.id,
         name: saved.name,
         email: saved.email,
-        avatar: saved.avatarUrl,
         group: saved.isAdmin ? 'admin' : saved.groupType,
         tier: saved.tier,
         xp: saved.xp,
@@ -120,7 +125,6 @@ export class AuthController {
         name || 'Usuário Google',
         email,
         passwordHash,
-        (name || 'G').substring(0, 2).toUpperCase(),
         'embaixador',
         'Embaixador Voice',
         0,
@@ -128,6 +132,8 @@ export class AuthController {
         false,
         new Date(),
         true,
+        null,
+        '',
         null,
       );
       user = await this.userRepository.create(newUser);
@@ -144,7 +150,6 @@ export class AuthController {
         id: user.id,
         name: user.name,
         email: user.email,
-        avatar: user.avatarUrl,
         group: user.isAdmin ? 'admin' : user.groupType,
         tier: user.tier,
         xp: user.xp,
@@ -160,11 +165,13 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   async getProfile(@Req() req: any) {
     const user: User = req.user;
+    const progressCount = await this.prisma.moduleProgress.count({
+      where: { enrollment: { userId: user.id }, isCompleted: true },
+    });
     return {
       id: user.id,
       name: user.name,
       email: user.email,
-      avatar: user.avatarUrl,
       group: user.isAdmin ? 'admin' : user.groupType,
       tier: user.tier,
       xp: user.xp,
@@ -172,6 +179,8 @@ export class AuthController {
       isAdmin: user.isAdmin,
       isActive: user.isActive,
       profileImage: user.profileImage,
+      business: user.business,
+      isFirstLogin: progressCount === 0,
     };
   }
 
@@ -180,7 +189,6 @@ export class AuthController {
   async updateProfile(@Req() req: any, @Body() body: any) {
     const user: User = req.user;
     if (body.name !== undefined) user.name = body.name;
-    if (body.avatar !== undefined) user.avatarUrl = body.avatar;
     if (body.profileImage !== undefined) user.profileImage = body.profileImage;
     if (body.level !== undefined && user.isAdmin) user.level = body.level; // admin can update level
     
@@ -189,7 +197,6 @@ export class AuthController {
       id: updated.id,
       name: updated.name,
       email: updated.email,
-      avatar: updated.avatarUrl,
       group: updated.isAdmin ? 'admin' : updated.groupType,
       tier: updated.tier,
       xp: updated.xp,
@@ -212,7 +219,6 @@ export class AuthController {
       id: u.id,
       name: u.name,
       email: u.email,
-      avatar: u.avatarUrl,
       group: u.groupType,
       tier: u.tier,
       xp: u.xp,
@@ -220,6 +226,7 @@ export class AuthController {
       isAdmin: u.isAdmin,
       isActive: u.isActive,
       profileImage: u.profileImage,
+      business: u.business,
     }));
   }
 
@@ -240,13 +247,13 @@ export class AuthController {
     if (body.xp !== undefined) target.xp = body.xp;
     if (body.level !== undefined) target.level = body.level;
     if (body.isActive !== undefined) target.isActive = body.isActive;
+    if (body.business !== undefined) target.business = body.business;
 
     const updated = await this.userRepository.update(target);
     return {
       id: updated.id,
       name: updated.name,
       email: updated.email,
-      avatar: updated.avatarUrl,
       group: updated.groupType,
       tier: updated.tier,
       xp: updated.xp,
@@ -254,6 +261,7 @@ export class AuthController {
       isAdmin: updated.isAdmin,
       isActive: updated.isActive,
       profileImage: updated.profileImage,
+      business: updated.business,
     };
   }
 
@@ -276,6 +284,46 @@ export class AuthController {
     };
   }
 
+  @Post('me/avatar')
+  @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('avatar', {
+    storage: diskStorage({
+      destination: (req, file, cb) => {
+        const uploadPath = path.join(process.cwd(), 'uploads', 'avatars');
+        if (!fs.existsSync(uploadPath)) {
+          fs.mkdirSync(uploadPath, { recursive: true });
+        }
+        cb(null, uploadPath);
+      },
+      filename: (req: any, file, cb) => {
+        const userId = req.user?.id || 'unknown';
+        const ext = path.extname(file.originalname).toLowerCase();
+        cb(null, `avatar_${userId}${ext}`);
+      },
+    }),
+    fileFilter: (req, file, cb) => {
+      const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (allowed.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new BadRequestException('Formato de imagem não suportado. Use JPG, PNG, WEBP ou GIF.'), false);
+      }
+    },
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  }))
+  async uploadAvatar(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Nenhum arquivo enviado');
+    const user: User = req.user;
+    const imageUrl = `/uploads/avatars/${file.filename}`;
+    user.profileImage = imageUrl;
+    const updated = await this.userRepository.update(user);
+    return {
+      profileImage: updated.profileImage,
+      message: 'Avatar atualizado com sucesso',
+    };
+  }
+
   @Get('leaderboard')
   @UseGuards(AuthGuard('jwt'))
   async getLeaderboard(@Req() req: any, @Query('group') group?: string) {
@@ -285,7 +333,6 @@ export class AuthController {
       return (await this.userRepository.listLeaderboard(group || undefined)).map(u => ({
         id: u.id,
         name: u.name,
-        avatar: u.avatarUrl,
         group: u.groupType,
         tier: u.tier,
         xp: u.xp,
@@ -297,7 +344,6 @@ export class AuthController {
     return (await this.userRepository.listLeaderboard(user.groupType)).map(u => ({
       id: u.id,
       name: u.name,
-      avatar: u.avatarUrl,
       group: u.groupType,
       tier: u.tier,
       xp: u.xp,

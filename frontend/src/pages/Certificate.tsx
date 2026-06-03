@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { apiRequest } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { usePlatformSettings } from "@/lib/settings";
 import { ShieldCheck, Award, ArrowLeft, Check, Calendar, Clock, Loader2, Download, Share2 } from "lucide-react";
 
 interface CertValidation {
@@ -18,9 +19,11 @@ interface CertValidation {
 
 export function CertificatePage() {
   const { codigo } = useParams<{ codigo: string }>();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [cert, setCert] = useState<CertValidation | null>(null);
   const [error, setError] = useState(false);
+  const { settings } = usePlatformSettings();
 
   useEffect(() => {
     if (!codigo) {
@@ -64,13 +67,21 @@ export function CertificatePage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 relative overflow-hidden">
-      <img src="/totvs.svg" className="watermark-bg" alt="" aria-hidden="true" />
+      <img 
+        src={settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : "/totvs.svg"} 
+        className="watermark-bg" 
+        alt="" 
+        aria-hidden="true" 
+      />
 
       <div className="w-full max-w-2xl relative z-10 space-y-6">
         <div className="flex justify-between items-center px-2">
-          <Link to="/" className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-smooth">
-            <ArrowLeft className="size-4" /> Voltar ao Portal
-          </Link>
+          <button
+            onClick={() => navigate(-1)}
+            className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-1 transition-smooth"
+          >
+            <ArrowLeft className="size-4" /> Voltar
+          </button>
           <span className="text-xs text-muted-foreground">Validador de Certificados</span>
         </div>
 

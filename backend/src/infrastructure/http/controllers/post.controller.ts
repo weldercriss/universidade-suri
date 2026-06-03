@@ -1,8 +1,9 @@
-import { Controller, Get, Post as PostMethod, Param, Body, UseGuards, Inject, Req, ForbiddenException } from '@nestjs/common';
+import { Controller, Get, Post as PostMethod, Param, Body, UseGuards, Inject, Req, ForbiddenException, Query } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { IPostRepository } from '../../../domain/repositories/post.repository.interface';
 import { Post } from '../../../domain/entities/post.entity';
 import { User } from '../../../domain/entities/user.entity';
+import { PrismaService } from '../../database/prisma.service';
 
 @Controller('posts')
 @UseGuards(AuthGuard('jwt'))
@@ -10,12 +11,33 @@ export class PostController {
   constructor(
     @Inject(IPostRepository)
     private readonly postRepository: IPostRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
-  @Get()
-  async listPosts(@Req() req: any) {
+  @Get('mine')
+  async getMyPosts(@Req() req: any) {
     const user: User = req.user;
-    // Admin sees ALL posts across all groups with interaction details
+    const posts = await this.prisma.post.findMany({
+      where: { authorId: user.id },
+      orderBy: { createdAt: 'desc' },
+      include: { course: { select: { title: true } } },
+    });
+    return posts.map((p) => ({
+      id: p.id,
+      title: p.title,
+      body: p.body,
+      courseId: p.courseId,
+      courseTitle: (p as any).course?.title ?? null,
+      createdAt: p.createdAt,
+    }));
+  }
+
+  @Get()
+  async listPosts(@Req() req: any, @Query('courseId') courseId?: string) {
+    const user: User = req.user;
+    if (courseId) {
+      return this.postRepository.listByCourse(courseId);
+    }
     if (user.isAdmin) {
       return this.postRepository.listAll();
     }
@@ -39,9 +61,9 @@ export class PostController {
       undefined,
       undefined,
       undefined,
-      undefined,
       body.media?.type,
       body.media?.url,
+      body.courseId,
     );
     return this.postRepository.create(post);
   }

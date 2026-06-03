@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, API_BASE_URL } from "@/lib/api";
 import { type Course } from "@/types";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -55,7 +55,7 @@ export function CoursesListPage() {
             id: c.id,
             title: c.title,
             description: c.description || "",
-            cover: "from-marine to-deep",
+            cover: c.coverUrl || "from-marine to-deep",
             group: c.targetGroup || c.target_group || "all",
             progress: progressPct,
             lessons: (c.lessons || []).map((l: any) => ({
@@ -215,8 +215,13 @@ export function CoursesListPage() {
                 <Card className="group bg-gradient-card border-border p-5 hover:border-primary/50 hover:shadow-glow transition-all duration-200 shadow-elegant">
                   <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
                     <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 min-w-0">
-                      <div className={`w-16 h-16 rounded-lg shrink-0 flex items-center justify-center bg-gradient-to-br ${c.cover} relative overflow-hidden`}>
-                        <PlayCircle className="size-8 text-white/80 group-hover:scale-110 transition-transform" />
+                      <div className={`w-16 h-16 rounded-lg shrink-0 flex items-center justify-center bg-gradient-to-br from-marine to-deep relative overflow-hidden`}>
+                        {c.cover && (c.cover.startsWith("http") || c.cover.startsWith("/")) ? (
+                          <img src={c.cover.startsWith("http") ? c.cover : `${API_BASE_URL}${c.cover}`} alt={c.title} className="absolute inset-0 w-full h-full object-cover" />
+                        ) : (
+                          <div className={`absolute inset-0 bg-gradient-to-br ${c.cover} opacity-80`} />
+                        )}
+                        <PlayCircle className="size-8 text-white/80 group-hover:scale-110 transition-transform relative z-10" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors truncate">{c.title}</h3>

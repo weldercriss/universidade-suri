@@ -4,24 +4,28 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const SQL = `
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 CREATE TABLE IF NOT EXISTS user_roles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   role_name VARCHAR(100) UNIQUE NOT NULL
 );
 
-INSERT INTO user_roles (role_name) VALUES ('admin'), ('student') ON CONFLICT DO NOTHING;
+INSERT INTO user_roles (id, role_name) VALUES (gen_random_uuid(), 'admin'), (gen_random_uuid(), 'student') ON CONFLICT (role_name) DO NOTHING;
 
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
+  business VARCHAR(255),
   password_hash VARCHAR(255) NOT NULL,
-  avatar_url VARCHAR(500),
   group_type VARCHAR(50) DEFAULT 'embaixador' CHECK (group_type IN ('vip', 'embaixador')),
   tier VARCHAR(100) DEFAULT 'Embaixador Voice',
   xp INTEGER DEFAULT 0,
   level INTEGER DEFAULT 1,
   is_admin BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  profile_image VARCHAR(500),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -30,6 +34,7 @@ CREATE TABLE IF NOT EXISTS courses (
   title VARCHAR(255) NOT NULL,
   description TEXT,
   workload_hours INTEGER DEFAULT 0,
+  xp_reward INTEGER DEFAULT 50,
   cover_url VARCHAR(500),
   target_group VARCHAR(50) DEFAULT 'all' CHECK (target_group IN ('all', 'vip', 'embaixador')),
   is_published BOOLEAN DEFAULT false,
@@ -85,6 +90,7 @@ CREATE TABLE IF NOT EXISTS posts (
 
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS media_type VARCHAR(50);
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS media_url TEXT;
+ALTER TABLE posts ADD COLUMN IF NOT EXISTS course_id UUID REFERENCES courses(id) ON DELETE CASCADE;
 
 CREATE TABLE IF NOT EXISTS post_likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -99,6 +105,27 @@ CREATE TABLE IF NOT EXISTS post_comments (
   post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS roadmaps (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  is_active BOOLEAN DEFAULT true,
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS roadmap_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  roadmap_id UUID NOT NULL REFERENCES roadmaps(id) ON DELETE CASCADE,
+  type VARCHAR(50) NOT NULL CHECK (type IN ('video', 'document', 'reference')),
+  title VARCHAR(255) NOT NULL,
+  url VARCHAR(1000) NOT NULL,
+  description TEXT,
+  sort_order INTEGER DEFAULT 0,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 `;
