@@ -7,7 +7,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
-import { SupabaseStorageService } from '../storage/supabase-storage.service';
+import { SupabaseStorageService } from '../../storage/supabase-storage.service';
 
 @ApiTags('courses')
 @Controller('courses')

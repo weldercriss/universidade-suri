@@ -6,7 +6,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { PrismaService } from '../../database/prisma.service';
 import { PhotoVisibilityDto } from '../dtos/auth.dto';
-import { SupabaseStorageService } from '../storage/supabase-storage.service';
+import { SupabaseStorageService } from '../../storage/supabase-storage.service';
 
 @Controller('settings')
 export class SettingsController {

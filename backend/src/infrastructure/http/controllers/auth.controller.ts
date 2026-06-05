@@ -13,7 +13,7 @@ import * as fs from 'fs';
 import * as nodeCrypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { LoginDto, SignupDto } from '../dtos/auth.dto';
-import { SupabaseStorageService } from '../storage/supabase-storage.service';
+import { SupabaseStorageService } from '../../storage/supabase-storage.service';
 
 @ApiTags('auth')
 @Controller('auth')
