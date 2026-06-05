@@ -22,14 +22,21 @@ async function bootstrap() {
 
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-  const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://localhost:5175')
+  const envOrigins = (process.env.ALLOWED_ORIGINS || '')
     .split(',')
     .map(o => o.trim())
     .filter(Boolean);
 
+  const allowedOrigins = [
+    'http://localhost:5173',
+    'http://localhost:5175',
+    'https://unisuri.vercel.app',
+    ...envOrigins
+  ];
+
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
         callback(null, true);
       } else {
         callback(new Error(`CORS: origem ${origin} não permitida`));
