@@ -244,7 +244,7 @@ export function AdminCoursesPage() {
                   <p className="text-xs text-muted-foreground">JPG, PNG ou WebP. Recomendado 16:9.</p>
                 </div>
               </div>
-              <input ref={newCoverInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
+              <input ref={newCoverInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" className="hidden" onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setNewCourseCoverFile(file);
@@ -482,7 +482,7 @@ export function AdminCoursesPage() {
                   <p className="text-xs text-muted-foreground">JPG, PNG ou WebP. Recomendado 16:9.</p>
                 </div>
               </div>
-              <input ref={editCoverInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
+              <input ref={editCoverInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/svg+xml" className="hidden" onChange={(e) => {
                 const file = e.target.files?.[0];
                 if (file) {
                   setEditCourseCoverFile(file);
@@ -567,7 +567,7 @@ export function AdminCoursesPage() {
         ref={coverInputRef}
         type="file"
         className="hidden"
-        accept="image/*"
+        accept="image/jpeg,image/png,image/webp,image/svg+xml"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file && coverTargetId) handleCoverUpload(coverTargetId, file);

@@ -373,7 +373,7 @@ export function CoursePlayerPage() {
     }
     const input = document.createElement("input");
     input.type = "file";
-    if (type === "image") input.accept = "image/*";
+    if (type === "image") input.accept = "image/jpeg,image/png,image/webp,image/svg+xml";
     else if (type === "video") input.accept = "video/*";
     else if (type === "document") input.accept = ".pdf,.doc,.docx,.txt";
     input.onchange = (e: Event) => {

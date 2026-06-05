@@ -10,6 +10,10 @@ import { API_BASE_URL } from "@/lib/api";
 import { ChangelogModal, useChangelogBadge } from "@/components/ChangelogModal";
 import totvsLight from "@/assets/icons/totvs-dark.svg";
 import totvsDark from "@/assets/icons/totvs.svg";
+import suriBlue from "@/assets/icons/suri-blue.svg";
+import suriWhite from "@/assets/icons/suri-white.svg";
+import fotoPh from "@/assets/img/foto-ph.png";
+import noiseBg from "@/assets/noise.png";
 
 // Gradientes de fallback usados quando o curso não possui capa cadastrada
 const GRADIENT_COVERS = [
@@ -72,7 +76,7 @@ export function LandingPage() {
             <div className="flex items-center">
               <button onClick={scrollToTop} className="cursor-pointer">
                 <img
-                  src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : "/src/assets/icons/suri-blue.svg") : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : "/src/assets/icons/suri-white.svg")}
+                  src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : suriBlue) : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : suriWhite)}
                   alt="Universidade Suri"
                   className="h-8 w-auto"
                 />
@@ -396,22 +400,22 @@ export function LandingPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
               {[
                 {
-                  foto: "/src/assets/img/foto-ph.png",
+                  foto: fotoPh,
                   nome: "Felipe Godoy",
                   titulo: "CEO & Co-Founder da Suri",
                 },
                 {
-                  foto: "/src/assets/img/foto-ph.png",
+                  foto: fotoPh,
                   nome: "Instrutor 2",
                   titulo: "Especialista em IA",
                 },
                 {
-                  foto: "/src/assets/img/foto-ph.png",
+                  foto: fotoPh,
                   nome: "Instrutor 3",
                   titulo: "Head de Vendas",
                 },
                 {
-                  foto: "/src/assets/img/foto-ph.png",
+                  foto: fotoPh,
                   nome: "Instrutor 4",
                   titulo: "Especialista em Atendimento",
                 },
@@ -441,7 +445,7 @@ export function LandingPage() {
         <section className="py-24 bg-gradient-to-b from-transparent to-primary/5 border-t border-border">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className={`max-w-4xl mx-auto rounded-3xl p-8 md:p-16 text-center shadow-glow overflow-hidden relative ${isLight ? "bg-deep" : "bg-snow"}`}>
-              <div className="absolute inset-0 bg-[url('/src/assets/noise.png')] opacity-10 mix-blend-overlay"></div>
+              <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: `url(${noiseBg})` }}></div>
               <h2 className={`text-3xl md:text-5xl font-bold mb-6 relative z-10 ${isLight ? "text-snow" : "text-deep"}`}>Pronto para dar o próximo passo?</h2>
               <p className={`text-lg md:text-xl mb-10 max-w-2xl mx-auto relative z-10 ${isLight ? "text-snow/80" : "text-deep/80"}`}>
                 Junte-se a milhares de profissionais que já transformaram suas carreiras com a Universidade Suri.
@@ -461,7 +465,7 @@ export function LandingPage() {
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center mb-4">
                 <img
-                  src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : "/src/assets/icons/suri-blue.svg") : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : "/src/assets/icons/suri-white.svg")}
+                  src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : suriBlue) : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : suriWhite)}
                   alt="Universidade Suri"
                   className="h-7 w-auto opacity-80"
                 />

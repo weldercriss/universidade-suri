@@ -90,7 +90,7 @@ export function CommunityPage() {
 
     switch (type) {
       case "image":
-        input.accept = "image/*";
+        input.accept = "image/jpeg,image/png,image/webp,image/svg+xml";
         break;
       case "video":
         input.accept = "video/*";
