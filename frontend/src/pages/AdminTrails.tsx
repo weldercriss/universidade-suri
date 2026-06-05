@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetClose } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Loader2, Plus, Trash2, Edit, Route, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 
@@ -20,6 +21,13 @@ export function AdminTrailsPage() {
   const [trailForm, setTrailForm] = useState({ name: "", description: "", targetGroup: "all" });
   const [openAddCourseToTrail, setOpenAddCourseToTrail] = useState<string | null>(null);
   const [selectedCourseToAdd, setSelectedCourseToAdd] = useState("");
+
+  // Confirm dialog state
+  const [confirmState, setConfirmState] = useState<{ open: boolean; title: string; onConfirm: () => void; description?: string }>({
+    open: false,
+    title: "",
+    onConfirm: () => {},
+  });
 
   const fetchCourses = () => {
     apiRequest<any[]>("/courses")
@@ -67,15 +75,21 @@ export function AdminTrailsPage() {
     }
   };
 
-  const handleDeleteTrail = async (id: string) => {
-    if (!confirm("Tem certeza que deseja excluir esta trilha?")) return;
-    try {
-      await apiRequest(`/trails/${id}`, { method: "DELETE" });
-      toast.success("Trilha excluída!");
-      fetchTrails();
-    } catch {
-      toast.error("Erro ao excluir trilha");
-    }
+  const handleDeleteTrail = (id: string) => {
+    setConfirmState({
+      open: true,
+      title: "Excluir trilha?",
+      description: "Tem certeza que deseja excluir esta trilha? Os cursos nela não serão excluídos.",
+      onConfirm: async () => {
+        try {
+          await apiRequest(`/trails/${id}`, { method: "DELETE" });
+          toast.success("Trilha excluída!");
+          fetchTrails();
+        } catch {
+          toast.error("Erro ao excluir trilha");
+        }
+      }
+    });
   };
 
   const handleAddCourseToTrail = async (trailId: string) => {
@@ -287,6 +301,14 @@ export function AdminTrailsPage() {
           </form>
         </SheetContent>
       </Sheet>
+
+      <ConfirmDialog
+        open={confirmState.open}
+        onOpenChange={(open) => setConfirmState({ ...confirmState, open })}
+        title={confirmState.title}
+        description={confirmState.description}
+        onConfirm={confirmState.onConfirm}
+      />
     </AppShell>
   );
 }

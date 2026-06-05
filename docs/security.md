@@ -1,67 +1,120 @@
 # Segurança — Universidade Suri
 
-> Este documento consolida as práticas de segurança implementadas na plataforma.
+> Práticas de segurança implementadas na plataforma.
 
 ---
 
-## 1. Proteção de Autenticação
+## 1. Autenticação
 
-### Tokens JWT
-- Adotamos a estratégia dupla: **Access Token** de curta duração (15 min) e **Refresh Token** (7 dias).
-- O access token não é armazenado em localStorage/sessionStorage para mitigar ataques XSS (Cross-Site Scripting). Ele fica apenas na memória da aplicação React (estado).
-- O refresh token é gerenciado via cookie `httpOnly`, inacessível para scripts frontend.
-- *Referência: [ADR 001 - Estratégia de Armazenamento JWT](adr/001-jwt-storage-strategy.md)*
+O sistema possui **dois mecanismos de autenticação** independentes, gerenciados por estratégias Passport distintas:
+
+### 1a. Tokens JWT (usuários da plataforma)
+- Gerado via `JwtService` (Passport.js) com expiração de **7 dias**.
+- Armazenado no frontend em `localStorage["suri_token"]` e dados do usuário em `localStorage["nimbus_user"]`.
+- Enviado em todas as requisições autenticadas como `Authorization: Bearer <JWT>`.
+- O backend valida via `JwtStrategy` (`strategies/jwt.strategy.ts`) — estratégia Passport que extrai e verifica o token.
+- Aplicado em todas as rotas com `@UseGuards(AuthGuard('jwt'))`.
+
+### 1b. Tokens de API (sistemas externos)
+- Usados exclusivamente por sistemas externos para acessar `/external/*`.
+- Formato: `suri_<64 hex chars>` — gerado com `crypto.randomBytes(32)`.
+- **Nunca armazenados em texto claro**: apenas o hash SHA256 (`tokenHash`) é persistido na tabela `ApiToken`.
+- O token em claro é retornado **somente no momento da criação** e não pode ser recuperado depois.
+- Validação feita pela `ApiTokenStrategy` (`strategies/api-token.strategy.ts`, `passport-custom`):
+  1. Extrai o valor do header `Authorization: Bearer <token>`
+  2. Se o valor tiver 3 pontos → é JWT → rejeita com 401 (guard correto é outro)
+  3. Calcula `SHA256(token)` e consulta `ApiToken.findUnique({ where: { tokenHash } })`
+  4. Verifica `isActive` e `expiresAt`
+  5. Atualiza `lastUsedAt` a cada uso (auditoria)
+- Gerenciados via `POST/GET/PATCH/DELETE /admin/api-tokens` (requer JWT + `isAdmin`).
 
 ### Senhas
-- Senhas são submetidas a hashing utilizando **bcrypt** com "cost factor" configurável via variável `BCRYPT_ROUNDS` (padrão 12).
-- Validadores fortes são aplicados na criação (mínimo de caracteres, exigência de letras/números).
+- Hashing com **bcrypt** usando `genSalt(10)` (10 rounds).
+- Variável `BCRYPT_ROUNDS=12` no `.env` existe mas o código usa 10 — futuro ajuste pode alinhar.
+- Reset de senha via token hexadecimal com validade de 24 horas armazenado em `Profile.resetPasswordToken`.
 
 ---
 
-## 2. Proteção de Rotas e API (NestJS)
+## 2. Proteção de Rotas e API
 
-### CORS (Cross-Origin Resource Sharing)
-- Em produção, o CORS deve ser estritamente configurado para aceitar requisições apenas do domínio da aplicação frontend (definido em `ALLOWED_ORIGINS`).
+### CORS
+- Configurado em `backend/src/main.ts` com lista dinâmica via `ALLOWED_ORIGINS` (env var).
+- Formato: `ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5175,https://app.seudominio.com.br`
+- Requisições de origens não listadas recebem erro de CORS.
+- Em desenvolvimento: fallback para `localhost:5173` e `localhost:5175`.
+
+### Helmet (HTTP Security Headers)
+- Implementado em `backend/src/main.ts` via `helmet()`.
+- Headers ativos: `X-Frame-Options`, `X-Content-Type-Options`, `Strict-Transport-Security`, `X-DNS-Prefetch-Control`.
+- **CSP (Content Security Policy)** configurada:
+  - `frameSrc`: permite `youtube.com` e `player.vimeo.com` (iframes de vídeo)
+  - `imgSrc`: permite `self`, `data:`, `blob:`, `https:` (uploads e avatares)
+  - `connectSrc`: permite apenas origens do `ALLOWED_ORIGINS`
+- `crossOriginEmbedderPolicy: false` — necessário para iframes do YouTube no CoursePlayer.
 
 ### Rate Limiting
-- (Pendente implementação final no código) O NestJS `ThrottlerModule` deve ser usado para limitar requisições (ex: max 100 requisições a cada 15 minutos) e evitar ataques de força bruta.
+- Implementado via `@nestjs/throttler` registrado no `AppModule`.
+- **Global**: 100 requisições por 60 segundos por IP.
+- **Endpoints de auth** (`/auth/login` e `/auth/signup`): 10 requisições por 60 segundos por IP (proteção contra força bruta).
 
-### Helmet
-- (Pendente implementação final no código) O middleware `helmet` deve ser usado no NestJS para definir cabeçalhos HTTP seguros (CSP, X-Frame-Options, HSTS).
+### Validação de Input (class-validator)
+- `ValidationPipe({ whitelist: true, transform: true })` aplicado globalmente em `main.ts`.
+- Campos não declarados nos DTOs são ignorados silenciosamente (`whitelist: true`).
+- DTOs definidos em `backend/src/infrastructure/http/dtos/auth.dto.ts`:
+  - `LoginDto`: valida email e senha mínima de 6 chars
+  - `SignupDto`: valida nome, email, senha e campos opcionais
+  - `UpdateProfileDto`: valida campos de perfil
+  - `PhotoVisibilityDto`: valida boolean de visibilidade de fotos
 
-### Autorização e IDOR (Insecure Direct Object Reference)
-- O backend utiliza decorators `@CurrentUser()` extraídos do payload do JWT validado.
-- Repositórios e controllers verificam propriedade antes de modificar ou retornar dados sensíveis (ex: verificar se o usuário é o autor do post antes de permitir deletar).
+### Autorização de Admin
+- Verificação manual em cada endpoint sensível:
+  ```typescript
+  if (!req.user.isAdmin) throw new ForbiddenException('...');
+  ```
+- Não há RBAC automatizado — cada controller verifica `req.user.isAdmin` explicitamente.
+
+### Separação de Superfície de Ataque
+
+| Superfície | Autenticação | Endpoints |
+|---|---|---|
+| Usuários finais | JWT 7 dias | `/auth/*`, `/courses/*`, `/enrollments/*`, etc. |
+| Administradores | JWT 7 dias + `isAdmin=true` | `/admin/*`, `/settings/*` (write) |
+| Sistemas externos | Token SHA256 | `/external/*` |
+
+Os tokens de API não podem acessar endpoints JWT e vice-versa — as estratégias Passport são exclusivas por rota.
 
 ---
 
-## 3. Segurança no Banco de Dados
+## 3. Banco de Dados
 
-### ORM e SQL Injection
-- O uso do Prisma ORM como camada de abstração garante que queries sejam parametrizadas automaticamente, protegendo contra Injeção de SQL tradicional.
+### SQL Injection
+- Prisma ORM usa queries parametrizadas automaticamente — SQL injection prevenido por padrão.
+- Nenhuma query raw (sem `$queryRaw`) é utilizada.
 
 ### Migrations
-- Em produção, modificações no schema ocorrem exclusivamente via `npx prisma migrate deploy` que aplica um histórico seguro e versionado.
+- Desenvolvimento: `npx prisma migrate dev`
+- Produção: `npx prisma migrate deploy` (nunca `db push` em produção)
 
 ---
 
-## 4. Segurança na Infraestrutura
+## 4. Upload de Arquivos
 
-### Nginx Reverse Proxy
-O Nginx na borda adiciona camadas de proteção adicionais (configuradas em `nginx/nginx.conf`):
-- Ocultação da assinatura do servidor.
-- `Strict-Transport-Security` (HSTS) forçando conexões HTTPS.
-- `X-Frame-Options DENY` contra Clickjacking.
-- `X-Content-Type-Options nosniff` contra ataques MIME sniffing.
-- `Permissions-Policy` restringindo uso de hardware não solicitado (câmera, microfone).
-
-### Imagens Docker
-- Multi-stage builds geram imagens purgeadas de dependências de desenvolvimento.
-- O backend roda via usuário `appuser` (UID 1001), e **não** como `root`, seguindo o princípio do menor privilégio em containers.
+- **Extensões permitidas**: `.jpg`, `.jpeg`, `.png`, `.webp`, `.gif`, `.svg`
+- **Limite**: 5MB por arquivo
+- **Armazenamento**: `/uploads/avatars/` e `/uploads/logos/` com nomes baseados em UUID
+- **Validação**: via `fileFilter` do Multer no backend — arquivos inválidos são rejeitados antes de chegar ao disco
 
 ---
 
-## 5. Auditoria e Dependências
+## 5. Infraestrutura Docker
 
-- As dependências devem ser periodicamente verificadas por vulnerabilidades usando `npm audit`.
-- Em repositórios gerenciados pelo GitHub, o **Dependabot** reporta vulnerabilidades conhecidas em pacotes da stack.
+- Multi-stage builds geram imagens sem dependências de desenvolvimento.
+- Backend roda via usuário não-root no container.
+- PostgreSQL exposto apenas internamente na rede Docker (porta 5435 apenas para acesso local de dev).
+
+---
+
+## 6. Auditoria
+
+- Verificar vulnerabilidades periodicamente: `npm audit` em `backend/` e `frontend/`.
+- Dependabot (GitHub) para alertas automáticos de CVEs.

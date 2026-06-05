@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/lib/auth";
+import { usePlatformSettings } from "@/lib/settings";
+import { UserAvatar } from "@/components/UserAvatar";
 import { type Course } from "@/types";
 import { AppShell } from "@/components/app-shell";
 import { apiRequest } from "@/lib/api";
@@ -47,6 +49,8 @@ function buildCompletedMap(lessonIds: string[], completedModuleIds: string[]) {
 export function CoursePlayerPage() {
   const { courseId } = useParams<{ courseId: string }>();
   const { user } = useAuth();
+  const { settings } = usePlatformSettings();
+  const showUserPhotos = settings.show_user_photos !== "false";
   const navigate = useNavigate();
 
   // Course / lesson state
@@ -55,6 +59,7 @@ export function CoursePlayerPage() {
   const [activeIdx, setActiveIdx] = useState(0);
   const [completed, setCompleted] = useState<Record<string, boolean>>({});
   const [videoFinished, setVideoFinished] = useState(false);
+  const [realVideoDuration, setRealVideoDuration] = useState<string | null>(null);
   const [generatingCert, setGeneratingCert] = useState(false);
 
   // Tab state
@@ -169,11 +174,41 @@ export function CoursePlayerPage() {
   useEffect(() => {
     if (activeTab !== "aulas") return;
     setVideoFinished(false);
+    setRealVideoDuration(null);
 
     let player: { destroy?: () => void } | undefined;
+    let progressInterval: number | undefined;
 
-    const onPlayerStateChange = (event: { data: number }) => {
+    const onPlayerStateChange = (event: { data: number; target: any }) => {
       if (event.data === 0) setVideoFinished(true);
+      
+      if (event.data === 1) { // Playing
+        if (!progressInterval) {
+          progressInterval = window.setInterval(() => {
+            if (event.target && typeof event.target.getCurrentTime === "function" && typeof event.target.getDuration === "function") {
+              const current = event.target.getCurrentTime();
+              const total = event.target.getDuration();
+              if (total > 0) {
+                const m = Math.floor(total / 60);
+                const s = Math.floor(total % 60);
+                setRealVideoDuration(`${m}:${s.toString().padStart(2, '0')}`);
+                if (current / total >= 0.7) {
+                  setVideoFinished(true);
+                  if (progressInterval) {
+                    window.clearInterval(progressInterval);
+                    progressInterval = undefined;
+                  }
+                }
+              }
+            }
+          }, 1000);
+        }
+      } else { // Paused, ended, etc
+        if (progressInterval) {
+          window.clearInterval(progressInterval);
+          progressInterval = undefined;
+        }
+      }
     };
 
     const win = window as Window & {
@@ -184,7 +219,19 @@ export function CoursePlayerPage() {
     const initPlayer = () => {
       if (!win.YT) return;
       player = new win.YT.Player("youtube-player", {
-        events: { onStateChange: onPlayerStateChange },
+        events: { 
+          onStateChange: onPlayerStateChange,
+          onReady: (event: any) => {
+            if (event.target && typeof event.target.getDuration === "function") {
+              const total = event.target.getDuration();
+              if (total > 0) {
+                const m = Math.floor(total / 60);
+                const s = Math.floor(total % 60);
+                setRealVideoDuration(`${m}:${s.toString().padStart(2, '0')}`);
+              }
+            }
+          }
+        },
       });
     };
 
@@ -199,6 +246,7 @@ export function CoursePlayerPage() {
     }
 
     return () => {
+      if (progressInterval) window.clearInterval(progressInterval);
       if (player?.destroy) {
         try { player.destroy(); } catch { /* ignore */ }
       }
@@ -475,6 +523,7 @@ export function CoursePlayerPage() {
             <Card className="bg-gradient-card border-border overflow-hidden shadow-elegant">
               <div className="aspect-video bg-black relative">
                 <iframe
+                  key={lesson.id}
                   id="youtube-player"
                   title={lesson.title}
                   src={`https://www.youtube.com/embed/${lesson.youtubeId}?enablejsapi=1&rel=0`}
@@ -491,7 +540,7 @@ export function CoursePlayerPage() {
                     </div>
                     <h1 className="text-2xl font-bold mt-1 text-gradient">{lesson.title}</h1>
                   </div>
-                  <Badge variant="outline" className="border-border">{lesson.duration}</Badge>
+                  <Badge variant="outline" className="border-border">{realVideoDuration || lesson.duration}</Badge>
                 </div>
                 <p className="text-muted-foreground mt-3">{course.description}</p>
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -506,13 +555,23 @@ export function CoursePlayerPage() {
                   >
                     {completed[lesson.id] ? "✓ Concluída" : (!videoFinished ? "Assista até o fim..." : "Concluir aula")}
                   </Button>
-                  <Button
-                    onClick={next}
-                    disabled={activeIdx === course.lessons.length - 1 || !completed[lesson.id]}
-                    className="bg-gradient-hero text-snow border border-border group"
-                  >
-                    Próxima aula <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                  </Button>
+                  {activeIdx === course.lessons.length - 1 ? (
+                    <Button
+                      onClick={() => setActiveTab("prova")}
+                      disabled={!completed[lesson.id]}
+                      className="bg-gradient-hero text-snow border border-border group"
+                    >
+                      Fazer a Prova <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={next}
+                      disabled={!completed[lesson.id]}
+                      className="bg-gradient-hero text-snow border border-border group"
+                    >
+                      Próxima aula <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                    </Button>
+                  )}
                 </div>
               </div>
             </Card>
@@ -579,9 +638,12 @@ export function CoursePlayerPage() {
             {/* Composer */}
             <Card className="bg-gradient-card border-border p-5 shadow-elegant">
               <div className="flex items-start gap-3">
-                <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden shrink-0">
-                  {user?.name.split(" ").map((p: string) => p[0]).slice(0, 2).join("").toUpperCase()}
-                </div>
+                <UserAvatar
+                  name={user?.name ?? ""}
+                  profileImage={user?.profileImage}
+                  showPhoto={true}
+                  size="md"
+                />
                 <div className="flex-1 space-y-3">
                   <Input
                     placeholder="Título do projeto"
@@ -634,9 +696,12 @@ export function CoursePlayerPage() {
             ) : posts.map((p) => (
               <Card key={p.id} className="bg-gradient-card border-border p-5 shadow-elegant hover-lift">
                 <div className="flex items-center gap-3">
-                  <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden shrink-0">
-                    {p.authorName.substring(0, 2).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={p.authorName}
+                    profileImage={(p as any).authorProfileImage}
+                    showPhoto={showUserPhotos}
+                    size="md"
+                  />
                   <div className="flex-1 min-w-0">
                     <div className="text-sm font-medium truncate">{p.authorName}</div>
                     <div className="text-[11px] text-muted-foreground">{p.authorTier} · {new Date(p.createdAt).toLocaleDateString("pt-BR")}</div>
@@ -697,9 +762,12 @@ export function CoursePlayerPage() {
                 {commentingPostId === p.id && (
                   <div className="mt-3 p-4 rounded-xl bg-muted/20 border border-border space-y-3">
                     <div className="flex items-start gap-3">
-                      <div className="size-8 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden shrink-0">
-                        {user?.name.split(" ").map((n: string) => n[0]).slice(0, 2).join("").toUpperCase()}
-                      </div>
+                      <UserAvatar
+                        name={user?.name ?? ""}
+                        profileImage={user?.profileImage}
+                        showPhoto={true}
+                        size="sm"
+                      />
                       <div className="flex-1">
                         <Textarea
                           placeholder="Escreva um comentário…"

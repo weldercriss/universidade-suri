@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "date": "2025-11-01",
+  "title": "Lançamento Inicial",
+  "changes": [
+    { "type": "new", "text": "Plataforma de ensino Universidade Suri lançada" },
+    { "type": "new", "text": "Sistema de cursos com aulas sequenciais e antifraude" },
+    { "type": "new", "text": "Certificados digitais com código de verificação único" },
+    { "type": "new", "text": "Leaderboard e gamificação com sistema de XP e níveis" },
+    { "type": "new", "text": "Comunidade segmentada por grupo (VIP e Embaixadores)" },
+    { "type": "new", "text": "Painel administrativo com CRUD de cursos, usuários e quizzes" }
+  ]
+}

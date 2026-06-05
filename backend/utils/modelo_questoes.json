@@ -1,0 +1,224 @@
+{
+  "questions": [
+    {
+      "text": "Sobre a exigência de site ativo para contratar a Suri e habilitar a WhatsApp Business API, o que é correto afirmar?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Não é necessário ter um site ativo."
+        },
+        {
+          "id": "b",
+          "text": "É uma exigência exclusiva da Suri, não da Meta."
+        },
+        {
+          "id": "c",
+          "text": "É uma exigência da Meta para habilitar a WhatsApp Business API."
+        },
+        {
+          "id": "d",
+          "text": "Apenas empresas com mais de 100 funcionários precisam de site."
+        }
+      ],
+      "answer": "c"
+    },
+    {
+      "text": "Qual a quantidade mínima de funcionários exigida para que uma empresa possa utilizar a plataforma Suri?",
+      "options": [
+        {
+          "id": "a",
+          "text": "1 funcionário"
+        },
+        {
+          "id": "b",
+          "text": "3 funcionários"
+        },
+        {
+          "id": "c",
+          "text": "5 funcionários"
+        },
+        {
+          "id": "d",
+          "text": "10 funcionários"
+        }
+      ],
+      "answer": "b"
+    },
+    {
+      "text": "Caso um contato pergunte sobre preços, mensalidades ou planos, qual deve ser a ação correta da assistente Suri?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Informar a tabela de preços atualizada imediatamente."
+        },
+        {
+          "id": "b",
+          "text": "Enviar um PDF com os planos disponíveis."
+        },
+        {
+          "id": "c",
+          "text": "Inventar uma faixa de valor aproximada para não perder a venda."
+        },
+        {
+          "id": "d",
+          "text": "Não informar valores e direcionar o contato para o fluxo comercial."
+        }
+      ],
+      "answer": "d"
+    },
+    {
+      "text": "Qual tipo de token de autenticação é utilizado na API da Suri (encontrado em Configurações > Endpoint)?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Basic Auth"
+        },
+        {
+          "id": "b",
+          "text": "API Key"
+        },
+        {
+          "id": "c",
+          "text": "Bearer Token"
+        },
+        {
+          "id": "d",
+          "text": "OAuth 2.0"
+        }
+      ],
+      "answer": "c"
+    },
+    {
+      "text": "De acordo com a documentação, a Suri possui integração nativa com quais das seguintes plataformas de e-commerce?",
+      "options": [
+        {
+          "id": "a",
+          "text": "VTex, Shopify, Tray e Mercadapp"
+        },
+        {
+          "id": "b",
+          "text": "Magento, WooCommerce e PrestaShop"
+        },
+        {
+          "id": "c",
+          "text": "Amazon, eBay e Mercado Livre"
+        },
+        {
+          "id": "d",
+          "text": "Apenas com Shopify"
+        }
+      ],
+      "answer": "a"
+    },
+    {
+      "text": "Sobre a capacidade da Suri em lidar com mensagens de áudio no WhatsApp, é correto afirmar que:",
+      "options": [
+        {
+          "id": "a",
+          "text": "A Suri não suporta o recebimento de áudios."
+        },
+        {
+          "id": "b",
+          "text": "A Suri converte as mensagens de áudio em texto e as entende."
+        },
+        {
+          "id": "c",
+          "text": "A Suri apenas transcreve áudios enviados por agentes humanos."
+        },
+        {
+          "id": "d",
+          "text": "A Suri responde apenas enviando outros áudios gravados."
+        }
+      ],
+      "answer": "b"
+    },
+    {
+      "text": "Como é classificada a cobrança por conversas no WhatsApp Business Platform?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Mensalidade fixa independente da quantidade de mensagens."
+        },
+        {
+          "id": "b",
+          "text": "Custo por caractere da mensagem enviada."
+        },
+        {
+          "id": "c",
+          "text": "Modelo baseado em janelas de 24h, dividido nas categorias Marketing, Utilidade, Autenticação e Serviço."
+        },
+        {
+          "id": "d",
+          "text": "Cobrança feita em pacotes anuais de disparo em massa."
+        }
+      ],
+      "answer": "c"
+    },
+    {
+      "text": "Se o cliente perguntar de forma direta 'Vocês têm aplicativo?', qual deve ser a resposta canônica prioritária?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Não, funcionamos apenas via web."
+        },
+        {
+          "id": "b",
+          "text": "Sim. A Suri possui aplicativo para Android e iOS."
+        },
+        {
+          "id": "c",
+          "text": "Temos apenas aplicativo para Android no momento."
+        },
+        {
+          "id": "d",
+          "text": "O nosso aplicativo ainda está em fase de testes fechada."
+        }
+      ],
+      "answer": "b"
+    },
+    {
+      "text": "Se um contato diz que já é cliente da Suri, menciona seu gerente de conta e solicita ajuda com uma integração, o que o assistente deve fazer?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Executar o fluxo comercial imediatamente para vender upgrades de plano."
+        },
+        {
+          "id": "b",
+          "text": "Perguntar sobre o tamanho da empresa e número de funcionários."
+        },
+        {
+          "id": "c",
+          "text": "Responder com base na base de conhecimento e direcionar para o fluxo do suporte, não executando o fluxo comercial."
+        },
+        {
+          "id": "d",
+          "text": "Informar que ele deve buscar ajuda diretamente no site da Meta."
+        }
+      ],
+      "answer": "c"
+    },
+    {
+      "text": "Quais são os principais tipos de eventos que podem ser recebidos ao configurar Webhooks na Suri?",
+      "options": [
+        {
+          "id": "a",
+          "text": "novo_produto, venda_realizada e carrinho_abandonado."
+        },
+        {
+          "id": "b",
+          "text": "novo_contato, troca_de_fila, finalizacao_de_atendimento e mensagem_recebida."
+        },
+        {
+          "id": "c",
+          "text": "login, logout e reset_senha."
+        },
+        {
+          "id": "d",
+          "text": "pagamento_aprovado, pagamento_recusado e estorno."
+        }
+      ],
+      "answer": "b"
+    }
+  ]
+}

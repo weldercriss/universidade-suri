@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useLocation, Link } from "react-router-dom";
 import { AppShell } from "@/components/app-shell";
 import { apiRequest } from "@/lib/api";
+import { usePlatformSettings } from "@/lib/settings";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,18 +10,28 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Users, Loader2, Plus, Edit, Lock, Unlock, UserCheck, UserX, Search, ArrowLeft } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Users, Loader2, Plus, Edit, Lock, Unlock, UserCheck, UserX, Search, ArrowLeft, Mail, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export function AdminPanelPage() {
+  const { settings, refreshSettings } = usePlatformSettings();
+
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(true);
 
   const [openUsersModal, setOpenUsersModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
-  const [editUserForm, setEditUserForm] = useState({ name: "", group: "", tier: "", level: 1, business: "" });
+  const [editUserForm, setEditUserForm] = useState({ name: "", group: "", tier: "", level: 1, business: "", newsletter: false });
   const [userSearch, setUserSearch] = useState("");
-  const [userFilter, setUserFilter] = useState<"all" | "active" | "inactive">("all");
+  const [userFilter, setUserFilter] = useState<"all" | "active" | "inactive" | "newsletter">("all");
+
+  const [photosEnabled, setPhotosEnabled] = useState(true);
+  const [togglingPhotos, setTogglingPhotos] = useState(false);
+
+  useEffect(() => {
+    setPhotosEnabled(settings.show_user_photos !== "false");
+  }, [settings.show_user_photos]);
 
 
 
@@ -31,13 +42,33 @@ export function AdminPanelPage() {
       const matchFilter =
         userFilter === "all" ? true :
         userFilter === "active" ? u.isActive :
-        !u.isActive;
+        userFilter === "inactive" ? !u.isActive :
+        u.newsletter === true;
       return matchSearch && matchFilter;
     });
   }, [allUsers, userSearch, userFilter]);
 
   const activeCount = allUsers.filter(u => u.isActive).length;
   const inactiveCount = allUsers.filter(u => !u.isActive).length;
+  const newsletterCount = allUsers.filter(u => u.newsletter).length;
+
+  const handlePhotoToggle = async (enabled: boolean) => {
+    setPhotosEnabled(enabled);
+    setTogglingPhotos(true);
+    try {
+      await apiRequest("/settings/photo-visibility", {
+        method: "PATCH",
+        body: JSON.stringify({ enabled }),
+      });
+      await refreshSettings();
+      toast.success(enabled ? "Fotos de perfil ativadas para todos os usuários" : "Fotos de perfil desativadas — aparecerão apenas iniciais");
+    } catch {
+      setPhotosEnabled(!enabled);
+      toast.error("Erro ao salvar configuração");
+    } finally {
+      setTogglingPhotos(false);
+    }
+  };
 
   const fetchUsers = () => {
     setLoadingUsers(true);
@@ -63,7 +94,7 @@ export function AdminPanelPage() {
     try {
       await apiRequest(`/auth/users/${editingUser.id}`, {
         method: "PUT",
-        body: JSON.stringify({ name: editUserForm.name, group: editUserForm.group, tier: editUserForm.tier, level: editUserForm.level, business: editUserForm.business })
+        body: JSON.stringify({ name: editUserForm.name, group: editUserForm.group, tier: editUserForm.tier, level: editUserForm.level, business: editUserForm.business, newsletter: editUserForm.newsletter })
       });
       toast.success("Usuário atualizado com sucesso!");
       setEditingUser(null);
@@ -216,6 +247,7 @@ export function AdminPanelPage() {
               { key: "all", label: "Todos", count: allUsers.length },
               { key: "active", label: "Ativos", count: activeCount },
               { key: "inactive", label: "Inativos", count: inactiveCount },
+              { key: "newsletter", label: "Newsletter", count: newsletterCount },
             ] as const).map(f => (
               <button
                 key={f.key}
@@ -224,12 +256,14 @@ export function AdminPanelPage() {
                   userFilter === f.key
                     ? f.key === "active" ? "bg-success/15 border-success/40 text-success"
                       : f.key === "inactive" ? "bg-destructive/15 border-destructive/40 text-destructive"
+                      : f.key === "newsletter" ? "bg-blue-500/15 border-blue-500/40 text-blue-500"
                       : "bg-primary/15 border-primary/40 text-primary"
                     : "bg-muted/30 border-border/50 text-muted-foreground hover:border-border"
                 }`}
               >
                 {f.key === "active" && <span className="size-1.5 rounded-full bg-success inline-block" />}
                 {f.key === "inactive" && <span className="size-1.5 rounded-full bg-destructive inline-block" />}
+                {f.key === "newsletter" && <Mail className="size-3" />}
                 {f.label}
                 <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
                   userFilter === f.key ? "bg-current/10" : "bg-muted/50"
@@ -273,13 +307,20 @@ export function AdminPanelPage() {
                       {u.isActive ? "Ativo" : "Inativo"}
                     </Badge>
                   </div>
-                  <div className="text-xs text-muted-foreground truncate">{u.email}{u.business ? ` · ${u.business}` : ""} · {u.tier}</div>
+                  <div className="text-xs text-muted-foreground truncate flex items-center gap-2">
+                    {u.email}{u.business ? ` · ${u.business}` : ""} · {u.tier}
+                    {u.newsletter && (
+                      <Badge variant="outline" className="border-blue-500/30 bg-blue-500/10 text-blue-500 text-[10px] px-1.5 py-0 h-4">
+                        Newsletter
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 <Badge variant="outline" className="border-border capitalize shrink-0">{u.group}</Badge>
                 <div className="flex items-center gap-1 ml-2 shrink-0">
                   <Button variant="ghost" size="icon" title="Editar usuário" onClick={() => {
                     setEditingUser(u);
-                    setEditUserForm({ name: u.name, group: u.group, tier: u.tier, level: u.level, business: u.business || "" });
+                    setEditUserForm({ name: u.name, group: u.group, tier: u.tier, level: u.level, business: u.business || "", newsletter: u.newsletter || false });
                   }}>
                     <Edit className="size-4" />
                   </Button>
@@ -328,12 +369,61 @@ export function AdminPanelPage() {
                 <Label>Empresa</Label>
                 <Input value={editUserForm.business} onChange={e => setEditUserForm({...editUserForm, business: e.target.value})} placeholder="Nome da empresa" className="bg-muted/50 border-border" />
               </div>
+              <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+                <span className="relative mt-0.5 shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={editUserForm.newsletter}
+                    onChange={(e) => setEditUserForm({...editUserForm, newsletter: e.target.checked})}
+                    className="peer sr-only"
+                  />
+                  <span className="flex size-4 rounded border border-border/70 bg-background/40 peer-checked:bg-primary peer-checked:border-primary transition-colors items-center justify-center">
+                    {editUserForm.newsletter && (
+                      <svg viewBox="0 0 10 8" className="size-2.5 fill-none stroke-white stroke-[2] stroke-linecap-round stroke-linejoin-round">
+                        <polyline points="1 4 4 7 9 1" />
+                      </svg>
+                    )}
+                  </span>
+                </span>
+                <span className="text-sm font-medium text-foreground/70 leading-snug">
+                  Inscrito na Newsletter
+                </span>
+              </label>
               <Button type="submit" className="w-full bg-primary text-primary-foreground hover:opacity-90">Salvar Alterações</Button>
             </form>
           </DialogContent>
         </Dialog>
       </Card>
 
+      {/* Platform settings card */}
+      <Card className="bg-gradient-card border-border p-6 shadow-elegant mt-6 fade-in-up">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="size-9 rounded-lg bg-secondary/10 border border-secondary/20 grid place-items-center shrink-0">
+            <ImageIcon className="size-5 text-secondary" />
+          </div>
+          <div>
+            <h2 className="font-semibold">Configurações da Plataforma</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">Controles globais visíveis para todos os usuários</p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between gap-4 py-4 border-t border-border/40">
+          <div>
+            <div className="font-medium text-sm">Exibir fotos de perfil</div>
+            <div className="text-xs text-muted-foreground mt-0.5">
+              {photosEnabled
+                ? "Fotos de outros usuários são visíveis no Ranking, posts e comentários"
+                : "Apenas as iniciais são exibidas no lugar das fotos"}
+            </div>
+          </div>
+          <Switch
+            checked={photosEnabled}
+            onCheckedChange={handlePhotoToggle}
+            disabled={togglingPhotos}
+            aria-label="Ativar ou desativar fotos de perfil"
+          />
+        </div>
+      </Card>
 
     </AppShell>
   );

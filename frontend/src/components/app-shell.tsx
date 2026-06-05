@@ -3,15 +3,17 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, GraduationCap, User, Trophy, Settings,
   ShieldCheck, LogOut, Sparkles, Shield, Sun, Moon, Menu, X,
-  PanelLeftClose, PanelLeftOpen, Route, Users, Layers, BarChart3, Map as MapIcon
+  PanelLeftClose, PanelLeftOpen, Route, Users, Layers, BarChart3, Map as MapIcon, MessageCircle, Newspaper
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePlatformSettings } from "@/lib/settings";
+import { ChangelogModal, useChangelogBadge } from "@/components/ChangelogModal";
 import totvsW from "@/assets/icons/totvs.svg";
 import totvsD from "@/assets/icons/totvs-dark.svg";
+import totvsLilac from "@/assets/icons/totvs-lilac.svg";
 import suriWhite from "@/assets/icons/suri-white.svg";
 import suriBlue from "@/assets/icons/suri-blue.svg";
 
@@ -31,8 +33,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const pathname = location.pathname;
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsedState] = useState(() => {
+    const saved = localStorage.getItem('suri_sidebar_collapsed');
+    return saved ? JSON.parse(saved) : true;
+  });
+
+  const setSidebarCollapsed = (value: boolean) => {
+    setSidebarCollapsedState(value);
+    localStorage.setItem('suri_sidebar_collapsed', JSON.stringify(value));
+  };
   const { settings } = usePlatformSettings();
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const { latestVersion, hasNew, markSeen } = useChangelogBadge();
 
   if (!user) {
     return null;
@@ -52,13 +64,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const mainPadding = sidebarCollapsed ? "md:pl-[68px]" : "md:pl-64";
 
   return (
-    <div className="min-h-screen flex w-full relative overflow-x-hidden bg-background pb-16 md:pb-0">
+    <div className="min-h-screen flex w-full relative overflow-x-hidden bg-background pb-[72px] md:pb-0">
       {/* Watermark Flutuante Gigante no Background */}
       {pathname !== "/admin" && (
         <img 
           src={isLight 
-            ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : "/totvs-dark.svg") 
-            : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : "/totvs.svg")} 
+            ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : totvsD)
+            : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : totvsW)} 
           className="watermark-bg" 
           alt="" 
           aria-hidden="true" 
@@ -76,7 +88,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <img 
               src={isLight 
                 ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : totvsD) 
-                : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : totvsW)} 
+                : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : totvsLilac)} 
               alt="SURI" 
               className="block" 
               style={{ height: "38px", width: "auto" }} 
@@ -120,7 +132,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/40 border-transparent"
                   }`}
               >
-                <Icon className={`size-4 shrink-0 ${active && !sidebarCollapsed ? 'text-primary' : ''}`} />
+                <Icon className={`shrink-0 ${sidebarCollapsed ? 'size-5' : 'size-4'} ${active && !sidebarCollapsed ? 'text-primary' : ''}`} />
                 {!sidebarCollapsed && <span className="font-medium truncate">{item.label}</span>}
               </Link>
             );
@@ -138,6 +150,24 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             {sidebarCollapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
           </Button>
+        </div>
+
+        {/* Changelog / Version */}
+        <div className={`px-3 pb-1 shrink-0 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
+          <button
+            onClick={() => { setChangelogOpen(true); markSeen(); }}
+            title="Novidades da plataforma"
+            className={`relative flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-lg py-1.5 w-full
+              ${sidebarCollapsed ? "justify-center px-2" : "px-2"}`}
+          >
+            <Newspaper className="size-4 shrink-0" />
+            {!sidebarCollapsed && (
+              <span className="font-medium">{latestVersion ? `v${latestVersion}` : "Changelog"}</span>
+            )}
+            {hasNew && (
+              <span className="absolute top-0.5 right-0.5 size-2 rounded-full bg-secondary ring-2 ring-card" />
+            )}
+          </button>
         </div>
 
         {/* User Profile */}
@@ -176,7 +206,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </aside>
 
       {/* Mobile Bottom Nav (Hidden on Desktop) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full h-[60px] border-t border-border bg-card/95 backdrop-blur-md z-50 flex flex-row items-center justify-around px-1 pb-safe">
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 w-full h-[68px] border-t border-border bg-card/95 backdrop-blur-md z-50 flex flex-row items-center justify-around px-2 pb-safe">
         {filteredNav.map((item) => {
           const to = item.to === "/cursos" && isAdmin ? "/admin/cursos"
             : item.to === "/trilhas" && isAdmin ? "/admin/trilhas"
@@ -199,8 +229,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               `}
             >
               {active && <span className="absolute top-0 right-1/2 translate-x-3.5 size-1.5 rounded-full bg-primary" />}
-              <Icon className="size-5 shrink-0" />
-              <span className="text-[10px] font-medium truncate w-full text-center leading-none px-0.5">
+              <Icon className="size-6 shrink-0" />
+              <span className="text-[11px] font-medium truncate w-full text-center leading-none px-0.5">
                 {item.label === "Configurações" ? "Ajustes" : item.label === "Dashboard" ? "Início" : item.label}
               </span>
             </Link>
@@ -254,6 +284,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <Button
               size="icon"
               variant="outline"
+              onClick={() => (document.querySelector('.__talkjs_launcher') as HTMLElement)?.click()}
+              className="md:hidden border-border size-8"
+              aria-label="Abrir chat de suporte"
+            >
+              <MessageCircle className="size-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="outline"
               onClick={toggleTheme}
               className="border-border relative overflow-hidden group size-8 md:size-9"
               aria-label={isLight ? "Mudar para Night Blue" : "Mudar para Snow Blue"}
@@ -268,6 +307,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </header>
         <main className="flex-1 px-3 sm:px-4 md:px-8 py-5 md:py-8 max-w-7xl w-full mx-auto">{children}</main>
       </div>
+
+      <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
     </div>
   );
 }

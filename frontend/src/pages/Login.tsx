@@ -12,7 +12,11 @@ import {
   ArrowLeft,
   Mail,
   Lock,
+  Newspaper,
 } from "lucide-react";
+import { ChangelogModal, useChangelogBadge } from "@/components/ChangelogModal";
+import totvsLight from "@/assets/icons/totvs-dark.svg";
+import totvsDark from "@/assets/icons/totvs.svg";
 
 export function LoginPage() {
   const { login } = useAuth();
@@ -23,6 +27,8 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const { latestVersion, hasNew, markSeen } = useChangelogBadge();
   const isLight = theme === "snow-blue";
 
   const submit = async (e: React.FormEvent) => {
@@ -42,11 +48,11 @@ export function LoginPage() {
       <div className="login-aurora" aria-hidden="true">
         <span />
       </div>
-      <div className="login-grid" aria-hidden="true" />
+
       <img 
         src={isLight 
-          ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : "/totvs-dark.svg") 
-          : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : "/totvs.svg")} 
+          ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : totvsLight)
+          : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : totvsDark)}
         className="watermark-bg" 
         alt="" 
         aria-hidden="true" 
@@ -110,15 +116,6 @@ export function LoginPage() {
 
             {/* ── RIGHT: form ── */}
             <div className="flex-1 flex flex-col justify-center">
-              <div className="flex justify-center mb-8">
-                <img 
-                  src={isLight 
-                    ? (settings?.logo_expanded_light ? `http://localhost:3000${settings.logo_expanded_light}` : "/suri-blue.svg") 
-                    : (settings?.logo_expanded_dark ? `http://localhost:3000${settings.logo_expanded_dark}` : "/suri-white.svg")} 
-                  alt="SURI" 
-                  className="h-10 w-auto" 
-                />
-              </div>
               <form onSubmit={submit} className="space-y-4">
                 <div>
                   <label
@@ -149,12 +146,12 @@ export function LoginPage() {
                     >
                       Senha
                     </label>
-                    <button
-                      type="button"
+                    <Link
+                      to="/esqueceu-senha"
                       className="text-[11px] text-foreground/55 hover:text-foreground transition-colors"
                     >
                       Esqueceu sua senha?
-                    </button>
+                    </Link>
                   </div>
                   <div className="field-glass">
                     <Lock className="field-icon size-4" />
@@ -207,10 +204,24 @@ export function LoginPage() {
           </div>
         </div>
 
-        <div className="mt-5 text-center text-[11px] text-foreground/45">
-          © Universidade Suri · Plataforma educacional da Suri 
+        <div className="mt-5 text-center text-[11px] text-foreground/45 flex items-center justify-center gap-3">
+          <span>© Universidade Suri · Plataforma educacional da Suri</span>
+          {latestVersion && (
+            <button
+              onClick={() => { setChangelogOpen(true); markSeen(); }}
+              className="relative inline-flex items-center gap-1 hover:text-foreground/70 transition-colors"
+            >
+              <Newspaper className="size-3" />
+              <span>v{latestVersion}</span>
+              {hasNew && (
+                <span className="absolute -top-1 -right-1.5 size-1.5 rounded-full bg-secondary" />
+              )}
+            </button>
+          )}
         </div>
       </div>
+
+      <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
     </div>
   );
 }

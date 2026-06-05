@@ -31,9 +31,11 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/prisma ./prisma
 
-# Cria usuário não-root por segurança
+# Cria usuário não-root e diretório de uploads com as permissões corretas
 RUN addgroup -g 1001 appgroup && \
-    adduser -u 1001 -G appgroup -s /bin/sh -D appuser
+    adduser -u 1001 -G appgroup -s /bin/sh -D appuser && \
+    mkdir -p /app/uploads/avatars /app/uploads/covers && \
+    chown -R appuser:appgroup /app/uploads
 USER appuser
 
 # Porta padrão da API
@@ -44,4 +46,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
 
 # Comando de inicialização
-CMD ["node", "dist/src/main"]
+CMD ["node", "dist/main"]

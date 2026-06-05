@@ -8,7 +8,6 @@ describe('User entity', () => {
     'Aluno',
     'aluno@suri.com',
     'hash',
-    'AL',
     'embaixador',
     'Embaixador Voice',
     overrides.xp ?? 0,
@@ -20,7 +19,7 @@ describe('User entity', () => {
   );
 
   it('constrói com defaults isActive=true e profileImage=null', () => {
-    const u = new User('id', 'n', 'e@e', 'h', 'AV', 'vip', 'VIP BLUE', 0, 1, false, new Date());
+    const u = new User('id', 'n', 'e@e', 'h', 'vip', 'VIP PLUS', 0, 1, false, new Date());
     expect(u.isActive).toBe(true);
     expect(u.profileImage).toBeNull();
   });

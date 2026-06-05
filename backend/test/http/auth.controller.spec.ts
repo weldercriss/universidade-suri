@@ -1,17 +1,20 @@
 import { UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthController } from '../../src/infrastructure/http/controllers/auth.controller';
-import { buildJwtServiceMock, buildUserRepoMock, makeAdmin, makeUser } from '../helpers/mocks';
+import { buildJwtServiceMock, buildPrismaMock, buildUserRepoMock, makeAdmin, makeUser } from '../helpers/mocks';
 
 describe('AuthController', () => {
   let userRepo: ReturnType<typeof buildUserRepoMock>;
   let jwt: ReturnType<typeof buildJwtServiceMock>;
+  let prisma: ReturnType<typeof buildPrismaMock>;
   let controller: AuthController;
 
   beforeEach(() => {
     userRepo = buildUserRepoMock();
     jwt = buildJwtServiceMock();
-    controller = new AuthController(userRepo as any, jwt as any);
+    prisma = buildPrismaMock();
+    prisma.moduleProgress.count = jest.fn().mockResolvedValue(0);
+    controller = new AuthController(userRepo as any, jwt as any, prisma as any);
   });
 
   describe('login', () => {
@@ -100,42 +103,23 @@ describe('AuthController', () => {
     });
   });
 
-  describe('googleLogin', () => {
-    it('rejeita quando não há email', async () => {
-      await expect(controller.googleLogin({ token: 't', name: 'x' })).rejects.toBeInstanceOf(UnauthorizedException);
-    });
-
-    it('cria conta automaticamente se inexistente', async () => {
-      userRepo.findByEmail.mockResolvedValue(null);
-      userRepo.create.mockImplementation(async (u) => u);
-      const out = await controller.googleLogin({ token: 'g', name: 'Maria', email: 'maria@gmail.com' });
-      expect(userRepo.create).toHaveBeenCalled();
-      expect(out.user.email).toBe('maria@gmail.com');
-      expect(out.user.group).toBe('embaixador');
-      expect(out.token).toBe('signed.jwt.token');
-    });
-
-    it('rejeita login google se conta existe e está inativa', async () => {
-      userRepo.findByEmail.mockResolvedValue(makeUser({ isActive: false }));
-      await expect(controller.googleLogin({ token: 'g', name: 'X', email: 'x@x.com' }))
-        .rejects.toBeInstanceOf(UnauthorizedException);
-    });
-
-    it('autentica usuário existente sem recriá-lo', async () => {
-      userRepo.findByEmail.mockResolvedValue(makeUser());
-      const out = await controller.googleLogin({ token: 'g', name: 'A', email: 'aluno@suri.com' });
-      expect(userRepo.create).not.toHaveBeenCalled();
-      expect(out.token).toBe('signed.jwt.token');
-    });
-  });
 
   describe('getProfile', () => {
-    it('retorna o perfil do usuário autenticado', async () => {
+    it('retorna o perfil do usuário autenticado com isFirstLogin', async () => {
       const user = makeUser({ name: 'Foo', xp: 200, level: 1 });
+      prisma.moduleProgress.count.mockResolvedValue(0); // sem progresso = primeiro login
       const result = await controller.getProfile({ user });
       expect(result.id).toBe(user.id);
       expect(result.name).toBe('Foo');
       expect(result.xp).toBe(200);
+      expect(result.isFirstLogin).toBe(true);
+    });
+
+    it('isFirstLogin=false quando usuário já tem progresso', async () => {
+      const user = makeUser({ name: 'Foo' });
+      prisma.moduleProgress.count.mockResolvedValue(3);
+      const result = await controller.getProfile({ user });
+      expect(result.isFirstLogin).toBe(false);
     });
   });
 

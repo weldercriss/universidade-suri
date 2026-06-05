@@ -253,7 +253,7 @@ export class QuizController {
       const existingCert = await this.prisma.certificate.findFirst({ where: { userId, courseId } });
       if (!existingCert) {
         const randomHex = Math.random().toString(16).substring(2, 8).toUpperCase();
-        certificateCode = `SURI-AC-${randomHex}`;
+        certificateCode = `UNISURI-${randomHex}`;
 
         await this.prisma.certificate.create({
           data: { userId, courseId, verificationCode: certificateCode },

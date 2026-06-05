@@ -1,8 +1,11 @@
 import { Controller, Get, Post, Param, UseGuards, Req, Inject, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PrismaService } from '../../database/prisma.service';
 import { IUserRepository } from '../../../domain/repositories/user.repository.interface';
 
+@ApiTags('enrollments')
+@ApiBearerAuth()
 @Controller('enrollments')
 @UseGuards(AuthGuard('jwt'))
 export class EnrollmentController {
@@ -12,6 +15,8 @@ export class EnrollmentController {
     private readonly userRepository: IUserRepository,
   ) {}
 
+  @ApiOperation({ summary: 'Progresso do aluno em todos os cursos inscritos (admin retorna [])' })
+  @ApiResponse({ status: 200, description: 'Array de { courseId, enrollmentId, completedModuleIds, totalModules, completedCount }' })
   @Get('progress')
   async listMyProgress(@Req() req: any) {
     if (req.user.isAdmin) {
@@ -36,6 +41,9 @@ export class EnrollmentController {
     }));
   }
 
+  @ApiOperation({ summary: 'Progresso do aluno em um curso específico' })
+  @ApiResponse({ status: 200, description: '{ enrollmentId, completedModuleIds, totalModules, completedCount }' })
+  @ApiResponse({ status: 403, description: 'Administradores não cursam' })
   @Get('courses/:courseId/progress')
   async getCourseProgress(@Param('courseId') courseId: string, @Req() req: any) {
     if (req.user.isAdmin) {
@@ -73,6 +81,9 @@ export class EnrollmentController {
     };
   }
 
+  @ApiOperation({ summary: 'Inscrição explícita em um curso (catálogo → meus cursos)' })
+  @ApiResponse({ status: 201, description: '{ message, enrollmentId }' })
+  @ApiResponse({ status: 403, description: 'Administradores não cursam' })
   @Post(':courseId/join')
   async join(@Param('courseId') courseId: string, @Req() req: any) {
     if (req.user.isAdmin) {
@@ -103,6 +114,10 @@ export class EnrollmentController {
     return { message: 'Inscrito com sucesso', enrollmentId: res.id };
   }
 
+  @ApiOperation({ summary: 'Marca uma aula como concluída — antifraude sequencial (módulo N exige N-1 concluído)' })
+  @ApiResponse({ status: 201, description: '{ message, courseCompleted } — orienta sobre a prova quando curso 100% concluído' })
+  @ApiResponse({ status: 403, description: 'Aula anterior não concluída ou admin' })
+  @ApiResponse({ status: 404, description: 'Aula não encontrada' })
   @Post('lessons/:lessonId/complete')
   async completeLesson(@Param('lessonId') lessonId: string, @Req() req: any) {
     if (req.user.isAdmin) {
@@ -189,7 +204,6 @@ export class EnrollmentController {
         where: { enrollmentId: enrollment.id, isCompleted: true },
       });
 
-      let xpAdded = 0;
       let courseCompleted = false;
 
       if (completedModules >= allModules.length) {
@@ -199,20 +213,11 @@ export class EnrollmentController {
           data: { completedAt: new Date() },
         });
 
-        // Get course to know xpReward
-        const course = await this.prisma.course.findUnique({ where: { id: courseId! } });
-        const reward = course?.xpReward || 0;
-        
-        if (reward > 0) {
-          user.addXp(reward);
-          await this.userRepository.update(user);
-          xpAdded = reward;
-        }
         courseCompleted = true;
       }
 
       const msg = courseCompleted 
-        ? `Curso concluído! +${xpAdded} XP adicionado!` 
+        ? 'Todas as aulas concluídas! Faça a prova para ganhar o XP.'
         : 'Aula concluída!';
         
       return { message: msg, xp: user.xp, level: user.level, courseCompleted };

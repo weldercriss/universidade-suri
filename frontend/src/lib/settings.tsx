@@ -34,6 +34,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     refreshSettings();
+    const id = setInterval(refreshSettings, 60_000);
+    return () => clearInterval(id);
   }, []);
 
   return (

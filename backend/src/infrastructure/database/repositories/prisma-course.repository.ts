@@ -129,6 +129,7 @@ export class PrismaCourseRepository implements ICourseRepository {
           description: lesson.description,
           content: lesson.content,
           videoUrl: lesson.videoUrl,
+          duration: lesson.duration,
           sortOrder: lesson.sortOrder,
         },
       });
@@ -148,6 +149,7 @@ export class PrismaCourseRepository implements ICourseRepository {
           description: lesson.description,
           content: lesson.content,
           videoUrl: lesson.videoUrl,
+          duration: lesson.duration,
           sortOrder: lesson.sortOrder,
         },
       });
@@ -194,6 +196,7 @@ export class PrismaCourseRepository implements ICourseRepository {
       row.description,
       row.content,
       row.videoUrl,
+      row.duration,
       row.sortOrder
     );
   }

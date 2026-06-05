@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Loader2, Plus, Trash2, Edit, Map as MapIcon, ExternalLink, PlayCircle, FileText, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
@@ -42,8 +43,8 @@ const TYPE_BADGE: Record<string, string> = {
 };
 
 const emptyRoadmapForm = { title: "", description: "", isActive: true, sortOrder: 0 };
-const emptyItemForm = { type: "video" as const, title: "", url: "", description: "", sortOrder: 0 };
-
+type ItemFormType = { type: "video" | "document" | "reference"; title: string; url: string; description: string; sortOrder: number };
+const emptyItemForm: ItemFormType = { type: "video", title: "", url: "", description: "", sortOrder: 0 };
 export function AdminRoadmapPage() {
   const [roadmaps, setRoadmaps] = useState<Roadmap[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,9 +52,16 @@ export function AdminRoadmapPage() {
   const [editingRoadmap, setEditingRoadmap] = useState<Roadmap | null>(null);
   const [roadmapForm, setRoadmapForm] = useState(emptyRoadmapForm);
   const [openAddItem, setOpenAddItem] = useState<string | null>(null);
-  const [itemForm, setItemForm] = useState(emptyItemForm);
+  const [itemForm, setItemForm] = useState<ItemFormType>(emptyItemForm);
   const [savingRoadmap, setSavingRoadmap] = useState(false);
   const [savingItem, setSavingItem] = useState(false);
+
+  // Confirm dialog state
+  const [confirmState, setConfirmState] = useState<{ open: boolean; title: string; onConfirm: () => void; description?: string }>({
+    open: false,
+    title: "",
+    onConfirm: () => {},
+  });
 
   const fetchRoadmaps = () => {
     setLoading(true);
@@ -123,15 +131,21 @@ export function AdminRoadmapPage() {
     }
   };
 
-  const handleDeleteRoadmap = async (r: Roadmap) => {
-    if (!confirm(`Excluir o roadmap "${r.title}"? Todos os itens serão removidos.`)) return;
-    try {
-      await apiRequest(`/roadmaps/${r.id}`, { method: "DELETE" });
-      toast.success("Roadmap excluído");
-      fetchRoadmaps();
-    } catch {
-      toast.error("Erro ao excluir roadmap");
-    }
+  const handleDeleteRoadmap = (r: Roadmap) => {
+    setConfirmState({
+      open: true,
+      title: "Excluir roadmap?",
+      description: `O roadmap "${r.title}" e todos os seus itens serão removidos.`,
+      onConfirm: async () => {
+        try {
+          await apiRequest(`/roadmaps/${r.id}`, { method: "DELETE" });
+          toast.success("Roadmap excluído");
+          fetchRoadmaps();
+        } catch {
+          toast.error("Erro ao excluir roadmap");
+        }
+      }
+    });
   };
 
   const handleAddItem = async (e: React.FormEvent) => {
@@ -447,6 +461,14 @@ export function AdminRoadmapPage() {
           </form>
         </DialogContent>
       </Dialog>
+      
+      <ConfirmDialog
+        open={confirmState.open}
+        onOpenChange={(open) => setConfirmState({ ...confirmState, open })}
+        title={confirmState.title}
+        description={confirmState.description}
+        onConfirm={confirmState.onConfirm}
+      />
     </AppShell>
   );
 }

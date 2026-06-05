@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model UserRole {
@@ -27,15 +28,21 @@ model Profile {
   level        Int      @default(1)
   isAdmin      Boolean  @default(false) @map("is_admin")
   isActive     Boolean  @default(true) @map("is_active")
-  profileImage String?  @map("profile_image")
-  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  newsletter          Boolean   @default(false)
+  profileImage        String?   @map("profile_image")
+  resetPasswordToken  String?   @map("reset_password_token")
+  resetPasswordExpiry DateTime? @map("reset_password_expiry") @db.Timestamptz(6)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  enrollments  Enrollment[]
-  certificates Certificate[]
-  posts        Post[]
-  postLikes    PostLike[]
-  postComments PostComment[]
-  quizAttempts QuizAttempt[]
+  enrollments       Enrollment[]
+  certificates      Certificate[]
+  posts             Post[]
+  postLikes         PostLike[]
+  postComments      PostComment[]
+  quizAttempts      QuizAttempt[]
+  trailEnrollments  TrailEnrollment[]
+  trailCertificates TrailCertificate[]
+  trailQuizAttempts TrailQuizAttempt[]
 
   @@map("profiles")
 }
@@ -69,12 +76,14 @@ model Module {
   description String?
   content     String?
   videoUrl    String?  @map("video_url")
+  duration    String?  @default("10:00")
   sortOrder   Int      @default(0) @map("sort_order")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
   course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   progress    ModuleProgress[]
 
+  @@index([courseId])
   @@map("modules")
 }
 
@@ -90,6 +99,8 @@ model Enrollment {
   progress    ModuleProgress[]
 
   @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
   @@map("enrollments")
 }
 
@@ -104,6 +115,8 @@ model ModuleProgress {
   module       Module?     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([enrollmentId, moduleId])
+  @@index([enrollmentId])
+  @@index([moduleId])
   @@map("module_progress")
 }
 
@@ -117,6 +130,8 @@ model Certificate {
   user             Profile? @relation(fields: [userId], references: [id], onDelete: Cascade)
   course           Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
+  @@index([userId])
+  @@index([courseId])
   @@map("certificates")
 }
 
@@ -135,6 +150,8 @@ model Post {
   likes     PostLike[]
   comments  PostComment[]
 
+  @@index([authorId])
+  @@index([courseId])
   @@map("posts")
 }
 
@@ -148,6 +165,8 @@ model PostLike {
   user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
+  @@index([postId])
+  @@index([userId])
   @@map("post_likes")
 }
 
@@ -161,6 +180,8 @@ model PostComment {
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
   user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@index([postId])
+  @@index([userId])
   @@map("post_comments")
 }
 
@@ -172,7 +193,10 @@ model Trail {
   sortOrder   Int          @default(0) @map("sort_order")
   createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  courses     TrailCourse[]
+  courses      TrailCourse[]
+  enrollments  TrailEnrollment[]
+  certificates TrailCertificate[]
+  quizAttempts TrailQuizAttempt[]
 
   @@map("trails")
 }
@@ -187,7 +211,72 @@ model TrailCourse {
   course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([trailId, courseId])
+  @@index([trailId])
+  @@index([courseId])
   @@map("trail_courses")
+}
+
+model TrailEnrollment {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  trailId    String   @map("trail_id") @db.Uuid
+  enrolledAt DateTime @default(now()) @map("enrolled_at") @db.Timestamptz(6)
+
+  user  Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trail Trail   @relation(fields: [trailId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, trailId])
+  @@index([userId])
+  @@index([trailId])
+  @@map("trail_enrollments")
+}
+
+model TrailCertificate {
+  id               String   @id @default(uuid()) @db.Uuid
+  userId           String   @map("user_id") @db.Uuid
+  trailId          String   @map("trail_id") @db.Uuid
+  verificationCode String   @unique @map("verification_code")
+  issuedAt         DateTime @default(now()) @map("issued_at") @db.Timestamptz(6)
+
+  user  Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trail Trail   @relation(fields: [trailId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([trailId])
+  @@map("trail_certificates")
+}
+
+model TrailQuizAttempt {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  trailId       String   @map("trail_id") @db.Uuid
+  score         Float
+  passed        Boolean
+  attemptNumber Int      @map("attempt_number")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user    Profile                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trail   Trail                    @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  answers TrailQuizAttemptAnswer[]
+
+  @@index([userId])
+  @@index([trailId])
+  @@map("trail_quiz_attempts")
+}
+
+model TrailQuizAttemptAnswer {
+  id             String           @id @default(uuid()) @db.Uuid
+  attemptId      String           @map("attempt_id") @db.Uuid
+  questionId     String           @map("question_id") @db.Uuid
+  selectedOption String           @map("selected_option")
+  isCorrect      Boolean          @map("is_correct")
+
+  attempt  TrailQuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([attemptId])
+  @@index([questionId])
+  @@map("trail_quiz_attempt_answers")
 }
 
 model Question {
@@ -198,9 +287,11 @@ model Question {
   answer    String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  course         Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  attemptAnswers QuizAttemptAnswer[]
+  course              Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attemptAnswers      QuizAttemptAnswer[]
+  trailAttemptAnswers TrailQuizAttemptAnswer[]
 
+  @@index([courseId])
   @@map("questions")
 }
 
@@ -217,6 +308,8 @@ model QuizAttempt {
   course  Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
   answers QuizAttemptAnswer[]
 
+  @@index([userId])
+  @@index([courseId])
   @@map("quiz_attempts")
 }
 
@@ -230,6 +323,8 @@ model QuizAttemptAnswer {
   attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
+  @@index([attemptId])
+  @@index([questionId])
   @@map("quiz_attempt_answers")
 }
 
@@ -241,6 +336,8 @@ model QuizExtraAttempt {
   used      Boolean  @default(false)
   grantedAt DateTime @default(now()) @map("granted_at") @db.Timestamptz(6)
 
+  @@index([userId])
+  @@index([courseId])
   @@map("quiz_extra_attempts")
 }
 
@@ -289,5 +386,20 @@ model RoadmapItem {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   roadmap     Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
 
+  @@index([roadmapId])
   @@map("roadmap_items")
+}
+
+model ApiToken {
+  id          String    @id @default(cuid())
+  name        String
+  tokenHash   String    @unique @map("token_hash")
+  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz(6)
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz(6)
+  isActive    Boolean   @default(true) @map("is_active")
+  createdById String    @map("created_by_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("api_tokens")
 }

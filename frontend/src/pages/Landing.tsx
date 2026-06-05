@@ -4,9 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTheme } from "@/lib/theme";
 import { usePlatformSettings } from "@/lib/settings";
-import { PlayCircle, ArrowRight, CheckCircle2, ChevronRight, Users, Layout, Moon, Sun, GraduationCap, FileText, MessageSquare, BookOpen, Link as LinkIcon, ArrowUp, ChevronDown } from "lucide-react";
+import { PlayCircle, ArrowRight, CheckCircle2, ChevronRight, Users, Layout, Moon, Sun, GraduationCap, FileText, MessageSquare, BookOpen, Link as LinkIcon, ArrowUp, ChevronDown, Newspaper } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { API_BASE_URL } from "@/lib/api";
+import { ChangelogModal, useChangelogBadge } from "@/components/ChangelogModal";
+import totvsLight from "@/assets/icons/totvs-dark.svg";
+import totvsDark from "@/assets/icons/totvs.svg";
 
 // Gradientes de fallback usados quando o curso não possui capa cadastrada
 const GRADIENT_COVERS = [
@@ -33,6 +36,8 @@ export function LandingPage() {
   const [courses, setCourses] = useState<PreviewCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [changelogOpen, setChangelogOpen] = useState(false);
+  const { latestVersion, hasNew, markSeen } = useChangelogBadge();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -65,16 +70,18 @@ export function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center">
-              <img
-                src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : "/src/assets/icons/suri-blue.svg") : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : "/src/assets/icons/suri-white.svg")}
-                alt="Universidade Suri"
-                className="h-8 w-auto"
-              />
+              <button onClick={scrollToTop} className="cursor-pointer">
+                <img
+                  src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : "/src/assets/icons/suri-blue.svg") : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : "/src/assets/icons/suri-white.svg")}
+                  alt="Universidade Suri"
+                  className="h-8 w-auto"
+                />
+              </button>
             </div>
             
             <div className="hidden md:flex items-center gap-6">
-              <a href="#cursos" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Cursos</a>
               <a href="#sobre" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Sobre</a>
+              <a href="#cursos" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Cursos</a>
               <a href="#instrutores" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Instrutores</a>
               
               {/* Dropdown Soluções */}
@@ -180,10 +187,10 @@ export function LandingPage() {
               >
                 {isLight ? <Moon className="size-4" /> : <Sun className="size-4" />}
               </Button>
-              <Button variant="ghost" asChild className="hidden sm:inline-flex font-semibold">
+              <Button variant="ghost" asChild className="hidden sm:inline-flex font-semibold hover:bg-primary/10 transition-all duration-200">
                 <Link to="/login">Entrar</Link>
               </Button>
-              <Button asChild className="bg-gradient-hero text-snow border-border hover:shadow-glow font-bold">
+              <Button asChild className="bg-gradient-hero text-snow border-0 shadow-md hover:shadow-glow hover:scale-[1.03] font-bold transition-all duration-300">
                 <Link to="/signup">Comece agora</Link>
               </Button>
             </div>
@@ -193,9 +200,12 @@ export function LandingPage() {
 
       <main>
         {/* Hero Section */}
-        <section className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 min-h-[calc(100vh-4rem)] flex items-center justify-center overflow-hidden">
+        <section className="relative pt-20 pb-32 lg:pt-32 lg:pb-40 min-h-screen flex items-center justify-center overflow-hidden">
           <img
-            src={settings?.logo_collapsed_dark ? `${API_BASE_URL}${settings.logo_collapsed_dark}` : "/totvs.svg"}
+            src={isLight
+              ? (settings?.logo_collapsed_dark ? `${API_BASE_URL}${settings.logo_collapsed_dark}` : totvsLight)
+              : (settings?.logo_collapsed_light ? `${API_BASE_URL}${settings.logo_collapsed_light}` : totvsDark)
+            }
             className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full pointer-events-none select-none rotate-[20deg] ${
               isLight
                 ? "opacity-[0.12] max-w-[1400px]"
@@ -206,22 +216,21 @@ export function LandingPage() {
           />
           <div className="container relative mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <div className="mx-auto max-w-3xl fade-in-up">
-              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-sm font-medium text-primary mb-8">
-                <span className="flex size-2 rounded-full bg-primary mr-2 animate-pulse"></span>
-                A nova forma de aprender na prática
-              </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground mb-6">
-                Transforme conhecimento em <span className="text-gradient">resultados reais.</span>
+                Aprenda na prática com quem faz na vida real
               </h1>
               <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-                A plataforma completa de educação corporativa para desenvolver as habilidades 
-                que o mercado mais valoriza, com metodologia eficiente e certificação oficial.
+                Transforme conhecimento em resultados reais.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Button asChild size="lg" className="w-full sm:w-auto h-14 px-8 text-base bg-gradient-hero text-snow shadow-glow hover:shadow-lg transition-all">
+                <Button asChild size="lg" className="w-full sm:w-auto h-14 px-10 text-base bg-gradient-hero text-snow shadow-glow hover:shadow-lg hover:scale-[1.03] transition-all duration-300">
                   <Link to="/signup">Criar conta grátis <ArrowRight className="ml-2 size-5" /></Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="w-full sm:w-auto h-14 px-8 text-base border-border bg-background/50">
+                <Button asChild size="lg" variant="outline" className={`w-full sm:w-auto h-14 px-10 text-base font-semibold transition-all duration-300 hover:scale-[1.03] ${
+                  isLight
+                    ? "border-foreground/20 bg-white/80 text-foreground hover:bg-white hover:border-primary hover:text-primary shadow-sm hover:shadow-md"
+                    : "border-border/60 bg-white/5 text-snow hover:bg-white/10 hover:border-primary/60 shadow-sm hover:shadow-md"
+                }`}>
                   <Link to="/login">Já tenho uma conta</Link>
                 </Button>
               </div>
@@ -378,23 +387,48 @@ export function LandingPage() {
         <section id="instrutores" className="py-24 bg-muted/20 border-t border-border/50">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-16 fade-in-up">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Conheça nossos Instrutores</h2>
+              <h2 className="text-3xl font-bold text-foreground mb-4">Conheça alguns de nossos Instrutores</h2>
               <p className="text-muted-foreground text-lg">
                 Aprenda com especialistas que vivenciam na prática os desafios do mercado de atendimento e IA.
               </p>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[1, 2, 3, 4].map((i) => (
-                <Card key={i} className="p-6 text-center border-border bg-card shadow-elegant hover:shadow-glow transition-all">
-                  <div className="size-24 mx-auto rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 mb-4 overflow-hidden border-2 border-primary/20">
-                    <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=Instrutor${i+10}`} alt="Instrutor" className="w-full h-full object-cover" />
+              {[
+                {
+                  foto: "/src/assets/img/foto-ph.png",
+                  nome: "Felipe Godoy",
+                  titulo: "CEO & Co-Founder da Suri",
+                },
+                {
+                  foto: "/src/assets/img/foto-ph.png",
+                  nome: "Instrutor 2",
+                  titulo: "Especialista em IA",
+                },
+                {
+                  foto: "/src/assets/img/foto-ph.png",
+                  nome: "Instrutor 3",
+                  titulo: "Head de Vendas",
+                },
+                {
+                  foto: "/src/assets/img/foto-ph.png",
+                  nome: "Instrutor 4",
+                  titulo: "Especialista em Atendimento",
+                },
+              ].map((instrutor, i) => (
+                <Card key={i} className="group p-6 text-center border-border bg-card shadow-elegant hover:shadow-glow hover:-translate-y-1 transition-all duration-300">
+                  <div className="relative size-28 mx-auto mb-5">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary via-cyan-accent to-primary opacity-60 group-hover:opacity-100 transition-opacity duration-300 blur-[2px]" />
+                    <div className="relative size-28 rounded-full overflow-hidden border-2 border-background shadow-lg">
+                      <img 
+                        src={instrutor.foto} 
+                        alt={instrutor.nome} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                      />
+                    </div>
                   </div>
-                  <h3 className="text-lg font-bold mb-1">Instrutor {i}</h3>
-                  <p className="text-xs text-primary font-medium mb-3 uppercase tracking-wider">Especialista</p>
-                  <p className="text-sm text-muted-foreground line-clamp-3">
-                    Profissional com vasta experiência em estruturação de processos de vendas e suporte utilizando inteligência artificial.
-                  </p>
+                  <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">{instrutor.nome}</h3>
+                  <p className="text-xs text-primary font-semibold uppercase tracking-wider">{instrutor.titulo}</p>
                 </Card>
               ))}
             </div>
@@ -454,15 +488,29 @@ export function LandingPage() {
           </div>
           <div className="pt-8 border-t border-border/50 text-center md:text-left text-xs text-muted-foreground flex flex-col md:flex-row justify-between items-center gap-4">
             <p>© {new Date().getFullYear()} Universidade Suri. Todos os direitos reservados.</p>
+            {latestVersion && (
+              <button
+                onClick={() => { setChangelogOpen(true); markSeen(); }}
+                className="relative inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Newspaper className="size-3.5" />
+                <span>v{latestVersion}</span>
+                {hasNew && (
+                  <span className="absolute -top-1 -right-1 size-2 rounded-full bg-secondary ring-2 ring-background" />
+                )}
+              </button>
+            )}
           </div>
         </div>
       </footer>
+
+      <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
 
       {/* Botão de voltar ao topo */}
       <Button
         size="icon"
         onClick={scrollToTop}
-        className={`fixed bottom-8 right-8 z-50 rounded-full shadow-glow bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 ${
+        className={`fixed bottom-24 right-8 z-50 rounded-full shadow-glow bg-primary text-primary-foreground hover:bg-primary/90 transition-all duration-300 ${
           showScrollTop ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10 pointer-events-none"
         }`}
         aria-label="Voltar ao topo"

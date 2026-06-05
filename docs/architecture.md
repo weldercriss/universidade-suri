@@ -12,8 +12,8 @@ A Universidade Suri é uma plataforma EAD com gamificação e comunidade social.
 universidade-suri/
 ├── backend/      → API REST (NestJS + Prisma + PostgreSQL)
 ├── frontend/     → SPA (React + Vite + Tailwind + shadcn/ui)
-├── nginx/        → Proxy reverso de produção
-└── docs/         → Documentação técnica
+├── docs/         → Documentação técnica
+└── docker-compose.yml
 ```
 
 ---
@@ -22,15 +22,15 @@ universidade-suri/
 
 ```mermaid
 graph TB
-    subgraph Cliente
-        Browser["🌐 Browser"]
+    subgraph Clientes
+        Browser["🌐 Browser\n(Usuário/Admin)"]
+        External["🔌 Sistema Externo\n(API Token)"]
     end
 
     subgraph Produção
-        Nginx["Nginx\nProxy Reverso + SSL"]
-
         subgraph Frontend
             React["React SPA\nVite + Tailwind"]
+            Webchat["🗨️ Webchat\nChatbotMaker (CBM)"]
         end
 
         subgraph Backend
@@ -41,11 +41,12 @@ graph TB
         DB[("PostgreSQL\n16-alpine")]
     end
 
-    Browser --> Nginx
-    Nginx -->|"/ (SPA)"| React
-    Nginx -->|"/api/*"| NestJS
+    Browser --> React
+    React -->|"REST API :3000 (JWT)"| NestJS
+    External -->|"REST API :3000 (API Token)"| NestJS
     NestJS --> Prisma
     Prisma --> DB
+    React --> Webchat
 ```
 
 ---
@@ -63,8 +64,8 @@ graph LR
 
     subgraph "Infrastructure (Implementações)"
         DB["Prisma Repositories"]
-        HTTP["Controllers"]
-        Auth["JWT Strategy"]
+        HTTP["Controllers + DTOs"]
+        Auth["JWT Strategy\nApiToken Strategy"]
     end
 
     HTTP --> RI
@@ -79,32 +80,110 @@ graph LR
 |---|---|---|
 | **Domain** | `src/domain/entities/` | Entidades de negócio (User, Course, Post, Certificate) |
 | **Domain** | `src/domain/repositories/` | Interfaces/contratos dos repositórios |
-| **Infrastructure** | `src/infrastructure/database/` | PrismaService + implementações concretas dos repositórios |
-| **Infrastructure** | `src/infrastructure/http/controllers/` | Controllers REST (auth, courses, enrollment, certificate, post) |
-| **Infrastructure** | `src/infrastructure/http/strategies/` | JWT authentication strategy (Passport.js) |
-| **Bootstrap** | `src/main.ts` | Configuração de CORS, Swagger, porta |
-| **Config** | `src/app.module.ts` | Wiring de DI (bind interfaces → implementações) |
-
-### Entidades do Domínio
-
-| Entidade | Arquivo | Descrição |
-|---|---|---|
-| `User` | `user.entity.ts` | Perfil do usuário com XP, nível, tier |
-| `Course` | `course.entity.ts` | Curso com módulos e recompensa XP |
-| `Post` | `post.entity.ts` | Post da comunidade com likes e comentários |
-| `Certificate` | `certificate.entity.ts` | Certificado com código de verificação |
+| **Infrastructure** | `src/infrastructure/database/` | PrismaService + repositórios concretos |
+| **Infrastructure** | `src/infrastructure/http/controllers/` | Controllers REST (13 controllers) |
+| **Infrastructure** | `src/infrastructure/http/dtos/` | DTOs com class-validator |
+| **Infrastructure** | `src/infrastructure/http/strategies/` | JwtStrategy + ApiTokenStrategy (Passport.js) |
+| **Infrastructure** | `src/infrastructure/http/guards/` | ApiTokenGuard |
+| **Bootstrap** | `src/main.ts` | CORS, Helmet, ValidationPipe, Swagger, body limit |
+| **Config** | `src/app.module.ts` | DI binding, ThrottlerModule, JwtModule |
 
 ### Repositórios
 
 | Interface | Implementação | Descrição |
 |---|---|---|
-| `IUserRepository` | `PrismaUserRepository` | CRUD de perfis e autenticação |
-| `ICourseRepository` | `PrismaCourseRepository` | Cursos, módulos, matrículas, certificados |
+| `IUserRepository` | `PrismaUserRepository` | CRUD de perfis, leaderboard, auth |
+| `ICourseRepository` | `PrismaCourseRepository` | Cursos, aulas, matrículas, certificados |
 | `IPostRepository` | `PrismaPostRepository` | Posts, likes, comentários da comunidade |
+| `IRoadmapRepository` | `PrismaRoadmapRepository` | Roadmaps e itens |
+
+### Controllers (13 no total)
+
+| Controller | Prefixo | Auth | Descrição |
+|---|---|---|---|
+| `AuthController` | `/auth` | JWT | Login, signup, perfil, usuários |
+| `CourseController` | `/courses` | JWT / Admin | CRUD de cursos e aulas |
+| `EnrollmentController` | `/enrollments` | JWT | Matrículas e progresso |
+| `CertificateController` | `/certificates` | JWT / Admin | Emissão e validação |
+| `QuizController` | `/quiz` | JWT / Admin | Questões e tentativas |
+| `TrailController` | `/trails` | JWT / Admin | Trilhas e exame final |
+| `PostController` | `/posts` | JWT | Comunidade de projetos |
+| `RoadmapController` | `/roadmaps` | JWT / Admin | Roadmaps de aprendizado |
+| `SettingsController` | `/settings` | Público / Admin | Configurações globais e logos |
+| `AdminGroupsController` | `/admin/groups` | Admin | Regras de tier por XP |
+| `AdminReportsController` | `/admin/reports` | Admin | Relatórios analíticos |
+| `AdminApiTokenController` | `/admin/api-tokens` | Admin | Gerenciar tokens de API externa |
+| `ExternalApiController` | `/external` | API Token | Endpoints para sistemas externos |
 
 ---
 
-## Modelo de Dados
+## API Externa (Integração com Sistemas Externos)
+
+O backend expõe um conjunto separado de endpoints (`/external/*`) autenticado por **token de API** (não JWT), permitindo integração com sistemas externos como CRMs, painéis e automações.
+
+```mermaid
+sequenceDiagram
+    participant S as Sistema Externo
+    participant B as Backend API
+    participant DB as PostgreSQL
+
+    S->>B: GET /external/stats\nAuthorization: Bearer suri_<token>
+    B->>B: ApiTokenStrategy:\n1. Extrai token do header\n2. Hash SHA256\n3. Busca ApiToken no banco
+    alt Token válido e ativo
+        B->>DB: Consulta dados
+        DB-->>B: Resultado
+        B-->>S: JSON com dados
+    else Token inválido/expirado
+        B-->>S: 401 Unauthorized
+    end
+```
+
+### Endpoints da API Externa
+
+| Método | Rota | Descrição |
+|---|---|---|
+| GET | `/external/stats` | Totais: usuários, cursos, trilhas, matrículas, certificados |
+| GET | `/external/leaderboard` | Top usuários por XP (`?limit=50&groupType=embaixador`) |
+| GET | `/external/users` | Listagem com filtros avançados |
+| GET | `/external/users/newsletter` | Assinantes da newsletter |
+| GET | `/external/users/:id` | Detalhes completos de um usuário |
+| GET | `/external/courses` | Cursos (`?all=true` inclui não-publicados) |
+| GET | `/external/courses/:id` | Detalhes com módulos e contadores |
+| GET | `/external/trails` | Trilhas com contadores |
+| GET | `/external/trails/:id` | Detalhes com cursos da trilha |
+| GET | `/external/enrollments` | Matrículas com filtros (`?userId&courseId&completed`) |
+| GET | `/external/enrollments/user/:userId` | Matrículas de um usuário |
+| GET | `/external/enrollments/course/:courseId` | Matrículas de um curso |
+| GET | `/external/certificates` | Certificados com filtros |
+| GET | `/external/certificates/validate/:code` | Validação pública de certificado |
+| GET | `/external/certificates/user/:userId` | Certificados (cursos + trilhas) de um usuário |
+
+---
+
+## Webchat (Balão de Suporte)
+
+O frontend integra o **ChatbotMaker (CBM)** como canal de suporte via widget flutuante.
+
+```
+index.html
+└── <script> window.cbAsyncInit
+    ├── CBM.ChatbotId = "cb11077427"
+    ├── Lê dados do usuário de localStorage["nimbus_user"]
+    └── CBM.StartWebChat(chatUser, false, null)
+```
+
+### Comportamento por dispositivo
+
+| Dispositivo | Comportamento |
+|---|---|
+| **Desktop** | Botão flutuante visível com opacidade 0.45 → 1.0 no hover |
+| **Mobile** | Botão flutuante oculto quando fechado; acesso via ícone `MessageCircle` no header; quando aberto, reposicionado acima da bottom nav (`bottom: 80px`) |
+
+O botão no header mobile faz `document.querySelector('.__talkjs_launcher')?.click()` para acionar o widget.
+
+---
+
+## Modelo de Dados (Principais Entidades)
 
 ```mermaid
 erDiagram
@@ -113,44 +192,37 @@ erDiagram
         string name
         string email UK
         string passwordHash
-        string avatarUrl
+        string profileImage
         string groupType
         string tier
         int xp
         int level
         boolean isAdmin
         boolean isActive
+        boolean newsletter
         datetime createdAt
     }
 
     Course {
         uuid id PK
         string title
-        string description
-        int workloadHours
-        int xpReward
-        string coverUrl
         string targetGroup
         boolean isPublished
-        datetime createdAt
+        int xpReward
     }
 
     Module {
         uuid id PK
         uuid courseId FK
         string title
-        string description
-        string content
         string videoUrl
         int sortOrder
-        datetime createdAt
     }
 
     Enrollment {
         uuid id PK
         uuid userId FK
         uuid courseId FK
-        datetime enrolledAt
         datetime completedAt
     }
 
@@ -159,7 +231,6 @@ erDiagram
         uuid enrollmentId FK
         uuid moduleId FK
         boolean isCompleted
-        datetime completedAt
     }
 
     Certificate {
@@ -167,45 +238,56 @@ erDiagram
         uuid userId FK
         uuid courseId FK
         string verificationCode UK
-        datetime issuedAt
+    }
+
+    Trail {
+        uuid id PK
+        string name
+        string targetGroup
+    }
+
+    Roadmap {
+        uuid id PK
+        string title
+        boolean isActive
+        int sortOrder
+    }
+
+    SystemSetting {
+        uuid id PK
+        string key UK
+        string value
     }
 
     Post {
         uuid id PK
         uuid authorId FK
+        uuid courseId FK
         string title
         string body
-        datetime createdAt
     }
 
-    PostLike {
+    ApiToken {
         uuid id PK
-        uuid postId FK
-        uuid userId FK
-        datetime createdAt
-    }
-
-    PostComment {
-        uuid id PK
-        uuid postId FK
-        uuid userId FK
-        string content
-        datetime createdAt
+        string name
+        string tokenHash UK
+        boolean isActive
+        datetime expiresAt
+        datetime lastUsedAt
+        uuid createdById FK
     }
 
     Profile ||--o{ Enrollment : "matricula"
     Profile ||--o{ Certificate : "recebe"
     Profile ||--o{ Post : "escreve"
-    Profile ||--o{ PostLike : "curte"
-    Profile ||--o{ PostComment : "comenta"
+    Profile ||--o{ ApiToken : "cria"
     Course ||--o{ Module : "contém"
     Course ||--o{ Enrollment : "tem"
-    Course ||--o{ Certificate : "gera"
     Enrollment ||--o{ ModuleProgress : "rastreia"
-    Module ||--o{ ModuleProgress : "progresso"
-    Post ||--o{ PostLike : "recebe"
-    Post ||--o{ PostComment : "tem"
+    Roadmap ||--o{ RoadmapItem : "contém"
 ```
+
+> Diagrama simplificado. Ver `docs/project-architecture.md` para referência completa de todos os modelos.
 
 ---
 
@@ -213,51 +295,61 @@ erDiagram
 
 ```
 frontend/src/
-├── App.tsx              # Router principal com rotas protegidas
-├── main.tsx             # Entry point (React DOM + providers)
+├── App.tsx                  # Router principal com guards de auth e admin
+├── main.tsx                 # Entry point (React DOM + providers)
 ├── components/
-│   ├── ui/              # Componentes shadcn/ui (Button, Card, Dialog...)
-│   ├── app-shell.tsx    # Layout com Navbar e Sidebar
-│   └── AvatarCreator.tsx
-├── pages/               # Uma página por rota
-│   ├── Login.tsx
-│   ├── SignUp.tsx
-│   ├── Dashboard.tsx
-│   ├── CoursesList.tsx
-│   ├── CoursePlayer.tsx
-│   ├── Community.tsx
-│   ├── Leaderboard.tsx
-│   ├── Profile.tsx
-│   ├── Settings.tsx
-│   ├── AdminPanel.tsx
-│   ├── Certificate.tsx
-│   └── Projects.tsx
+│   ├── ui/                  # Componentes shadcn/ui (Button, Card, Switch, Dialog...)
+│   ├── app-shell.tsx        # Layout: sidebar desktop + header mobile + navegação + botão webchat
+│   ├── UserAvatar.tsx       # Avatar de usuário (foto ou iniciais, controlado por setting)
+│   └── QuizModal.tsx        # Modal de quiz de curso
+├── pages/
+│   ├── Landing.tsx          # Página pública de apresentação
+│   ├── Login.tsx / SignUp.tsx
+│   ├── Dashboard.tsx        # Home: stats, cursos em andamento, top ranking
+│   ├── CoursesList.tsx      # Listagem de cursos disponíveis
+│   ├── CoursePlayer.tsx     # Player + quiz + aba comunidade do curso
+│   ├── Leaderboard.tsx      # Ranking com fotos ou iniciais
+│   ├── Roadmap.tsx          # Roadmaps (polling 30s para tempo real)
+│   ├── TrailsList.tsx       # Trilhas de aprendizado
+│   ├── Profile.tsx          # Perfil, certificados, histórico
+│   ├── Settings.tsx         # Configurações pessoais + links admin
+│   ├── Certificate.tsx      # Certificado público por código
+│   ├── AdminPanel.tsx       # Usuários + toggle de fotos de perfil
+│   ├── AdminCourses.tsx     # CRUD de cursos e aulas
+│   ├── AdminRoadmap.tsx     # CRUD de roadmaps
+│   ├── AdminApiTokens.tsx   # Gerenciar tokens de API externa
+│   └── (AdminGroups, AdminReports, AdminLogos, AdminQuizzes, AdminNewsletter)
 ├── lib/
-│   ├── api.ts           # Client HTTP (fetch wrapper)
-│   ├── auth.tsx         # AuthProvider (contexto + login/signup/logout)
-│   ├── theme.tsx        # ThemeProvider (dark/light mode)
-│   └── utils.ts         # cn() helper
+│   ├── api.ts               # apiRequest() e apiUpload() com Bearer token
+│   ├── auth.tsx             # AuthProvider: login, logout, signup, refreshProfile
+│   ├── settings.tsx         # SettingsProvider: configurações globais com polling 60s
+│   └── theme.tsx            # ThemeProvider: dark/light mode
 ├── hooks/
-│   └── use-mobile.tsx   # Hook para detectar mobile
-└── styles.css           # Estilos globais + Tailwind
+│   ├── useCachedRequest.ts  # Cache GET com TTL (Map global, limpo no logout)
+│   └── use-mobile.tsx       # Detecta viewport mobile
+└── styles.css               # Tokens CSS, animações, breakpoints mobile
 ```
 
 ### Rotas
 
 | Rota | Página | Acesso |
 |---|---|---|
+| `/` | Landing | 🌐 Público |
 | `/login` | Login | 🌐 Público |
 | `/signup` | Cadastro | 🌐 Público |
-| `/certificado/:codigo` | Verificação de certificado | 🌐 Público |
-| `/` | Dashboard | 🔒 Autenticado |
+| `/certificado/:codigo` | Verificação | 🌐 Público |
+| `/dashboard` | Dashboard | 🔒 Autenticado |
 | `/cursos` | Lista de cursos | 🔒 Autenticado |
 | `/cursos/:courseId` | Player do curso | 🔒 Autenticado |
-| `/comunidade` | Feed da comunidade | 🔒 Autenticado |
-| `/projetos` | Projetos | 🔒 Autenticado |
 | `/ranking` | Leaderboard | 🔒 Autenticado |
-| `/perfil` | Perfil do usuário | 🔒 Autenticado |
+| `/roadmap` | Roadmaps | 🔒 Autenticado |
+| `/trilhas` | Trilhas | 🔒 Autenticado |
+| `/perfil` | Perfil | 🔒 Autenticado |
 | `/configuracoes` | Configurações | 🔒 Autenticado |
 | `/admin` | Painel admin | 🔒 Admin |
+| `/admin/cursos` | Gerenciar cursos | 🔒 Admin |
+| `/admin/roadmap` | Gerenciar roadmaps | 🔒 Admin |
+| `/admin/api-tokens` | Tokens de API | 🔒 Admin |
 
 ---
 
@@ -272,17 +364,19 @@ sequenceDiagram
 
     U->>F: Preenche email + senha
     F->>B: POST /auth/login {email, password}
+    B->>B: Valida LoginDto (class-validator)
     B->>DB: Busca usuário por email
     DB-->>B: Profile (com passwordHash)
     B->>B: bcrypt.compare(password, hash)
     alt Senha correta
-        B->>B: Gera JWT (access + refresh)
-        B-->>F: {token, user} + Set-Cookie (refresh)
-        F->>F: Salva token em memória
+        B->>B: Gera JWT (7 dias)
+        B-->>F: {token, user}
+        F->>F: localStorage["suri_token"] = token
+        F->>F: localStorage["nimbus_user"] = user
         F->>U: Redireciona para /dashboard
     else Senha incorreta
         B-->>F: 401 Unauthorized
-        F->>U: Exibe erro
+        F->>U: Exibe erro via toast
     end
 ```
 
@@ -290,42 +384,40 @@ sequenceDiagram
 
 ## Gamificação
 
-O sistema de gamificação funciona com:
-
 | Conceito | Descrição |
 |---|---|
-| **XP** | Pontos de experiência ganhos ao completar módulos e cursos |
-| **Level** | Nível baseado no XP acumulado (1000 XP por nível) |
-| **Tier** | Classificação especial (ex: "Embaixador Voice", "Embaixador Elite") |
-| **Certificado** | Emitido ao completar 100% de um curso |
+| **XP** | Ganho ao completar módulos, cursos e passar em exames de trilha (+200 XP) |
+| **Level** | 1 nível por 1000 XP acumulados (`Math.floor(xp / 1000) + 1`) |
+| **Tier** | Classificação especial definida por regras de XP em `GroupRule` |
+| **Certificado de Curso** | Emitido ao completar 100% + passar no quiz (código `UNISURI-XXXXXX`) |
+| **Certificado de Trilha** | Emitido ao passar no exame final (≥70%), código `SURI-TR-XXXXXX` |
+| **Admin** | Não acumula XP (`addXp()` retorna sem efeito para admins) |
 
 ---
 
 ## Stack Tecnológico
 
-| Componente | Tecnologia | Versão |
-|---|---|---|
-| Frontend Framework | React | 19 |
-| Build Tool | Vite | 7 |
-| CSS Framework | Tailwind CSS | 4 |
-| UI Components | shadcn/ui (Radix) | — |
-| Formulários | React Hook Form + Zod | — |
-| Roteamento | React Router | 6 |
-| Backend Framework | NestJS | 10 |
-| ORM | Prisma | 5 |
-| Database | PostgreSQL | 16 |
-| Auth | JWT + Passport.js | — |
-| API Docs | Swagger | — |
-| Container | Docker + Docker Compose | — |
-| CI/CD | GitHub Actions | — |
+| Componente | Tecnologia |
+|---|---|
+| Frontend Framework | React 18 + TypeScript |
+| Build Tool | Vite (porta 5175) |
+| CSS Framework | Tailwind CSS v4 |
+| UI Components | shadcn/ui |
+| Roteamento | React Router v6 |
+| Webchat | ChatbotMaker (CBM) via `webchat.chatbotmaker.io/cbm-jssdk.js` |
+| Backend Framework | NestJS 10 |
+| ORM | Prisma 5 |
+| Database | PostgreSQL 16 |
+| Auth (usuários) | JWT 7d + Passport.js + bcrypt(10) |
+| Auth (API externa) | Token SHA256 + `passport-custom` |
+| Segurança | helmet, @nestjs/throttler, class-validator |
+| API Docs | Swagger (`/api/docs`) |
+| Container | Docker + Docker Compose |
 
 ---
 
 ## Referências
 
-- [ADR 001 — JWT Storage Strategy](adr/001-jwt-storage-strategy.md)
-- [ADR 002 — Clean Architecture](adr/002-clean-architecture-backend.md)
-- [ADR 003 — Tailwind + shadcn/ui](adr/003-tailwind-shadcn-ui.md)
-- [ADR 004 — Prisma ORM](adr/004-prisma-orm.md)
-- [Guia de Deploy](deploy-guide.md)
+- [Documentação Técnica Detalhada](project-architecture.md)
 - [Guia de Segurança](security.md)
+- [Guia de Deploy](deploy-guide.md)

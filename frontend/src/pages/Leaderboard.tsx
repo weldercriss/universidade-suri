@@ -2,8 +2,11 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { apiRequest } from "@/lib/api";
+import { usePlatformSettings } from "@/lib/settings";
+import { UserAvatar } from "@/components/UserAvatar";
 import { Card } from "@/components/ui/card";
-import { Trophy, Crown, Medal, Sparkles, Loader2, Filter } from "lucide-react";
+import { Sparkles, Loader2, Filter, Trophy } from "lucide-react";
+import { GoldMedal, SilverMedal, BronzeMedal } from "@/components/ranking-icons";
 
 interface LeaderboardEntry {
   id: string;
@@ -17,6 +20,9 @@ interface LeaderboardEntry {
 
 export function LeaderboardPage() {
   const { user } = useAuth();
+  const { settings } = usePlatformSettings();
+  const showUserPhotos = settings.show_user_photos !== "false";
+
   const [list, setList] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<string>("all");
@@ -49,7 +55,7 @@ export function LeaderboardPage() {
   const podium = list.slice(0, 3);
   const rest = list.slice(3);
 
-  const podiumIcons = [Crown, Trophy, Medal];
+  const podiumIcons = [GoldMedal, SilverMedal, BronzeMedal];
   const podiumColors = ["text-secondary", "text-primary", "text-secondary/80"];
 
   const filters = [
@@ -100,14 +106,20 @@ export function LeaderboardPage() {
         </Card>
       ) : (
         <>
-          <div className="grid md:grid-cols-3 gap-4 mb-8 stagger-children">
+          <div className="grid md:grid-cols-3 gap-5 mb-8 stagger-children">
             {podium.map((r, i) => {
-              const Icon = podiumIcons[i] as any;
+              const Icon = podiumIcons[i]!;
               return (
                 <Card key={r.id} className={`bg-gradient-card border-border p-6 text-center shadow-elegant hover-lift ${i === 0 ? "pulse-glow border-primary/40 md:order-2 md:-mt-4" : i === 1 ? "md:order-1" : "md:order-3"}`}>
-                  <Icon className={`mx-auto size-8 ${podiumColors[i]}`} />
-                  <div className="mt-3 size-16 rounded-full bg-gradient-hero grid place-items-center mx-auto text-lg font-bold text-snow overflow-hidden">
-                    {r.name.substring(0, 2).toUpperCase()}
+                  <Icon size={40} className={`mx-auto ${podiumColors[i]}`} />
+                  <div className="mt-3 mx-auto">
+                    <UserAvatar
+                      name={r.name}
+                      profileImage={r.profileImage}
+                      showPhoto={showUserPhotos}
+                      size="xl"
+                      className="mx-auto text-lg font-bold"
+                    />
                   </div>
                   <div className="mt-3 font-bold text-gradient">{r.name}</div>
                   <div className="text-xs text-muted-foreground">{r.tier}</div>
@@ -121,11 +133,14 @@ export function LeaderboardPage() {
           {rest.length > 0 && (
             <Card className="bg-gradient-card border-border divide-y divide-border shadow-elegant overflow-hidden">
               {rest.map((r, i) => (
-                <div key={r.id} className="flex items-center gap-4 p-4 hover:bg-muted/10 transition-smooth">
+                <div key={r.id} className="flex items-center gap-4 p-5 hover:bg-muted/10 transition-smooth">
                   <div className="w-8 text-center text-muted-foreground font-bold">#{i + 4}</div>
-                  <div className="size-10 rounded-full bg-gradient-hero grid place-items-center text-xs font-semibold text-snow overflow-hidden">
-                    {r.name.substring(0, 2).toUpperCase()}
-                  </div>
+                  <UserAvatar
+                    name={r.name}
+                    profileImage={r.profileImage}
+                    showPhoto={showUserPhotos}
+                    size="md"
+                  />
                   <div className="flex-1">
                     <div className="font-medium">{r.name}</div>
                     <div className="text-xs text-muted-foreground">{r.tier} · Nível {r.level}</div>

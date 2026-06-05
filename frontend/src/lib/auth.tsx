@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { apiRequest } from "./api";
+import { clearApiCache } from "@/hooks/useCachedRequest";
 import { toast } from "sonner";
 
 export type Group = "embaixador" | "vip" | "admin";
@@ -25,7 +26,7 @@ export interface MockUser {
 interface AuthCtx {
   user: MockUser | null;
   login: (email: string, password: string) => Promise<void>;
-  signup: (data: { name: string; email: string; password: string; group: Group; tier: Tier }) => Promise<void>;
+  signup: (data: { name: string; email: string; password: string; group: Group; tier: Tier; business?: string; phone?: string; newsletter?: boolean }) => Promise<void>;
   logout: () => void;
   switchGroup: (group: Group) => void;
   refreshProfile: () => Promise<void>;
@@ -107,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: data.user.isAdmin,
         profileImage: data.user.profileImage || null,
         business: data.user.business || "",
+        isFirstLogin: data.user.isFirstLogin ?? false,
       };
 
       setUser(mappedUser);
@@ -118,11 +120,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signup = async ({ name, email, password, group, tier, business, phone }: any) => {
+  const signup = async ({ name, email, password, group, tier, business, phone, newsletter }: any) => {
     try {
       const data = await apiRequest("/auth/signup", {
         method: "POST",
-        body: JSON.stringify({ name, email, password, group, tier, business, phone }),
+        body: JSON.stringify({ name, email, password, group, tier, business, phone, newsletter }),
       });
 
       localStorage.setItem(TOKEN_KEY, data.token);
@@ -141,6 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isAdmin: data.user.isAdmin,
         profileImage: data.user.profileImage || null,
         business: data.user.business || "",
+        isFirstLogin: data.user.isFirstLogin ?? true,
       };
 
       setUser(mappedUser);
@@ -156,6 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(TOKEN_KEY);
+    clearApiCache();
     toast.info("Sessão encerrada");
   };
 

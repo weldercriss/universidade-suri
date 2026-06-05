@@ -158,23 +158,20 @@ describe('EnrollmentController', () => {
         { id: 'm2', sortOrder: 1 },
       ]);
       prisma.moduleProgress.count.mockResolvedValue(2);
-      prisma.course.findUnique.mockResolvedValue({ xpReward: 200 });
 
       const out = await controller.completeLesson('m2', { user });
       expect(out.courseCompleted).toBe(true);
-      expect(out.message).toMatch(/\+200 XP/);
-      expect(userRepo.update).toHaveBeenCalled();
-      expect(user.xp).toBe(200);
+      // XP é concedido ao passar na prova, não ao concluir aulas
+      expect(out.message).toMatch(/prova/i);
     });
 
-    it('curso 100% concluído atualiza completedAt e adiciona XP do reward', async () => {
+    it('curso 100% concluído atualiza completedAt e orienta sobre a prova', async () => {
       const user = makeUser({ id: 'u1', xp: 50 });
       prisma.module.findUnique.mockResolvedValue({ id: 'm1', courseId: 'c1' });
       prisma.enrollment.findUnique.mockResolvedValue({ id: 'e1' });
       prisma.moduleProgress.findUnique.mockResolvedValueOnce(null);
       prisma.module.findMany.mockResolvedValue([{ id: 'm1', sortOrder: 0 }]);
       prisma.moduleProgress.count.mockResolvedValue(1);
-      prisma.course.findUnique.mockResolvedValue({ xpReward: 100 });
 
       const out = await controller.completeLesson('m1', { user });
       expect(out.courseCompleted).toBe(true);
@@ -182,7 +179,6 @@ describe('EnrollmentController', () => {
         where: { id: 'e1' },
         data: expect.objectContaining({ completedAt: expect.any(Date) }),
       }));
-      expect(user.xp).toBe(150);
     });
 
     it('aula já concluída retorna mensagem informativa', async () => {

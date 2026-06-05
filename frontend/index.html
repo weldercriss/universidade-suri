@@ -2,17 +2,66 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="/src/assets/icons/totvs.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/pwa-icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <meta name="theme-color" content="#4D4DFF" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <title>Universidade Suri</title>
     <!-- Sora Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="manifest" href="/manifest.json" />
+    <style>
+      /* Desktop: opacidade reduzida no launcher */
+      @media (min-width: 768px) {
+        .__talkjs_launcher {
+          opacity: 0.45;
+          transition: opacity 0.3s ease;
+        }
+        .__talkjs_launcher:hover {
+          opacity: 1;
+        }
+      }
+
+      /* Mobile: esconde o botão flutuante quando fechado (acesso via botão no header)
+         Quando aberto, reposiciona o X acima da bottom nav (68px) */
+      @media (max-width: 767px) {
+        .__talkjs_launcher.closed {
+          display: none !important;
+        }
+        .__talkjs_launcher.open {
+          bottom: 80px !important;
+        }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      window.cbAsyncInit = function () {
+        CBM.ChatbotId = "cb11077427";
+
+        var chatUser;
+        try {
+          var raw = localStorage.getItem("nimbus_user");
+          if (raw) {
+            var u = JSON.parse(raw);
+            chatUser = { name: u.name || undefined, email: u.email || undefined };
+          }
+        } catch (e) {}
+
+        CBM.StartWebChat(chatUser, false, null).catch(function () {});
+      };
+
+      (function (d, s, id) {
+        var js, fjs = d.getElementsByTagName(s)[0];
+        if (d.getElementById(id)) { return; }
+        js = d.createElement(s); js.id = id;
+        js.src = "https://webchat.chatbotmaker.io/cbm-jssdk.js";
+        fjs.parentNode.insertBefore(js, fjs);
+      }(document, 'script', 'cbm-jssdk'));
+    </script>
   </body>
 </html>

@@ -6,6 +6,7 @@ export class Lesson {
     public description: string,
     public content: string,
     public videoUrl: string,
+    public duration: string,
     public sortOrder: number,
   ) {}
 }

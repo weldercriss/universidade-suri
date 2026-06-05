@@ -1,14 +1,16 @@
 import { ForbiddenException } from '@nestjs/common';
 import { PostController } from '../../src/infrastructure/http/controllers/post.controller';
-import { buildPostRepoMock, makeAdmin, makePost, makeUser } from '../helpers/mocks';
+import { buildPostRepoMock, buildPrismaMock, makeAdmin, makePost, makeUser } from '../helpers/mocks';
 
 describe('PostController', () => {
   let repo: ReturnType<typeof buildPostRepoMock>;
+  let prisma: ReturnType<typeof buildPrismaMock>;
   let controller: PostController;
 
   beforeEach(() => {
     repo = buildPostRepoMock();
-    controller = new PostController(repo as any);
+    prisma = buildPrismaMock();
+    controller = new PostController(repo as any, prisma as any);
   });
 
   describe('listPosts', () => {

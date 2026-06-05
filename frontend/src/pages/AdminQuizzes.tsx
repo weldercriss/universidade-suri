@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { ClipboardList, BookOpen, Plus, Upload, Download, Loader2, CheckCircle2, Edit, Trash2, RefreshCw, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,6 +34,13 @@ export function AdminQuizzesPage() {
       { id: "d", text: "" },
     ],
     answer: "a",
+  });
+
+  // Confirm dialog state
+  const [confirmState, setConfirmState] = useState<{ open: boolean; title: string; onConfirm: () => void; description?: string }>({
+    open: false,
+    title: "",
+    onConfirm: () => {},
   });
 
   const fetchCourses = () => {
@@ -105,15 +113,21 @@ export function AdminQuizzesPage() {
     }
   };
 
-  const handleDeleteQuestion = async (questionId: string) => {
-    if (!confirm("Remover esta questão?")) return;
-    try {
-      await apiRequest(`/quiz/questions/${questionId}`, { method: "DELETE" });
-      toast.success("Questão removida");
-      fetchQuestions(selectedCourseId);
-    } catch {
-      toast.error("Erro ao remover questão");
-    }
+  const handleDeleteQuestion = (questionId: string) => {
+    setConfirmState({
+      open: true,
+      title: "Remover esta questão?",
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        try {
+          await apiRequest(`/quiz/questions/${questionId}`, { method: "DELETE" });
+          toast.success("Questão removida");
+          fetchQuestions(selectedCourseId);
+        } catch {
+          toast.error("Erro ao remover questão");
+        }
+      }
+    });
   };
 
   const handleDownloadSample = () => {
@@ -399,6 +413,13 @@ export function AdminQuizzesPage() {
           </form>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={confirmState.open}
+        onOpenChange={(open) => setConfirmState({ ...confirmState, open })}
+        title={confirmState.title}
+        description={confirmState.description}
+        onConfirm={confirmState.onConfirm}
+      />
     </AppShell>
   );
 }

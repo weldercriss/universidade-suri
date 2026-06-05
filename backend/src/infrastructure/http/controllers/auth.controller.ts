@@ -1,5 +1,7 @@
-import { Controller, Post, Body, Get, Put, Patch, Param, Query, UseGuards, Req, Inject, UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { Controller, Post, Body, Get, Put, Patch, Param, Query, UseGuards, Req, Inject, UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException, UseInterceptors, UploadedFile, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { IUserRepository } from '../../../domain/repositories/user.repository.interface';
 import { User } from '../../../domain/entities/user.entity';
 import * as bcrypt from 'bcrypt';
@@ -8,10 +10,15 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
+import * as nodeCrypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
+import { LoginDto, SignupDto } from '../dtos/auth.dto';
 
+@ApiTags('auth')
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     @Inject(IUserRepository)
     private readonly userRepository: IUserRepository,
@@ -19,8 +26,12 @@ export class AuthController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @ApiOperation({ summary: 'Login com e-mail e senha corporativo — retorna JWT e dados do usuário' })
+  @ApiResponse({ status: 201, description: '{ token, user }' })
+  @ApiResponse({ status: 401, description: 'Email/senha inválidos ou conta desativada' })
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('login')
-  async login(@Body() body: any) {
+  async login(@Body() body: LoginDto) {
     const { email, password } = body;
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
@@ -54,9 +65,13 @@ export class AuthController {
     };
   }
 
+  @ApiOperation({ summary: 'Cadastro de novo usuário — padrão embaixador/Embaixador Voice, ou admin se group=admin' })
+  @ApiResponse({ status: 201, description: '{ token, user }' })
+  @ApiResponse({ status: 400, description: 'E-mail já cadastrado' })
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post('signup')
-  async signup(@Body() body: any) {
-    const { name, email, password, group, tier, business, phone } = body;
+  async signup(@Body() body: SignupDto) {
+    const { name, email, password, group, tier, business, phone, newsletter } = body;
     const existing = await this.userRepository.findByEmail(email);
     if (existing) {
       throw new BadRequestException('E-mail já cadastrado');
@@ -66,7 +81,7 @@ export class AuthController {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const isSignupAdmin = group === 'admin' || body.isAdmin === true;
-    const resolvedGroup = isSignupAdmin ? 'admin' : (group || 'embaixador');
+    const resolvedGroup = (isSignupAdmin ? 'admin' : (group || 'embaixador')) as 'admin' | 'vip' | 'embaixador';
     const resolvedTier = isSignupAdmin ? 'ADMIN' : (tier || 'Embaixador Voice');
 
     const newUser = new User(
@@ -84,6 +99,7 @@ export class AuthController {
       null,
       business || '',
       phone || null,
+      newsletter || false,
     );
 
     const saved = await this.userRepository.create(newUser);
@@ -102,65 +118,14 @@ export class AuthController {
         isAdmin: saved.isAdmin,
         isActive: saved.isActive,
         profileImage: saved.profileImage,
+        isFirstLogin: true,
       },
     };
   }
 
-  @Post('google')
-  async googleLogin(@Body() body: any) {
-    const { token: googleToken, name, email } = body;
-    if (!email) {
-      throw new UnauthorizedException('Email do Google inválido');
-    }
-
-    let user = await this.userRepository.findByEmail(email);
-    if (!user) {
-      // Create user automatically
-      const randomPassword = Math.random().toString(36).substring(2, 15);
-      const salt = await bcrypt.genSalt(10);
-      const passwordHash = await bcrypt.hash(randomPassword, salt);
-
-      const newUser = new User(
-        crypto.randomUUID ? crypto.randomUUID() : 'user_' + Math.random().toString(36).substr(2, 9),
-        name || 'Usuário Google',
-        email,
-        passwordHash,
-        'embaixador',
-        'Embaixador Voice',
-        0,
-        1,
-        false,
-        new Date(),
-        true,
-        null,
-        '',
-        null,
-      );
-      user = await this.userRepository.create(newUser);
-    }
-
-    if (!user.isActive) {
-      throw new UnauthorizedException('Conta desabilitada. Entre em contato com o administrador.');
-    }
-
-    const token = this.jwtService.sign({ sub: user.id, email: user.email });
-    return {
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        group: user.isAdmin ? 'admin' : user.groupType,
-        tier: user.tier,
-        xp: user.xp,
-        level: user.level,
-        isAdmin: user.isAdmin,
-        isActive: user.isActive,
-        profileImage: user.profileImage,
-      },
-    };
-  }
-
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Perfil do usuário autenticado — inclui isFirstLogin (sem ModuleProgress)' })
+  @ApiResponse({ status: 200, description: 'Dados do usuário com isFirstLogin' })
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
   async getProfile(@Req() req: any) {
@@ -184,6 +149,9 @@ export class AuthController {
     };
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Atualiza nome, avatar e profileImage do usuário autenticado (admin pode alterar level)' })
+  @ApiResponse({ status: 200, description: 'Usuário atualizado' })
   @Put('me')
   @UseGuards(AuthGuard('jwt'))
   async updateProfile(@Req() req: any, @Body() body: any) {
@@ -207,6 +175,10 @@ export class AuthController {
     };
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Lista todos os usuários da plataforma' })
+  @ApiResponse({ status: 200, description: 'Array de usuários com grupo, tier, XP e empresa' })
+  @ApiResponse({ status: 401, description: 'Apenas administradores' })
   @Get('users')
   @UseGuards(AuthGuard('jwt'))
   async listAllUsers(@Req() req: any) {
@@ -225,11 +197,17 @@ export class AuthController {
       level: u.level,
       isAdmin: u.isAdmin,
       isActive: u.isActive,
+      newsletter: u.newsletter,
       profileImage: u.profileImage,
       business: u.business,
     }));
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Atualiza dados de qualquer usuário — grupo, tier, XP, level, isActive, empresa' })
+  @ApiResponse({ status: 200, description: 'Usuário atualizado' })
+  @ApiResponse({ status: 403, description: 'Apenas administradores' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
   @Put('users/:id')
   @UseGuards(AuthGuard('jwt'))
   async updateUser(@Req() req: any, @Param('id') id: string, @Body() body: any) {
@@ -248,6 +226,7 @@ export class AuthController {
     if (body.level !== undefined) target.level = body.level;
     if (body.isActive !== undefined) target.isActive = body.isActive;
     if (body.business !== undefined) target.business = body.business;
+    if (body.newsletter !== undefined) target.newsletter = body.newsletter;
 
     const updated = await this.userRepository.update(target);
     return {
@@ -260,6 +239,7 @@ export class AuthController {
       level: updated.level,
       isAdmin: updated.isAdmin,
       isActive: updated.isActive,
+      newsletter: updated.newsletter,
       profileImage: updated.profileImage,
       business: updated.business,
     };
@@ -322,6 +302,62 @@ export class AuthController {
       profileImage: updated.profileImage,
       message: 'Avatar atualizado com sucesso',
     };
+  }
+
+  @ApiOperation({ summary: 'Solicita token de redefinição de senha — retorna mensagem genérica' })
+  @ApiResponse({ status: 201, description: 'Mensagem de confirmação' })
+  @Post('forgot-password')
+  async forgotPassword(@Body() body: any) {
+    const { email } = body;
+    if (!email) throw new BadRequestException('E-mail é obrigatório');
+
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      return { message: 'Se o e-mail estiver cadastrado, um link de redefinição será disponibilizado.' };
+    }
+
+    const token = nodeCrypto.randomBytes(32).toString('hex');
+    const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 h
+
+    await this.prisma.profile.update({
+      where: { id: user.id },
+      data: { resetPasswordToken: token, resetPasswordExpiry: expiry },
+    });
+
+    const resetUrl = `${process.env['FRONTEND_URL'] || 'http://localhost:5173'}/redefinir-senha?token=${token}`;
+    this.logger.log(`[PASSWORD RESET] Token para ${email}: ${resetUrl}`);
+
+    return { message: 'Se o e-mail estiver cadastrado, um link de redefinição será disponibilizado.', debug_url: resetUrl };
+  }
+
+  @ApiOperation({ summary: 'Redefine senha com token válido' })
+  @ApiResponse({ status: 201, description: 'Senha redefinida com sucesso' })
+  @ApiResponse({ status: 400, description: 'Token inválido ou expirado' })
+  @Post('reset-password')
+  async resetPassword(@Body() body: any) {
+    const { token, password } = body;
+    if (!token || !password) throw new BadRequestException('Token e nova senha são obrigatórios');
+    if (password.length < 6) throw new BadRequestException('A senha deve ter pelo menos 6 caracteres');
+
+    const profile = await this.prisma.profile.findFirst({
+      where: { resetPasswordToken: token },
+    });
+
+    if (!profile) throw new BadRequestException('Token inválido ou já utilizado');
+
+    if (!profile.resetPasswordExpiry || new Date() > profile.resetPasswordExpiry) {
+      throw new BadRequestException('Token expirado. Solicite um novo link de redefinição.');
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    await this.prisma.profile.update({
+      where: { id: profile.id },
+      data: { passwordHash, resetPasswordToken: null, resetPasswordExpiry: null },
+    });
+
+    return { message: 'Senha redefinida com sucesso. Você já pode fazer login.' };
   }
 
   @Get('leaderboard')

@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
@@ -39,6 +40,7 @@ interface MyPost {
 
 export function ProfilePage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
   const [certificates, setCertificates] = useState<any[]>([]);
   const [quizAttempts, setQuizAttempts] = useState<QuizAttemptRecord[]>([]);
@@ -95,7 +97,7 @@ export function ProfilePage() {
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">
             {/* Avatar */}
             <div className="relative shrink-0 group">
-              <div className="size-24 rounded-2xl bg-snow/10 border border-snow/20 overflow-hidden">
+              <div className="size-24 rounded-full bg-primary/80 overflow-hidden shadow-lg ring-2 ring-white/20">
                 {avatarUrl ? (
                   <img
                     src={avatarUrl}
@@ -122,6 +124,7 @@ export function ProfilePage() {
               )}
               <h1 className="text-3xl font-bold text-snow mt-2">{user.name}</h1>
               <div className="text-snow/70 text-sm">{user.email}</div>
+              {user.business && <div className="text-snow/60 text-xs mt-0.5">{user.business}</div>}
               {!isAdmin && (
                 <div className="mt-4 flex gap-6 text-sm text-snow/80 flex-wrap">
                   <span className="flex items-center gap-1">
@@ -236,7 +239,7 @@ export function ProfilePage() {
                     size="icon"
                     className="shrink-0 text-primary hover:bg-primary/10"
                     title="Ver certificado"
-                    onClick={() => window.open(`/certificado/${cert.verificationCode}`, "_blank")}
+                    onClick={() => navigate(`/certificado/${cert.verificationCode}`)}
                   >
                     <ExternalLink className="size-4" />
                   </Button>

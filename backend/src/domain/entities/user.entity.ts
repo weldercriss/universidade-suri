@@ -14,6 +14,7 @@ export class User {
     public profileImage: string | null = null,
     public business: string = '',
     public phone: string | null = null,
+    public newsletter: boolean = false,
   ) {}
 
   addXp(amount: number): void {

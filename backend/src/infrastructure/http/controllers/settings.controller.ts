@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Req, UseGuards, UseInterceptors, UploadedFile, BadRequestException, ForbiddenException, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Req, UseGuards, UseInterceptors, UploadedFile, BadRequestException, ForbiddenException, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import { PrismaService } from '../../database/prisma.service';
+import { PhotoVisibilityDto } from '../dtos/auth.dto';
 
 @Controller('settings')
 export class SettingsController {
@@ -19,7 +20,8 @@ export class SettingsController {
             'logo_expanded_light',
             'logo_expanded_dark',
             'logo_collapsed_light',
-            'logo_collapsed_dark'
+            'logo_collapsed_dark',
+            'show_user_photos',
           ]
         }
       }
@@ -31,6 +33,26 @@ export class SettingsController {
     });
 
     return result;
+  }
+
+  @Patch('photo-visibility')
+  @UseGuards(AuthGuard('jwt'))
+  async setPhotoVisibility(@Req() req: any, @Body() body: PhotoVisibilityDto) {
+    if (!req.user.isAdmin) {
+      throw new ForbiddenException('Apenas administradores podem alterar esta configuração.');
+    }
+
+    const setting = await this.prisma.systemSetting.upsert({
+      where: { key: 'show_user_photos' },
+      update: { value: String(body.enabled) },
+      create: { key: 'show_user_photos', value: String(body.enabled) },
+    });
+
+    return {
+      key: setting.key,
+      value: setting.value,
+      message: body.enabled ? 'Fotos de perfil ativadas' : 'Fotos de perfil desativadas',
+    };
   }
 
   @Post('logos')
@@ -47,7 +69,6 @@ export class SettingsController {
       filename: (req: any, file, cb) => {
         const key = req.body.key || 'default';
         const ext = path.extname(file.originalname).toLowerCase();
-        // timestamp to avoid caching issues when replacing
         cb(null, `${key}_${Date.now()}${ext}`);
       },
     }),
@@ -60,7 +81,7 @@ export class SettingsController {
         cb(new BadRequestException('Formato de imagem não suportado. Use JPG, PNG, WEBP, GIF ou SVG.'), false);
       }
     },
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+    limits: { fileSize: 5 * 1024 * 1024 },
   }))
   async uploadLogo(@Req() req: any, @Body('key') key: string, @UploadedFile() file: Express.Multer.File) {
     const user = req.user;
@@ -68,20 +89,20 @@ export class SettingsController {
       throw new ForbiddenException('Apenas administradores podem alterar os logotipos.');
     }
     if (!file) throw new BadRequestException('Nenhum arquivo enviado');
-    
+
     const validKeys = [
       'logo_expanded_light',
       'logo_expanded_dark',
       'logo_collapsed_light',
       'logo_collapsed_dark'
     ];
-    
+
     if (!validKeys.includes(key)) {
       throw new BadRequestException('Chave de logotipo inválida.');
     }
 
     const imageUrl = `/uploads/logos/${file.filename}`;
-    
+
     const setting = await this.prisma.systemSetting.upsert({
       where: { key },
       update: { value: imageUrl },

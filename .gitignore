@@ -13,6 +13,7 @@ dist-ssr/
 .tanstack/
 .nitro/
 *.local
+*.tsbuildinfo
 
 # ---------- Logs ----------
 logs/
@@ -65,3 +66,8 @@ Thumbs.db
 # ---------- Prisma ----------
 # Migrations são versionadas, mas o client gerado não
 # node_modules/.prisma/ já é coberto por node_modules/
+
+# ---------- Uploads de usuários ----------
+backend/uploads/
+
+.pdf

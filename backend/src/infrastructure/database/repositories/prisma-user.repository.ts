@@ -86,6 +86,7 @@ export class PrismaUserRepository implements IUserRepository {
           profileImage: user.profileImage,
           business: user.business,
           phone: user.phone,
+          newsletter: user.newsletter,
           createdAt: user.createdAt,
         },
       });
@@ -113,6 +114,7 @@ export class PrismaUserRepository implements IUserRepository {
           profileImage: user.profileImage,
           business: user.business,
           phone: user.phone,
+          newsletter: user.newsletter,
         },
       });
       return this.mapRowToEntity(row);
@@ -138,6 +140,7 @@ export class PrismaUserRepository implements IUserRepository {
       row.profileImage ?? null,
       row.business || '',
       row.phone || null,
+      row.newsletter ?? false,
     );
   }
 }

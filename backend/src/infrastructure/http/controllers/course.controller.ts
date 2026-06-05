@@ -1,5 +1,6 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Inject, Req, ForbiddenException, NotFoundException, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ICourseRepository } from '../../../domain/repositories/course.repository.interface';
 import { Course, Lesson } from '../../../domain/entities/course.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
@@ -7,6 +8,7 @@ import { diskStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 
+@ApiTags('courses')
 @Controller('courses')
 export class CourseController {
   constructor(
@@ -14,7 +16,8 @@ export class CourseController {
     private readonly courseRepository: ICourseRepository,
   ) {}
 
-  /** Rota pública — sem autenticação — usada na Landing page */
+  @ApiOperation({ summary: 'Preview público de cursos (sem autenticação, usado na landing page)' })
+  @ApiResponse({ status: 200, description: 'Lista resumida de cursos publicados' })
   @Get('public')
   async listPublicPreview() {
     const courses = await this.courseRepository.listAllPublished('all');
@@ -27,6 +30,9 @@ export class CourseController {
     }));
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Lista cursos — admin vê todos, aluno vê apenas publicados do seu grupo' })
+  @ApiResponse({ status: 200, description: 'Array de cursos' })
   @UseGuards(AuthGuard('jwt'))
   @Get()
   async listAll(@Req() req: any) {
@@ -37,6 +43,11 @@ export class CourseController {
     return this.courseRepository.listAllPublished(user.groupType);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Detalhes de um curso com suas aulas' })
+  @ApiResponse({ status: 200, description: 'Curso encontrado' })
+  @ApiResponse({ status: 403, description: 'Acesso restrito ao grupo do curso' })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado' })
   @UseGuards(AuthGuard('jwt'))
   @Get(':id')
   async getDetails(@Param('id') id: string, @Req() req: any) {
@@ -53,6 +64,10 @@ export class CourseController {
     return course;
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Cria um novo curso' })
+  @ApiResponse({ status: 201, description: 'Curso criado' })
+  @ApiResponse({ status: 403, description: 'Apenas administradores' })
   @UseGuards(AuthGuard('jwt'))
   @Post()
   async create(@Body() body: any, @Req() req: any) {
@@ -71,6 +86,11 @@ export class CourseController {
     return this.courseRepository.create(course);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Atualiza dados de um curso' })
+  @ApiResponse({ status: 200, description: 'Curso atualizado' })
+  @ApiResponse({ status: 403, description: 'Apenas administradores' })
+  @ApiResponse({ status: 404, description: 'Curso não encontrado' })
   @UseGuards(AuthGuard('jwt'))
   @Put(':id')
   async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
@@ -89,6 +109,10 @@ export class CourseController {
     return this.courseRepository.update(course);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Remove um curso' })
+  @ApiResponse({ status: 200, description: 'Curso removido' })
+  @ApiResponse({ status: 403, description: 'Apenas administradores' })
   @UseGuards(AuthGuard('jwt'))
   @Delete(':id')
   async delete(@Param('id') id: string, @Req() req: any) {
@@ -96,6 +120,10 @@ export class CourseController {
     return this.courseRepository.delete(id);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Adiciona uma aula ao curso' })
+  @ApiResponse({ status: 201, description: 'Aula criada' })
+  @ApiResponse({ status: 403, description: 'Apenas administradores' })
   // Modules / Lessons Sub-routes
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/lessons')
@@ -108,11 +136,16 @@ export class CourseController {
       body.description,
       body.content,
       body.videoUrl,
+      body.duration || '10:00',
       body.sortOrder || 0
     );
     return this.courseRepository.createLesson(lesson);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Atualiza uma aula' })
+  @ApiResponse({ status: 200, description: 'Aula atualizada' })
+  @ApiResponse({ status: 404, description: 'Aula não encontrada' })
   @UseGuards(AuthGuard('jwt'))
   @Put('lessons/:lessonId')
   async updateLesson(@Param('lessonId') lessonId: string, @Body() body: any, @Req() req: any) {
@@ -124,11 +157,15 @@ export class CourseController {
     lesson.description = body.description ?? lesson.description;
     lesson.content = body.content ?? lesson.content;
     lesson.videoUrl = body.videoUrl ?? lesson.videoUrl;
+    lesson.duration = body.duration ?? lesson.duration;
     lesson.sortOrder = body.sortOrder ?? lesson.sortOrder;
 
     return this.courseRepository.updateLesson(lesson);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Remove uma aula' })
+  @ApiResponse({ status: 200, description: 'Aula removida' })
   @UseGuards(AuthGuard('jwt'))
   @Delete('lessons/:lessonId')
   async deleteLesson(@Param('lessonId') lessonId: string, @Req() req: any) {
@@ -136,6 +173,9 @@ export class CourseController {
     return this.courseRepository.deleteLesson(lessonId);
   }
 
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Upload de imagem de capa do curso (JPG/PNG/WEBP, máx 5MB)' })
+  @ApiResponse({ status: 201, description: 'Capa atualizada, retorna coverUrl' })
   // Upload de capa do curso
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/cover')

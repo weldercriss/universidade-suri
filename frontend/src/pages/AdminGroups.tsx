@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Layers, Plus, Edit, Trash2, Loader2, Users, Search, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 
@@ -53,6 +54,13 @@ export function AdminGroupsPage() {
   const [ruleModalOpen, setRuleModalOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<GroupRule | null>(null);
   const [ruleForm, setRuleForm] = useState({ groupType: "vip", tier: "VIP PLUS", minXp: 0, maxXp: "" });
+
+  // Confirm dialog state
+  const [confirmState, setConfirmState] = useState<{ open: boolean; title: string; onConfirm: () => void; description?: string }>({
+    open: false,
+    title: "",
+    onConfirm: () => {},
+  });
 
   const fetchAll = async () => {
     setLoading(true);
@@ -114,15 +122,21 @@ export function AdminGroupsPage() {
     }
   };
 
-  const handleDeleteRule = async (id: string) => {
-    if (!confirm("Remover esta regra?")) return;
-    try {
-      await apiRequest(`/admin/groups/rules/${id}`, { method: "DELETE" });
-      toast.success("Regra removida");
-      fetchAll();
-    } catch {
-      toast.error("Erro ao remover regra");
-    }
+  const handleDeleteRule = (id: string) => {
+    setConfirmState({
+      open: true,
+      title: "Remover esta regra?",
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        try {
+          await apiRequest(`/admin/groups/rules/${id}`, { method: "DELETE" });
+          toast.success("Regra removida");
+          fetchAll();
+        } catch {
+          toast.error("Erro ao remover regra");
+        }
+      }
+    });
   };
 
   const filteredUsers = users.filter((u) =>
@@ -326,6 +340,13 @@ export function AdminGroupsPage() {
           </form>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog
+        open={confirmState.open}
+        onOpenChange={(open) => setConfirmState({ ...confirmState, open })}
+        title={confirmState.title}
+        description={confirmState.description}
+        onConfirm={confirmState.onConfirm}
+      />
     </AppShell>
   );
 }

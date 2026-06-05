@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { PrismaService } from './infrastructure/database/prisma.service';
 
 // Controllers
@@ -15,6 +17,9 @@ import { AdminGroupsController } from './infrastructure/http/controllers/admin-g
 import { AdminReportsController } from './infrastructure/http/controllers/admin-reports.controller';
 import { SettingsController } from './infrastructure/http/controllers/settings.controller';
 import { RoadmapController } from './infrastructure/http/controllers/roadmap.controller';
+import { AdminApiTokenController } from './infrastructure/http/controllers/admin-api-token.controller';
+import { ExternalApiController } from './infrastructure/http/controllers/external-api.controller';
+import { ChangelogController } from './infrastructure/http/controllers/changelog.controller';
 
 // Repository Implementations
 import { PrismaUserRepository } from './infrastructure/database/repositories/prisma-user.repository';
@@ -28,6 +33,7 @@ import { IRoadmapRepository } from './domain/repositories/roadmap.repository.int
 
 // Strategies & Guards
 import { JwtStrategy } from './infrastructure/http/strategies/jwt.strategy';
+import { ApiTokenStrategy } from './infrastructure/http/strategies/api-token.strategy';
 
 @Module({
   imports: [
@@ -36,6 +42,7 @@ import { JwtStrategy } from './infrastructure/http/strategies/jwt.strategy';
       secret: process.env.JWT_SECRET || 'suri_super_secret_key_123!',
       signOptions: { expiresIn: '7d' },
     }),
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
   ],
   controllers: [
     AuthController,
@@ -49,10 +56,15 @@ import { JwtStrategy } from './infrastructure/http/strategies/jwt.strategy';
     AdminReportsController,
     SettingsController,
     RoadmapController,
+    AdminApiTokenController,
+    ExternalApiController,
+    ChangelogController,
   ],
   providers: [
     PrismaService,
     JwtStrategy,
+    ApiTokenStrategy,
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
     {
       provide: IUserRepository,
       useClass: PrismaUserRepository,

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, Loader2, Upload, ZoomIn, ZoomOut, Move, Check, X, Camera, User2, ShieldCheck, Users, Layers, BarChart3, LogOut, Image as ImageIcon, ClipboardList } from "lucide-react";
+import { Sun, Moon, Loader2, Upload, ZoomIn, ZoomOut, Move, Check, X, User2, ShieldCheck, Users, Layers, BarChart3, LogOut, Image as ImageIcon, ClipboardList, Mail, KeyRound } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest, apiUpload } from "@/lib/api";
@@ -49,11 +49,15 @@ function AvatarEditor({ src, onConfirm, onCancel }: AvatarEditorProps) {
 
     ctx.clearRect(0, 0, SIZE, SIZE);
 
-    // Circular clip
+    // Circular clip — fill with white first to avoid black areas in JPEG
     ctx.save();
     ctx.beginPath();
     ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2, 0, Math.PI * 2);
     ctx.clip();
+
+    // White fill to prevent black background on export
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, SIZE, SIZE);
 
     const scale = Math.max(SIZE / img.width, SIZE / img.height) * z;
     const w = img.width * scale;
@@ -63,13 +67,6 @@ function AvatarEditor({ src, onConfirm, onCancel }: AvatarEditorProps) {
 
     ctx.drawImage(img, x, y, w, h);
     ctx.restore();
-
-    // Border ring
-    ctx.beginPath();
-    ctx.arc(SIZE / 2, SIZE / 2, SIZE / 2 - 1, 0, Math.PI * 2);
-    ctx.strokeStyle = "hsl(237 90% 65% / 0.6)";
-    ctx.lineWidth = 2;
-    ctx.stroke();
   }, []);
 
   useEffect(() => {
@@ -182,6 +179,7 @@ export function SettingsPage() {
   const { theme, setTheme } = useTheme();
 
   const [name, setName] = useState(user?.name || "");
+  const [company, setCompany] = useState(user?.business || "");
   const [saving, setSaving] = useState(false);
 
   // Avatar states
@@ -199,7 +197,7 @@ export function SettingsPage() {
       setSaving(true);
       await apiRequest("/auth/me", {
         method: "PUT",
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ name, business: company }),
       });
       await refreshProfile();
       toast.success("Perfil atualizado com sucesso!");
@@ -286,23 +284,17 @@ export function SettingsPage() {
                       </div>
                     )}
                   </div>
-                  {/* Camera badge */}
-                  <button
-                    type="button"
-                    disabled={avatarUploading}
-                    onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 size-9 rounded-full bg-primary text-white grid place-items-center shadow-glow border-2 border-background hover:scale-110 transition-transform disabled:opacity-50"
-                    title="Alterar foto"
-                  >
-                    <Camera className="size-4" />
-                  </button>
                 </div>
 
                 {/* Info + button */}
                 <div className="flex-1 text-center sm:text-left">
                   <p className="font-medium text-sm mb-1">{user.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user.email}
+                  </p>
+                  {user.business && <p className="text-xs text-muted-foreground">{user.business}</p>}
                   <p className="text-xs text-muted-foreground mb-4">
-                    {user.tier} · {user.email}
+                    {user.tier}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-2">
                     <Button
@@ -368,6 +360,10 @@ export function SettingsPage() {
               <Label>Email (não pode ser alterado)</Label>
               <Input disabled value={user.email} className="bg-muted/30 border-border h-11 opacity-50" />
             </div>
+            <div className="space-y-2">
+              <Label>Empresa</Label>
+              <Input value={company} onChange={(e) => setCompany(e.target.value)} className="bg-muted/30 border-border h-11" />
+            </div>
           </div>
           <Button
             onClick={handleSaveProfile}
@@ -427,6 +423,14 @@ export function SettingsPage() {
                 <Link to="/admin/provas" className="flex items-center gap-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary transition-colors font-medium">
                   <ClipboardList className="size-5" />
                   Gestão de Provas
+                </Link>
+                <Link to="/admin/newsletter" className="flex items-center gap-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary transition-colors font-medium">
+                  <Mail className="size-5" />
+                  Newsletter
+                </Link>
+                <Link to="/admin/tokens" className="flex items-center gap-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary transition-colors font-medium">
+                  <KeyRound className="size-5" />
+                  API Tokens
                 </Link>
               </div>
             </Card>

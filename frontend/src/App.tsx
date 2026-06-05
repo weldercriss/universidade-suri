@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate, Link } from "react-router-dom";
 import { AuthProvider, useAuth } from "./lib/auth";
 import { usePlatformSettings } from "./lib/settings";
+import totvsLight from "@/assets/icons/totvs-dark.svg";
+import totvsDark from "@/assets/icons/totvs.svg";
 import { DashboardPage } from "./pages/Dashboard";
 import { CoursesListPage } from "./pages/CoursesList";
 import { CoursePlayerPage } from "./pages/CoursePlayer";
@@ -12,6 +14,8 @@ import { AdminCoursesPage } from "./pages/AdminCourses";
 import { AdminTrailsPage } from "./pages/AdminTrails";
 import { LoginPage } from "./pages/Login";
 import { SignUpPage } from "./pages/SignUp";
+import { ForgotPasswordPage } from "./pages/ForgotPassword";
+import { ResetPasswordPage } from "./pages/ResetPassword";
 import { CertificatePage } from "./pages/Certificate";
 import { LandingPage } from "./pages/Landing";
 import { TrailsListPage } from "./pages/TrailsList";
@@ -21,6 +25,8 @@ import { AdminReportsPage } from "./pages/AdminReports";
 import { AdminLogosPage } from "./pages/AdminLogos";
 import { AdminQuizzesPage } from "./pages/AdminQuizzes";
 import { AdminRoadmapPage } from "./pages/AdminRoadmap";
+import { AdminNewsletterPage } from "./pages/AdminNewsletter";
+import { AdminApiTokensPage } from "./pages/AdminApiTokens";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -63,8 +69,8 @@ function NotFound() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4 relative overflow-hidden">
       <img 
         src={isLight 
-          ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : "/totvs-dark.svg") 
-          : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : "/totvs.svg")} 
+          ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : totvsLight)
+          : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : totvsDark)} 
         className="watermark-bg" 
         alt="" 
         aria-hidden="true" 
@@ -93,6 +99,8 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/esqueceu-senha" element={<ForgotPasswordPage />} />
+        <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
         <Route path="/certificado/:codigo" element={<CertificatePage />} />
 
         {/* Protected Routes */}
@@ -221,6 +229,22 @@ export default function App() {
           element={
             <AdminRoute>
               <AdminRoadmapPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/newsletter"
+          element={
+            <AdminRoute>
+              <AdminNewsletterPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/tokens"
+          element={
+            <AdminRoute>
+              <AdminApiTokensPage />
             </AdminRoute>
           }
         />

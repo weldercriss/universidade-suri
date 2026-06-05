@@ -3,11 +3,12 @@ import { Course, Lesson } from '../../src/domain/entities/course.entity';
 import { Post } from '../../src/domain/entities/post.entity';
 
 export function makeUser(overrides: Partial<User> = {}): User {
-  const u = new User(
+  return new User(
     overrides.id ?? 'user-1',
     overrides.name ?? 'Aluno Teste',
     overrides.email ?? 'aluno@suri.com',
-    (overrides.groupType as any) ?? 'embaixador',
+    overrides.passwordHash ?? '$2b$10$placeholder.hash.for.tests',
+    (overrides.groupType as 'vip' | 'embaixador' | 'admin') ?? 'embaixador',
     overrides.tier ?? 'Embaixador Voice',
     overrides.xp ?? 0,
     overrides.level ?? 1,
@@ -16,7 +17,6 @@ export function makeUser(overrides: Partial<User> = {}): User {
     overrides.isActive ?? true,
     overrides.profileImage ?? null,
   );
-  return u;
 }
 
 export function makeAdmin(overrides: Partial<User> = {}): User {
@@ -53,6 +53,7 @@ export function makeLesson(overrides: Partial<Lesson> = {}): Lesson {
     overrides.description ?? 'desc',
     overrides.content ?? 'conteudo',
     overrides.videoUrl ?? 'https://yt/abc',
+    overrides.duration ?? '10:00',
     overrides.sortOrder ?? 0,
   );
 }
@@ -133,6 +134,43 @@ export function buildPrismaMock() {
       findFirst: jest.fn(),
       findUnique: jest.fn(),
       create: jest.fn(),
+      findMany: jest.fn(),
+    },
+    question: {
+      count: jest.fn(),
+    },
+    quizAttempt: {
+      findFirst: jest.fn(),
+      findMany: jest.fn(),
+    },
+    trail: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
+    },
+    trailEnrollment: {
+      findMany: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
+    trailCertificate: {
+      findMany: jest.fn(),
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      create: jest.fn(),
+    },
+    trailQuizAttempt: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+    },
+    trailCourse: {
+      upsert: jest.fn(),
+      deleteMany: jest.fn(),
+    },
+    profile: {
+      update: jest.fn(),
     },
   };
 }
