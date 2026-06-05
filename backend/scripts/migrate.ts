@@ -92,6 +92,22 @@ ALTER TABLE posts ADD COLUMN IF NOT EXISTS media_type VARCHAR(50);
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS media_url TEXT;
 ALTER TABLE posts ADD COLUMN IF NOT EXISTS course_id UUID REFERENCES courses(id) ON DELETE CASCADE;
 
+CREATE TABLE IF NOT EXISTS xp_rules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  action VARCHAR(100) UNIQUE NOT NULL,
+  label VARCHAR(255) NOT NULL,
+  description TEXT,
+  xp_value INTEGER NOT NULL DEFAULT 0,
+  icon VARCHAR(100),
+  is_active BOOLEAN DEFAULT true,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+INSERT INTO xp_rules (action, label, description, xp_value, icon) VALUES
+  ('post', 'Publicar post na comunidade', 'XP concedido ao autor ao publicar um novo post', 10, 'MessageSquare'),
+  ('trail_exam', 'Passar no exame final de trilha', 'XP concedido ao aluno ao ser aprovado no exame final de uma trilha', 100, 'Award')
+ON CONFLICT (action) DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS post_likes (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   post_id UUID NOT NULL REFERENCES posts(id) ON DELETE CASCADE,

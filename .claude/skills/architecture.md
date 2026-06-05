@@ -23,18 +23,22 @@ frontend/
 ├── src/
 │   ├── components/
 │   │   ├── ui/              # base shadcn/Radix (Button, Card, Input, sonner…)
-│   │   └── app-shell.tsx    # layout + sidebar retrátil
+│   │   ├── app-shell.tsx    # layout + sidebar retrátil (com data-tour e botão HelpCircle)
+│   │   └── GuidedTour.tsx   # componente react-joyride com estilos Suri
 │   ├── hooks/               # ex.: useCachedRequest
 │   ├── lib/
 │   │   ├── api.ts           # apiRequest — injeta JWT no Authorization automaticamente
 │   │   ├── auth.tsx         # AuthProvider (login/signup/usuário)
 │   │   ├── theme.tsx        # tema Snow Blue / Night Blue
 │   │   ├── settings.tsx     # SettingsProvider (polling 60s de /settings/public)
+│   │   ├── tour.tsx         # TourProvider + useTour hook (react-joyride)
+│   │   ├── tour-steps.ts    # 8 steps do guided tour em PT-BR
 │   │   └── utils.ts
 │   ├── pages/               # Dashboard, AdminPanel, AdminCourses, AdminTrails,
 │   │                        # AdminGroups, AdminReports, AdminRoadmap, AdminQuizzes,
 │   │                        # CoursesList, CoursePlayer, TrailsList, Roadmap, Community,
-│   │                        # Leaderboard, Profile, Settings, Login, SignUp, Certificate, Landing
+│   │                        # Leaderboard, Profile, Settings, Login, SignUp, Certificate, Landing,
+│   │                        # Gamification (/gamificacao), AdminGamification (/admin/gamificacao)
 │   ├── styles.css           # tokens de tema (Tailwind v4) — fonte da verdade do design
 │   ├── App.tsx / main.tsx
 │   └── sw.js / registerServiceWorker.ts   # PWA
@@ -92,7 +96,8 @@ Interfaces em `domain/repositories/`, implementações em `infrastructure/databa
 
 ### Controllers (prefixos de rota)
 `auth`, `courses`, `enrollments`, `certificates`, `quiz`, `trails`, `posts`, `roadmaps`,
-`settings`, `changelog`, `admin/groups`, `admin/reports`, `admin/api-tokens`, `external`.
+`settings`, `changelog`, `gamification`, `admin/groups`, `admin/reports`, `admin/api-tokens`,
+`admin/gamification`, `external`.
 
 ---
 

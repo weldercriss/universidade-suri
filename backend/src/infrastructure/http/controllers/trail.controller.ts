@@ -409,6 +409,9 @@ export class TrailController {
       }
     }
 
+    const trailExamXpRule = await this.prisma.xpRule.findUnique({ where: { action: 'trail_exam' } });
+    const trailExamXp = (trailExamXpRule?.isActive && trailExamXpRule.xpValue > 0) ? trailExamXpRule.xpValue : 100;
+
     // Se todos os cursos foram aprovados individualmente → emite certificado automaticamente
     if (questions.length === 0) {
       const existingCert = await this.prisma.trailCertificate.findFirst({ where: { userId, trailId } });
@@ -420,7 +423,7 @@ export class TrailController {
         });
         await this.prisma.profile.update({
           where: { id: userId },
-          data: { xp: { increment: 100 } },
+          data: { xp: { increment: trailExamXp } },
         });
         return { score: 100, correct: 0, total: 0, passed: true, autoPassed: true, certificateCode };
       }
@@ -465,7 +468,7 @@ export class TrailController {
         });
         await this.prisma.profile.update({
           where: { id: userId },
-          data: { xp: { increment: 100 } },
+          data: { xp: { increment: trailExamXp } },
         });
       } else {
         certificateCode = (existingCert as any).verificationCode;

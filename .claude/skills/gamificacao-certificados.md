@@ -14,14 +14,32 @@ addXp(amount: number): void {
 ```
 
 ### Fontes de XP
-| Ação | XP |
-|------|----|
-| Concluir um curso | `Course.xpReward` (default **50**) | o Valor é definido de acordo com o Curso, configurado dentro do curso.
-| Publicar um post na comunidade | **+10** |
-| Passar no exame final de uma trilha | **+100** |
+| Ação | XP | Fonte |
+|------|----|-------|
+| Concluir um curso | `Course.xpReward` (default **50**) | Configurado por curso no admin |
+| Publicar um post na comunidade | `XpRule.action='post'` (padrão **+10**, fallback 10) | Configurável via admin |
+| Passar no exame final de uma trilha | `XpRule.action='trail_exam'` (padrão **+100**, fallback 100) | Configurável via admin |
+
+> Controllers (`post.controller.ts`, `trail.controller.ts`) lêem o valor de `XpRule` no banco.
+> Se a regra não existir ou `isActive=false`, usam o fallback hardcoded.
 
 - **Admin não acumula XP** (badge "ADMINISTRADOR", sem grupo).
 - Tier por faixa de XP é definido pelas `GroupRule` (ver `user-groups.md`).
+
+### XpRule (model configurável)
+Model `XpRule` (`xp_rules`): `action` (unique), `label`, `description?`, `xpValue`, `icon?`, `isActive`, `updatedAt`.
+Regras iniciais inseridas no banco: `post` (+10 XP), `trail_exam` (+100 XP).
+
+### Endpoints de Gamificação
+| Método | Rota | Acesso | Descrição |
+|--------|------|--------|-----------|
+| `GET` | `/gamification/rules` | JWT | Retorna XpRules ativas + GroupRules |
+| `PUT` | `/admin/gamification/rules/:id` | Admin | Edita `xpValue`, `label`, `description`, `icon` de uma regra |
+
+### Páginas Frontend
+- `/gamificacao` — alunos visualizam fontes de XP (carregadas do banco), progressão de nível (10 níveis × 1000 XP) e tiers por grupo
+- `/admin/gamificacao` — admin edita XP por ação inline; visualiza tiers com link para `/admin/grupos`
+- Link "Gamificação" (ícone `Zap`) na sidebar e no menu admin em Configurações
 
 ### Leaderboard
 - `GET /auth/leaderboard` — ranking por XP. No frontend: `Leaderboard.tsx`

@@ -4,7 +4,7 @@ Persistência em **PostgreSQL** via **Prisma ORM** (`backend/prisma/schema.prism
 são `UUID` (exceto `ApiToken`, que usa `cuid()`), com integridade referencial, índices de
 performance e deletes em cascata.
 
-> ⚠️ **Fonte da verdade**: `backend/prisma/schema.prisma` (23 models). Este documento espelha o
+> ⚠️ **Fonte da verdade**: `backend/prisma/schema.prisma` (24 models). Este documento espelha o
 > schema atual. Autenticação é **somente e-mail + senha (bcrypt)** — **não há Google OAuth**.
 
 ---
@@ -61,6 +61,9 @@ erDiagram
   Ex.: logos por tema, `show_user_photos`.
 - **`ApiToken`** (`api_tokens`) — PK `cuid()`. `name`, `tokenHash` (SHA256 unique), `lastUsedAt?`,
   `expiresAt?`, `isActive` (true), `createdById`, timestamps. Token nunca persistido em claro.
+- **`XpRule`** (`xp_rules`) — `action` (unique), `label`, `description?`, `xpValue` (int),
+  `icon?`, `isActive` (true), `updatedAt`. Regras iniciais: `post` (10 XP), `trail_exam` (100 XP).
+  Editável via `PUT /admin/gamification/rules/:id`.
 
 ### Cursos e progresso
 - **`Course`** (`courses`) — `title`, `description?`, `workloadHours` (0), `xpReward` (50),

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, Loader2, Upload, ZoomIn, ZoomOut, Move, Check, X, User2, ShieldCheck, Users, Layers, BarChart3, LogOut, Image as ImageIcon, ClipboardList, Mail, KeyRound } from "lucide-react";
+import { Sun, Moon, Loader2, Upload, ZoomIn, ZoomOut, Move, Check, X, User2, ShieldCheck, Users, Layers, BarChart3, LogOut, Image as ImageIcon, ClipboardList, Mail, KeyRound, Zap } from "lucide-react";
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { apiRequest, apiUpload } from "@/lib/api";
@@ -431,6 +431,10 @@ export function SettingsPage() {
                 <Link to="/admin/tokens" className="flex items-center gap-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary transition-colors font-medium">
                   <KeyRound className="size-5" />
                   API Tokens
+                </Link>
+                <Link to="/admin/gamificacao" className="flex items-center gap-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary transition-colors font-medium">
+                  <Zap className="size-5" />
+                  Gamificação
                 </Link>
               </div>
             </Card>

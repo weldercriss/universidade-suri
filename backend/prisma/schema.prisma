@@ -362,6 +362,19 @@ model SystemSetting {
   @@map("system_settings")
 }
 
+model XpRule {
+  id          String   @id @default(uuid()) @db.Uuid
+  action      String   @unique
+  label       String
+  description String?
+  xpValue     Int      @map("xp_value")
+  icon        String?
+  isActive    Boolean  @default(true) @map("is_active")
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("xp_rules")
+}
+
 model Roadmap {
   id          String        @id @default(uuid()) @db.Uuid
   title       String

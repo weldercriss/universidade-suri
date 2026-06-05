@@ -102,9 +102,10 @@ Interfaces em `domain/repositories/`, implementações em `infrastructure/databa
 - Publicação de curso via `isPublished` flag; `targetGroup` filtra por grupo de usuários (`'all'`, `'vip'`, `'embaixador'`)
 - Usuários só veem roadmaps com `isActive=true`
 - Feed da comunidade segmentado por `groupType` — VIPs veem só VIPs, Embaixadores só Embaixadores
-- Admin vê todos os posts mas não pode publicar; cada post = +100 XP ao autor
+- Admin vê todos os posts mas não pode publicar; cada post = XP definido em `XpRule.action='post'` (padrão **+10**, fallback 10)
 - Inscrição em curso explícita via `POST /enrollments/:courseId/join`; auto-enroll no CoursePlayer como fallback
 - Token de API: exibido apenas na criação; hash SHA256 armazenado; `isActive` e `expiresAt` validados a cada request
+- XP por ação configurável via model `XpRule`; controllers lêem o valor do banco com fallback hardcoded
 
 ---
 
@@ -122,8 +123,32 @@ Interfaces em `domain/repositories/`, implementações em `infrastructure/databa
 - Página `/trilhas` com abas: "Minhas Trilhas" (inscritas) e "Catálogo" (disponíveis)
 - Inscrição via `POST /trails/:id/enroll`
 - Exame final disponível após 100% de módulos concluídos em todos os cursos da trilha
-- Aprovação ≥70%. Máximo 3 tentativas. +200 XP ao passar.
+- Aprovação ≥70%. Máximo 3 tentativas. XP definido em `XpRule.action='trail_exam'` (padrão **+100**, fallback 100)
 - Endpoints: `GET /trails/:id/exam/status`, `GET /trails/:id/exam/questions`, `POST /trails/:id/exam/submit`
+
+---
+
+## Regras de Gamificação (XpRule)
+
+- Model `XpRule` no banco (`xp_rules`): `action` (unique), `label`, `description?`, `xpValue`, `icon?`, `isActive`
+- Regras iniciais: `post` (+10 XP), `trail_exam` (+100 XP)
+- Controllers lêem o XP do banco com fallback hardcoded (post: 10, trail_exam: 100)
+- Admin edita valores via `PUT /admin/gamification/rules/:id`
+- `GET /gamification/rules` retorna XpRules ativas + GroupRules (requer JWT)
+- Frontend: `/gamificacao` (alunos) e `/admin/gamificacao` (admin edita inline)
+- Link "Gamificação" com ícone `Zap` na sidebar e no menu admin (Configurações)
+
+---
+
+## Product Tour (Guided Tour)
+
+- Biblioteca: `react-joyride` v3
+- `TourProvider` + `useTour` hook em `frontend/src/lib/tour.tsx`
+- Auto-inicia no primeiro login (`user.isFirstLogin && !localStorage["suri_tour_completed"]`)
+- Conclusão persistida em `localStorage["suri_tour_completed"]`; não exibido para admins
+- 8 steps: boas-vindas, navegação, cursos, trilhas, ranking, gamificação, XP bar, botão "?"
+- Botão `HelpCircle` ("?") na sidebar desktop e no header mobile (oculto para admins)
+- Atributos `data-tour` nos elementos alvo (`sidebar-nav`, `nav-cursos`, `nav-trilhas`, `nav-ranking`, `gamification-link`, `xp-bar`, `tour-btn`)
 
 ---
 

@@ -66,9 +66,11 @@ export class PostController {
       body.courseId,
     );
     const created = await this.postRepository.create(post);
+    const xpRule = await this.prisma.xpRule.findUnique({ where: { action: 'post' } });
+    const xpAmount = (xpRule?.isActive && xpRule.xpValue > 0) ? xpRule.xpValue : 10;
     await this.prisma.profile.update({
       where: { id: user.id },
-      data: { xp: { increment: 10 } },
+      data: { xp: { increment: xpAmount } },
     });
     return created;
   }

@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard, GraduationCap, User, Trophy, Settings,
   ShieldCheck, LogOut, Sparkles, Shield, Sun, Moon, Menu, X,
-  PanelLeftClose, PanelLeftOpen, Route, Users, Layers, BarChart3, Map as MapIcon, MessageCircle, Newspaper
+  PanelLeftClose, PanelLeftOpen, Route, Users, Layers, BarChart3, Map as MapIcon, MessageCircle, Newspaper, Zap, HelpCircle
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { useTheme } from "@/lib/theme";
@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { usePlatformSettings } from "@/lib/settings";
 import { ChangelogModal, useChangelogBadge } from "@/components/ChangelogModal";
+import { GuidedTour } from "@/components/GuidedTour";
+import { useTour } from "@/lib/tour";
 import totvsW from "@/assets/icons/totvs.svg";
 import totvsD from "@/assets/icons/totvs-dark.svg";
 import totvsLilac from "@/assets/icons/totvs-lilac.svg";
@@ -23,6 +25,7 @@ const nav = [
   { to: "/trilhas", label: "Trilhas", icon: Route, adminOnly: false },
   { to: "/roadmap", label: "Roadmap", icon: MapIcon, adminOnly: false },
   { to: "/ranking", label: "Ranking", icon: Trophy, adminOnly: false },
+  { to: "/gamificacao", label: "Gamificação", icon: Zap, adminOnly: false },
   { to: "/perfil", label: "Perfil", icon: User, adminOnly: false },
   { to: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: false },
 ] as const;
@@ -45,6 +48,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { settings } = usePlatformSettings();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const { latestVersion, hasNew, markSeen } = useChangelogBadge();
+  const { startTour } = useTour();
 
   if (!user) {
     return null;
@@ -106,11 +110,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
 
         {/* Navigation */}
-        <nav className={`flex-1 space-y-0.5 ${sidebarCollapsed ? "px-1.5" : "px-3"}`}>
+        <nav data-tour="sidebar-nav" className={`flex-1 space-y-0.5 ${sidebarCollapsed ? "px-1.5" : "px-3"}`}>
           {filteredNav.map((item) => {
             const to = item.to === "/cursos" && isAdmin ? "/admin/cursos"
               : item.to === "/trilhas" && isAdmin ? "/admin/trilhas"
               : item.to === "/roadmap" && isAdmin ? "/admin/roadmap"
+              : item.to === "/gamificacao" && isAdmin ? "/admin/gamificacao"
               : item.to;
             let active = false;
             if (item.to === "/configuracoes" && isAdmin && pathname.startsWith("/admin") && !pathname.startsWith("/admin/cursos") && !pathname.startsWith("/admin/trilhas") && !pathname.startsWith("/admin/roadmap")) {
@@ -120,11 +125,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             }
             const Icon = item.icon;
 
+            const dataTourAttr = item.to === "/cursos" ? "nav-cursos"
+              : item.to === "/trilhas" ? "nav-trilhas"
+              : item.to === "/ranking" ? "nav-ranking"
+              : item.to === "/gamificacao" ? "gamification-link"
+              : undefined;
+
             return (
               <Link
                 key={item.to}
                 to={to}
                 title={sidebarCollapsed ? item.label : undefined}
+                data-tour={dataTourAttr}
                 className={`flex items-center gap-3 py-2.5 rounded-lg text-sm transition-smooth border w-full
                   ${sidebarCollapsed ? "justify-center px-2" : "px-3"}
                   ${active
@@ -152,13 +164,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
 
-        {/* Changelog / Version */}
-        <div className={`px-3 pb-1 shrink-0 ${sidebarCollapsed ? "flex justify-center" : ""}`}>
+        {/* Changelog / Version + Tour */}
+        <div className={`px-3 pb-1 shrink-0 flex items-center gap-1 ${sidebarCollapsed ? "justify-center flex-col" : ""}`}>
           <button
             onClick={() => { setChangelogOpen(true); markSeen(); }}
             title="Novidades da plataforma"
-            className={`relative flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-lg py-1.5 w-full
-              ${sidebarCollapsed ? "justify-center px-2" : "px-2"}`}
+            className={`relative flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground transition-colors rounded-lg py-1.5 flex-1
+              ${sidebarCollapsed ? "justify-center px-2 flex-initial" : "px-2"}`}
           >
             <Newspaper className="size-4 shrink-0" />
             {!sidebarCollapsed && (
@@ -168,6 +180,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="absolute top-0.5 right-0.5 size-2 rounded-full bg-secondary ring-2 ring-card" />
             )}
           </button>
+          {!isAdmin && (
+            <button
+              data-tour="tour-btn"
+              onClick={startTour}
+              title="Tour do produto — clique para conhecer a plataforma"
+              className="text-muted-foreground hover:text-foreground transition-colors rounded-lg p-1.5"
+            >
+              <HelpCircle className="size-4" />
+            </button>
+          )}
         </div>
 
         {/* User Profile */}
@@ -274,7 +296,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                   <span className="hidden xs:inline">{isVip ? "VIP" : "Embaixador"}</span>
                   {user.tier && <span className="hidden sm:inline">· {user.tier}</span>}
                 </Badge>
-                <span className="text-xs text-muted-foreground truncate">
+                <span data-tour="xp-bar" className="text-xs text-muted-foreground truncate">
                   Nível {user.level} · {user.xp.toLocaleString()} XP
                 </span>
               </>
@@ -290,6 +312,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <MessageCircle className="size-4" />
             </Button>
+            {!isAdmin && (
+              <Button
+                data-tour="tour-btn"
+                size="icon"
+                variant="outline"
+                onClick={startTour}
+                className="md:hidden border-border size-8"
+                aria-label="Tour do produto"
+                title="Tour do produto"
+              >
+                <HelpCircle className="size-4" />
+              </Button>
+            )}
             <Button
               size="icon"
               variant="outline"
@@ -309,6 +344,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
+      {!isAdmin && <GuidedTour />}
     </div>
   );
 }

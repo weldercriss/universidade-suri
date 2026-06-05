@@ -67,8 +67,12 @@ Detalhes completos (endpoints, import de questões, bloqueios) em `quizzes-trilh
 
 - `addXp()` **retorna early se `isAdmin`** — admin nunca acumula XP.
 - Level sobe a cada **1000 XP** (`level = floor(xp/1000) + 1`).
-- Fontes de XP: conclusão de curso (`Course.xpReward`, default **50**), publicação na comunidade
-  (**+100 XP**), passar no exame de trilha (**+200 XP**).
+- Fontes de XP:
+  - Conclusão de curso: `Course.xpReward` (default **50**, configurado por curso)
+  - Publicação de post: valor em `XpRule.action='post'` (padrão **+10**, fallback 10)
+  - Passar no exame de trilha: valor em `XpRule.action='trail_exam'` (padrão **+100**, fallback 100)
+- **XP configurável**: model `XpRule` armazena valores editáveis pelo admin via `PUT /admin/gamification/rules/:id`.
+  Controllers lêem do banco e usam fallback hardcoded caso a regra não exista.
 - Leaderboard: `GET /auth/leaderboard`. Detalhes em `gamificacao-certificados.md`.
 
 ---
@@ -123,7 +127,21 @@ Conteúdo curado pelo admin, **sem vínculo** com cursos/trilhas:
 
 ---
 
-## 📖 11. Documentação Swagger
+## 🧭 11. Product Tour (Guided Tour)
+
+- Biblioteca `react-joyride` v3 instalada no frontend.
+- `TourProvider` (em `lib/tour.tsx`) + `useTour` hook gerenciam estado do tour.
+- Auto-inicia 800ms após o login se `user.isFirstLogin && !localStorage["suri_tour_completed"]`.
+- Não exibido para admins (`user.isAdmin`).
+- Conclusão salva em `localStorage["suri_tour_completed"] = "true"`.
+- 8 steps em PT-BR (definidos em `lib/tour-steps.ts`): boas-vindas, navegação, cursos, trilhas, ranking, gamificação, XP bar, botão "?".
+- `GuidedTour.tsx` usa estilos do design system (cores primárias, fonte Sora).
+- Botão `HelpCircle` ("?") na sidebar desktop e header mobile (oculto para admins) permite rever o tour manualmente via `startTour()`.
+- Elementos-alvo usam atributos `data-tour`: `sidebar-nav`, `nav-cursos`, `nav-trilhas`, `nav-ranking`, `gamification-link`, `xp-bar`, `tour-btn`.
+
+---
+
+## 📖 12. Documentação Swagger
 
 - API expõe Swagger em `/api-docs` (configurado em `main.ts`, com `addBearerAuth`).
 - DTOs e controllers anotados com `@ApiTags`, `@ApiOperation`, `@ApiResponse`, `@ApiBearerAuth`.

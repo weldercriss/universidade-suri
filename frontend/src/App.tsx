@@ -27,6 +27,9 @@ import { AdminQuizzesPage } from "./pages/AdminQuizzes";
 import { AdminRoadmapPage } from "./pages/AdminRoadmap";
 import { AdminNewsletterPage } from "./pages/AdminNewsletter";
 import { AdminApiTokensPage } from "./pages/AdminApiTokens";
+import GamificationPage from "./pages/Gamification";
+import { AdminGamificationPage } from "./pages/AdminGamification";
+import { TourProvider } from "./lib/tour";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -94,6 +97,7 @@ function NotFound() {
 export default function App() {
   return (
     <AuthProvider>
+      <TourProvider>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
@@ -165,6 +169,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <RoadmapPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/gamificacao"
+          element={
+            <ProtectedRoute>
+              <GamificationPage />
             </ProtectedRoute>
           }
         />
@@ -248,11 +260,20 @@ export default function App() {
             </AdminRoute>
           }
         />
+        <Route
+          path="/admin/gamificacao"
+          element={
+            <AdminRoute>
+              <AdminGamificationPage />
+            </AdminRoute>
+          }
+        />
 
         {/* 404 Route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Toaster />
+      </TourProvider>
     </AuthProvider>
   );
 }

@@ -20,6 +20,7 @@ import { RoadmapController } from './infrastructure/http/controllers/roadmap.con
 import { AdminApiTokenController } from './infrastructure/http/controllers/admin-api-token.controller';
 import { ExternalApiController } from './infrastructure/http/controllers/external-api.controller';
 import { ChangelogController } from './infrastructure/http/controllers/changelog.controller';
+import { GamificationController } from './infrastructure/http/controllers/gamification.controller';
 import { SupabaseStorageService } from './infrastructure/storage/supabase-storage.service';
 
 // Repository Implementations
@@ -60,6 +61,7 @@ import { ApiTokenStrategy } from './infrastructure/http/strategies/api-token.str
     AdminApiTokenController,
     ExternalApiController,
     ChangelogController,
+    GamificationController,
   ],
   providers: [
     PrismaService,
