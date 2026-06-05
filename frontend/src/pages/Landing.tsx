@@ -400,24 +400,10 @@ export function LandingPage() {
               {[
                 {
                   foto: fotoPh,
-                  nome: "Felipe Godoy",
-                  titulo: "CEO & Co-Founder da Suri",
+                  nome: `Paulo Henrique - PH`,
+                  titulo: "Especialista Meta e Coordenador do time de Suporte",
                 },
-                {
-                  foto: fotoPh,
-                  nome: "Instrutor 2",
-                  titulo: "Especialista em IA",
-                },
-                {
-                  foto: fotoPh,
-                  nome: "Instrutor 3",
-                  titulo: "Head de Vendas",
-                },
-                {
-                  foto: fotoPh,
-                  nome: "Instrutor 4",
-                  titulo: "Especialista em Atendimento",
-                },
+                
               ].map((instrutor, i) => (
                 <Card key={i} className="group p-6 text-center border-border bg-card shadow-elegant hover:shadow-glow hover:-translate-y-1 transition-all duration-300">
                   <div className="relative size-28 mx-auto mb-5">
