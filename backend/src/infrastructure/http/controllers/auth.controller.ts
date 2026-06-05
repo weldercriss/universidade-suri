@@ -7,12 +7,13 @@ import { User } from '../../../domain/entities/user.entity';
 import * as bcrypt from 'bcrypt';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { diskStorage, memoryStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as nodeCrypto from 'crypto';
 import { PrismaService } from '../../database/prisma.service';
 import { LoginDto, SignupDto } from '../dtos/auth.dto';
+import { SupabaseStorageService } from '../storage/supabase-storage.service';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -24,6 +25,7 @@ export class AuthController {
     private readonly userRepository: IUserRepository,
     private readonly jwtService: JwtService,
     private readonly prisma: PrismaService,
+    private readonly supabaseStorage: SupabaseStorageService,
   ) {}
 
   @ApiOperation({ summary: 'Login com e-mail e senha corporativo — retorna JWT e dados do usuário' })
@@ -267,20 +269,7 @@ export class AuthController {
   @Post('me/avatar')
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('avatar', {
-    storage: diskStorage({
-      destination: (req, file, cb) => {
-        const uploadPath = path.join(process.cwd(), 'uploads', 'avatars');
-        if (!fs.existsSync(uploadPath)) {
-          fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-      },
-      filename: (req: any, file, cb) => {
-        const userId = req.user?.id || 'unknown';
-        const ext = path.extname(file.originalname).toLowerCase();
-        cb(null, `avatar_${userId}${ext}`);
-      },
-    }),
+    storage: memoryStorage(),
     fileFilter: (req, file, cb) => {
       const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
       const ext = path.extname(file.originalname).toLowerCase();
@@ -295,7 +284,17 @@ export class AuthController {
   async uploadAvatar(@Req() req: any, @UploadedFile() file: Express.Multer.File) {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado');
     const user: User = req.user;
-    const imageUrl = `/uploads/avatars/${file.filename}`;
+    
+    const ext = path.extname(file.originalname).toLowerCase();
+    const filename = `avatar_${user.id}_${Date.now()}${ext}`;
+    
+    const imageUrl = await this.supabaseStorage.uploadFile(
+      file.buffer,
+      filename,
+      file.mimetype,
+      'avatars'
+    );
+    
     user.profileImage = imageUrl;
     const updated = await this.userRepository.update(user);
     return {

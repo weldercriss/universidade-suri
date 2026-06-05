@@ -4,9 +4,10 @@ import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagg
 import { ICourseRepository } from '../../../domain/repositories/course.repository.interface';
 import { Course, Lesson } from '../../../domain/entities/course.entity';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
+import { SupabaseStorageService } from '../storage/supabase-storage.service';
 
 @ApiTags('courses')
 @Controller('courses')
@@ -14,6 +15,7 @@ export class CourseController {
   constructor(
     @Inject(ICourseRepository)
     private readonly courseRepository: ICourseRepository,
+    private readonly supabaseStorage: SupabaseStorageService,
   ) {}
 
   @ApiOperation({ summary: 'Preview público de cursos (sem autenticação, usado na landing page)' })
@@ -180,20 +182,7 @@ export class CourseController {
   @UseGuards(AuthGuard('jwt'))
   @Post(':id/cover')
   @UseInterceptors(FileInterceptor('cover', {
-    storage: diskStorage({
-      destination: (req, file, cb) => {
-        const uploadPath = path.join(process.cwd(), 'uploads', 'covers');
-        if (!fs.existsSync(uploadPath)) {
-          fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-      },
-      filename: (req: any, file, cb) => {
-        const courseId = req.params?.id || 'course';
-        const ext = path.extname(file.originalname).toLowerCase();
-        cb(null, `cover_${courseId}${ext}`);
-      },
-    }),
+    storage: memoryStorage(),
     fileFilter: (req, file, cb) => {
       const allowed = ['.jpg', '.jpeg', '.png', '.webp'];
       const ext = path.extname(file.originalname).toLowerCase();
@@ -210,7 +199,18 @@ export class CourseController {
     if (!file) throw new BadRequestException('Nenhum arquivo enviado');
     const course = await this.courseRepository.findById(id);
     if (!course) throw new NotFoundException('Curso não encontrado');
-    course.coverUrl = `/uploads/covers/${file.filename}`;
+    
+    const ext = path.extname(file.originalname).toLowerCase();
+    const filename = `cover_${id}_${Date.now()}${ext}`;
+    
+    const imageUrl = await this.supabaseStorage.uploadFile(
+      file.buffer,
+      filename,
+      file.mimetype,
+      'covers'
+    );
+    
+    course.coverUrl = imageUrl;
     const updated = await this.courseRepository.update(course);
     return { coverUrl: updated.coverUrl, message: 'Capa atualizada com sucesso' };
   }

@@ -20,6 +20,7 @@ import { RoadmapController } from './infrastructure/http/controllers/roadmap.con
 import { AdminApiTokenController } from './infrastructure/http/controllers/admin-api-token.controller';
 import { ExternalApiController } from './infrastructure/http/controllers/external-api.controller';
 import { ChangelogController } from './infrastructure/http/controllers/changelog.controller';
+import { SupabaseStorageService } from './infrastructure/storage/supabase-storage.service';
 
 // Repository Implementations
 import { PrismaUserRepository } from './infrastructure/database/repositories/prisma-user.repository';
@@ -81,6 +82,7 @@ import { ApiTokenStrategy } from './infrastructure/http/strategies/api-token.str
       provide: IRoadmapRepository,
       useClass: PrismaRoadmapRepository,
     },
+    SupabaseStorageService,
   ],
   exports: [PrismaService],
 })

@@ -1,15 +1,19 @@
 import { Controller, Get, Post, Patch, Req, UseGuards, UseInterceptors, UploadedFile, BadRequestException, ForbiddenException, Body } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { diskStorage } from 'multer';
+import { memoryStorage } from 'multer';
 import * as path from 'path';
 import * as fs from 'fs';
 import { PrismaService } from '../../database/prisma.service';
 import { PhotoVisibilityDto } from '../dtos/auth.dto';
+import { SupabaseStorageService } from '../storage/supabase-storage.service';
 
 @Controller('settings')
 export class SettingsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly supabaseStorage: SupabaseStorageService,
+  ) {}
 
   @Get('public')
   async getPublicSettings() {
@@ -58,20 +62,7 @@ export class SettingsController {
   @Post('logos')
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('file', {
-    storage: diskStorage({
-      destination: (req, file, cb) => {
-        const uploadPath = path.join(process.cwd(), 'uploads', 'logos');
-        if (!fs.existsSync(uploadPath)) {
-          fs.mkdirSync(uploadPath, { recursive: true });
-        }
-        cb(null, uploadPath);
-      },
-      filename: (req: any, file, cb) => {
-        const key = req.body.key || 'default';
-        const ext = path.extname(file.originalname).toLowerCase();
-        cb(null, `${key}_${Date.now()}${ext}`);
-      },
-    }),
+    storage: memoryStorage(),
     fileFilter: (req, file, cb) => {
       const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.svg'];
       const ext = path.extname(file.originalname).toLowerCase();
@@ -101,7 +92,15 @@ export class SettingsController {
       throw new BadRequestException('Chave de logotipo inválida.');
     }
 
-    const imageUrl = `/uploads/logos/${file.filename}`;
+    const ext = path.extname(file.originalname).toLowerCase();
+    const filename = `${key}_${Date.now()}${ext}`;
+
+    const imageUrl = await this.supabaseStorage.uploadFile(
+      file.buffer,
+      filename,
+      file.mimetype,
+      'logos'
+    );
 
     const setting = await this.prisma.systemSetting.upsert({
       where: { key },
