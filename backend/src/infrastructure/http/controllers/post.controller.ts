@@ -65,7 +65,12 @@ export class PostController {
       body.media?.url,
       body.courseId,
     );
-    return this.postRepository.create(post);
+    const created = await this.postRepository.create(post);
+    await this.prisma.profile.update({
+      where: { id: user.id },
+      data: { xp: { increment: 10 } },
+    });
+    return created;
   }
 
   @PostMethod(':id/like')

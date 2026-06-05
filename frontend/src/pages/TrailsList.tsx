@@ -572,7 +572,7 @@ function MyTrailCard({
 // ─── Página Principal ─────────────────────────────────────────────────────────
 
 export function TrailsListPage() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<"mine" | "catalog">("mine");
   const [allTrails, setAllTrails] = useState<Trail[]>([]);
   const [myTrails, setMyTrails] = useState<MyTrail[]>([]);
@@ -728,7 +728,8 @@ export function TrailsListPage() {
           onClose={() => setExamState(null)}
           onPass={(code) => {
             handleExamPass();
-            toast.success(`Certificado emitido: ${code}`);
+            refreshProfile();
+            toast.success(`Certificado emitido! +100 XP — Código: ${code}`);
           }}
         />
       )}

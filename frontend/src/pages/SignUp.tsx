@@ -100,7 +100,7 @@ export function SignUpPage() {
       </div>
 
       {/* Card horizontal */}
-      <div className="relative z-10 w-full max-w-3xl fade-in-up">
+      <div className="relative z-10 w-full max-w-3xl fade-in">
         <div className="login-card p-8 sm:p-10">
           {/* Horizontal layout: info left | form right */}
           <div className="flex flex-col md:flex-row md:gap-10 lg:gap-14">

@@ -331,7 +331,7 @@ export class TrailController {
 
   // ─── Submeter exame da trilha ─────────────────────────────────────────────────
 
-  @ApiOperation({ summary: 'Submete respostas do exame — ≥70% aprova e emite certificado SURI-TR-XXXXXX (+200 XP)' })
+  @ApiOperation({ summary: 'Submete respostas do exame — ≥70% aprova e emite certificado SURI-TR-XXXXXX (+100 XP)' })
   @ApiResponse({ status: 201, description: '{ score, correct, total, passed, certificateCode }' })
   @ApiResponse({ status: 403, description: 'Admin, não inscrito, cursos incompletos ou tentativas esgotadas' })
   @Post(':id/exam/submit')
@@ -420,7 +420,7 @@ export class TrailController {
         });
         await this.prisma.profile.update({
           where: { id: userId },
-          data: { xp: { increment: 200 } },
+          data: { xp: { increment: 100 } },
         });
         return { score: 100, correct: 0, total: 0, passed: true, autoPassed: true, certificateCode };
       }
@@ -465,7 +465,7 @@ export class TrailController {
         });
         await this.prisma.profile.update({
           where: { id: userId },
-          data: { xp: { increment: 200 } },
+          data: { xp: { increment: 100 } },
         });
       } else {
         certificateCode = (existingCert as any).verificationCode;

@@ -26,7 +26,7 @@ interface ProjectPost {
 }
 
 export function CommunityPage() {
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const [posts, setPosts] = useState<ProjectPost[]>([]);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
@@ -65,11 +65,12 @@ export function CommunityPage() {
           ...(mediaData && { media: mediaData })
         })
       });
-      toast.success("Projeto publicado! +100 XP");
+      toast.success("Projeto publicado! +10 XP");
       setTitle("");
       setBody("");
       setMediaData(null);
       fetchPosts();
+      refreshProfile();
     } catch (e) {
       toast.error("Erro ao publicar");
     } finally {
@@ -129,11 +130,26 @@ export function CommunityPage() {
   };
 
   const like = async (id: string) => {
+    const currentUser = user!;
+    // Atualização otimista local
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.id !== id) return p;
+        const alreadyLiked = p.likedBy?.some((l) => l.email === currentUser.email);
+        return {
+          ...p,
+          likes: alreadyLiked ? p.likes - 1 : p.likes + 1,
+          likedBy: alreadyLiked
+            ? (p.likedBy ?? []).filter((l) => l.email !== currentUser.email)
+            : [...(p.likedBy ?? []), { name: currentUser.name, email: currentUser.email }],
+        };
+      })
+    );
     try {
       await apiRequest(`/posts/${id}/like`, { method: "POST" });
-      fetchPosts();
     } catch (e) {
       toast.error("Erro ao curtir");
+      fetchPosts(); // reverte se falhar
     }
   };
 

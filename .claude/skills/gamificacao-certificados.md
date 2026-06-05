@@ -16,9 +16,9 @@ addXp(amount: number): void {
 ### Fontes de XP
 | Ação | XP |
 |------|----|
-| Concluir um curso | `Course.xpReward` (default **50**) |
-| Publicar um post na comunidade | **+100** |
-| Passar no exame final de uma trilha | **+200** |
+| Concluir um curso | `Course.xpReward` (default **50**) | o Valor é definido de acordo com o Curso, configurado dentro do curso.
+| Publicar um post na comunidade | **+10** |
+| Passar no exame final de uma trilha | **+100** |
 
 - **Admin não acumula XP** (badge "ADMINISTRADOR", sem grupo).
 - Tier por faixa de XP é definido pelas `GroupRule` (ver `user-groups.md`).

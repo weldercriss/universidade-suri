@@ -48,7 +48,7 @@ function buildCompletedMap(lessonIds: string[], completedModuleIds: string[]) {
 
 export function CoursePlayerPage() {
   const { courseId } = useParams<{ courseId: string }>();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { settings } = usePlatformSettings();
   const showUserPhotos = settings.show_user_photos !== "false";
   const navigate = useNavigate();
@@ -352,11 +352,12 @@ export function CoursePlayerPage() {
           ...(mediaData && { media: mediaData }),
         }),
       });
-      toast.success("Projeto publicado! +100 XP");
+      toast.success("Projeto publicado! +10 XP");
       setPostTitle("");
       setPostBody("");
       setMediaData(null);
       fetchPosts();
+      refreshProfile();
     } catch {
       toast.error("Erro ao publicar");
     } finally {
@@ -981,6 +982,7 @@ export function CoursePlayerPage() {
         onResult={async (res) => {
           if (res.passed) {
             toast.success("Parabéns! Você foi aprovado na prova!");
+            refreshProfile();
           } else if (res.blocked) {
             toast.error("Tentativas esgotadas. Contate o administrador.");
           } else {
