@@ -349,7 +349,7 @@ export function CertificatePage() {
       <img
         src={
           settings?.logo_collapsed_dark
-            ? `http://localhost:3000${settings.logo_collapsed_dark}`
+            ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_collapsed_dark}`
             : totvsDark
         }
         className="watermark-bg"

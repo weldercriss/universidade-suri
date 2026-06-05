@@ -52,7 +52,7 @@ function LogoUploader({ title, description, settingKey, currentUrl }: LogoUpload
 
   const getFullUrl = (url: string | null) => {
     if (!url) return null;
-    return url.startsWith("http") || url.startsWith("data:") ? url : `http://localhost:3000${url}`;
+    return url.startsWith("http") || url.startsWith("data:") ? url : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${url}`;
   };
 
   return (

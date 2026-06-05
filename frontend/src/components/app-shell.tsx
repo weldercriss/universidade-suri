@@ -69,8 +69,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {pathname !== "/admin" && (
         <img 
           src={isLight 
-            ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : totvsD)
-            : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : totvsW)} 
+            ? (settings?.logo_collapsed_light ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_collapsed_light}` : totvsD)
+            : (settings?.logo_collapsed_dark ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_collapsed_dark}` : totvsW)} 
           className="watermark-bg" 
           alt="" 
           aria-hidden="true" 
@@ -87,8 +87,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {sidebarCollapsed ? (
             <img 
               src={isLight 
-                ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : totvsD) 
-                : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : totvsLilac)} 
+                ? (settings?.logo_collapsed_light ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_collapsed_light}` : totvsD) 
+                : (settings?.logo_collapsed_dark ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_collapsed_dark}` : totvsLilac)} 
               alt="SURI" 
               className="block" 
               style={{ height: "38px", width: "auto" }} 
@@ -96,8 +96,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           ) : (
             <img 
               src={isLight 
-                ? (settings?.logo_expanded_light ? `http://localhost:3000${settings.logo_expanded_light}` : suriBlue) 
-                : (settings?.logo_expanded_dark ? `http://localhost:3000${settings.logo_expanded_dark}` : suriWhite)} 
+                ? (settings?.logo_expanded_light ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_expanded_light}` : suriBlue) 
+                : (settings?.logo_expanded_dark ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_expanded_dark}` : suriWhite)} 
               alt="Universidade SURI" 
               className="block mx-auto" 
               style={{ height: "28px", width: "auto" }} 
@@ -176,7 +176,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <div className="size-10 rounded-full bg-gradient-brand grid place-items-center text-sm font-semibold text-white relative overflow-hidden shrink-0">
               {user.profileImage && (user.profileImage.startsWith('data:image/') || user.profileImage.startsWith('http') || user.profileImage.startsWith('/uploads')) ? (
                 <img
-                  src={user.profileImage.startsWith('data:image/') || user.profileImage.startsWith('http') ? user.profileImage : `http://localhost:3000${user.profileImage}`}
+                  src={user.profileImage.startsWith('data:image/') || user.profileImage.startsWith('http') ? user.profileImage : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${user.profileImage}`}
                   alt="Avatar"
                   className="size-full object-cover"
                 />
@@ -248,7 +248,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <img
                   src={user.profileImage.startsWith('data:image/') || user.profileImage.startsWith('http')
                     ? user.profileImage
-                    : `http://localhost:3000${user.profileImage}`}
+                    : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${user.profileImage}`}
                   alt="Avatar"
                   className="size-full object-cover"
                 />

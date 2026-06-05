@@ -237,7 +237,7 @@ export function SettingsPage() {
   const avatarSrc = user.profileImage
     ? (user.profileImage.startsWith("data:") || user.profileImage.startsWith("http")
       ? user.profileImage
-      : `http://localhost:3000${user.profileImage}`)
+      : `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${user.profileImage}`)
     : null;
 
 

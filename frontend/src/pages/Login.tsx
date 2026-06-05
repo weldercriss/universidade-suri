@@ -51,8 +51,8 @@ export function LoginPage() {
 
       <img 
         src={isLight 
-          ? (settings?.logo_collapsed_light ? `http://localhost:3000${settings.logo_collapsed_light}` : totvsLight)
-          : (settings?.logo_collapsed_dark ? `http://localhost:3000${settings.logo_collapsed_dark}` : totvsDark)}
+          ? (settings?.logo_collapsed_light ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_collapsed_light}` : totvsLight)
+          : (settings?.logo_collapsed_dark ? `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${settings.logo_collapsed_dark}` : totvsDark)}
         className="watermark-bg" 
         alt="" 
         aria-hidden="true" 
