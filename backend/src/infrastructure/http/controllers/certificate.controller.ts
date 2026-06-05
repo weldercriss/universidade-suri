@@ -107,6 +107,14 @@ export class CertificateController {
 
     const verificationCode = `UNISURI-MAN-${Math.random().toString(16).substring(2, 8).toUpperCase()}`;
 
+    const existingCert = await this.prisma.certificate.findFirst({
+      where: { userId: targetUserId, courseId },
+    });
+
+    if (existingCert) {
+      return { message: 'Certificado já emitido', code: existingCert.verificationCode };
+    }
+
     let enrollment = await this.prisma.enrollment.findUnique({
       where: {
         userId_courseId: {
@@ -124,24 +132,20 @@ export class CertificateController {
           completedAt: new Date(),
         },
       });
-    } else {
+    } else if (!enrollment.completedAt) {
       await this.prisma.enrollment.update({
         where: { id: enrollment.id },
         data: { completedAt: new Date() },
       });
     }
 
-    try {
-      await this.prisma.certificate.create({
-        data: {
-          userId: targetUserId,
-          courseId,
-          verificationCode,
-        },
-      });
-    } catch (e) {
-      // Ignora erro de duplicidade
-    }
+    await this.prisma.certificate.create({
+      data: {
+        userId: targetUserId,
+        courseId,
+        verificationCode,
+      },
+    });
 
     return { message: 'Certificado emitido manualmente pelo Administrador', code: verificationCode };
   }

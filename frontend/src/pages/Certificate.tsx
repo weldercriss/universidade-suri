@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { createRoot } from "react-dom/client";
+import { flushSync } from "react-dom";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import QRCode from "qrcode";
-import surishopLogo from "@/assets/icons/surishop.svg?url";
+import surishopRaw from "@/assets/icons/surishop.svg?raw";
 import totvsDark from "@/assets/icons/totvs.svg";
 import { apiRequest } from "@/lib/api";
 import { Card } from "@/components/ui/card";
@@ -54,7 +56,7 @@ function SuriSealSvg() {
   );
 
   return (
-    <svg viewBox="0 0 200 245" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
+    <svg viewBox="0 0 200 245" width="200" height="245" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: "100%" }}>
       {/* Fitas (desenhadas antes para ficarem atrás do selo) */}
       <path d="M 72 118 L 96 128 L 84 234 L 74 218 L 60 228 Z" fill="#262626" />
       <path d="M 128 118 L 104 128 L 116 234 L 126 218 L 140 228 Z" fill="#262626" />
@@ -92,6 +94,27 @@ function SuriSealSvg() {
   );
 }
 
+/**
+ * Blob decorativa do canto superior direito.
+ * Renderizada como <img> com a SVG embutida (data-URI) e dimensões explícitas
+ * porque o html2canvas rasteriza SVG inline posicionado com `right`/`slice`
+ * de forma incorreta na exportação (PDF/imagem). Como <img>, sai fiel.
+ */
+const BLOB_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 340" preserveAspectRatio="xMaxYMin slice" width="440" height="330"><path d="M 460 0 L 232 0 C 202 36 274 82 244 138 C 217 188 302 196 348 170 C 402 140 434 182 460 150 Z" fill="#5e22d6"/><path d="M 460 0 L 360 0 C 366 48 420 54 436 96 C 449 128 460 112 460 112 Z" fill="#1c1248"/><path d="M 460 120 C 432 150 446 200 460 220 Z" fill="#1c1248"/></svg>`;
+const BLOB_DATA_URL = `data:image/svg+xml,${encodeURIComponent(BLOB_SVG)}`;
+
+/**
+ * Logo embutido como data-URI (em vez de referenciar o .svg externo via ?url).
+ * O html2canvas 1.4.1 dimensiona errado SVG cuja raiz só tem `viewBox` (sem
+ * width/height) — o logo saía como um "domo" azul cortado. Injetamos width/height
+ * na tag <svg> raiz (igual à blob/selo) para dar tamanho intrínseco e sair fiel.
+ */
+const SURISHOP_LOGO_SIZED = surishopRaw.replace(
+  /<svg /,
+  '<svg width="7271.45" height="1773.98" ',
+);
+const SURISHOP_LOGO_URL = `data:image/svg+xml,${encodeURIComponent(SURISHOP_LOGO_SIZED)}`;
+
 function CertificateVisual({ cert, qrDataUrl }: { cert: CertValidation; qrDataUrl: string | null }) {
   return (
     <div
@@ -106,35 +129,29 @@ function CertificateVisual({ cert, qrDataUrl }: { cert: CertValidation; qrDataUr
         flexDirection: "column",
       }}
     >
-      {/* Blob orgânico — canto superior direito */}
-      <svg
-        viewBox="0 0 460 340"
-        preserveAspectRatio="xMaxYMin slice"
-        style={{ position: "absolute", top: 0, right: 0, width: "440px", height: "330px" }}
-      >
-        {/* Roxo principal */}
-        <path
-          d="M 460 0 L 232 0 C 202 36 274 82 244 138 C 217 188 302 196 348 170 C 402 140 434 182 460 150 Z"
-          fill="#5e22d6"
-        />
-        {/* Acento navy escuro na borda direita */}
-        <path
-          d="M 460 0 L 360 0 C 366 48 420 54 436 96 C 449 128 460 112 460 112 Z"
-          fill="#1c1248"
-        />
-        <path
-          d="M 460 120 C 432 150 446 200 460 220 Z"
-          fill="#1c1248"
-        />
-      </svg>
+      {/* Blob orgânico — canto superior direito (img p/ exportação fiel) */}
+      <img
+        src={BLOB_DATA_URL}
+        alt=""
+        aria-hidden="true"
+        width={440}
+        height={330}
+        style={{ position: "absolute", top: 0, left: "460px", width: "440px", height: "330px" }}
+      />
 
       {/* Conteúdo */}
       <div style={{ display: "flex", flex: 1, padding: "44px 56px 40px 56px", position: "relative", zIndex: 1 }}>
         {/* Coluna esquerda */}
         <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-          {/* Logo */}
+          {/* Logo — width/height explícitos p/ rasterização fiel no html2canvas */}
           <div style={{ marginBottom: "40px" }}>
-            <img src={surishopLogo} alt="Suri Shop" style={{ height: "30px", display: "block" }} />
+            <img
+              src={SURISHOP_LOGO_URL}
+              alt="Suri Shop"
+              width={123}
+              height={30}
+              style={{ width: "123px", height: "30px", display: "block" }}
+            />
           </div>
 
           {/* Título */}
@@ -250,7 +267,6 @@ export function CertificatePage() {
   const [exporting, setExporting] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const { settings } = usePlatformSettings();
-  const certRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!cert) return;
@@ -292,18 +308,47 @@ export function CertificatePage() {
   const sanitizeFilename = (str: string) =>
     str.replace(/[/\\?%*:|"<>]/g, "-").trim();
 
+  // Renderiza CertificateVisual em um container off-screen a partir dos dados
+  // originais do servidor (cert state), ignorando qualquer modificação de DOM
+  // feita via DevTools. Isso impede que alguém altere o nome visível e exporte
+  // um certificado com dados falsos.
+  const buildExportCanvas = async () => {
+    if (!cert) return null;
+    const html2canvas = (await import("html2canvas")).default;
+
+    const container = document.createElement("div");
+    container.style.cssText = "position:fixed;top:-9999px;left:-9999px;overflow:visible;";
+    document.body.appendChild(container);
+
+    const root = createRoot(container);
+    flushSync(() => {
+      root.render(<CertificateVisual cert={cert} qrDataUrl={qrDataUrl} />);
+    });
+
+    const target = container.firstElementChild as HTMLElement;
+    const canvas = await html2canvas(target, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#fafbfe",
+      ignoreElements: (el: Element) => {
+        const cls = typeof el.className === "string" ? el.className : "";
+        const id = el.id || "";
+        return /__talkjs|talkjs|cbm/i.test(`${cls} ${id}`);
+      },
+    });
+
+    root.unmount();
+    document.body.removeChild(container);
+    return canvas;
+  };
+
   const handleExportPdf = async () => {
-    if (!certRef.current || !cert) return;
+    if (!cert) return;
     setExporting(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
       const jsPDF = (await import("jspdf")).default;
-
-      const canvas = await html2canvas(certRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#fafbfe",
-      });
+      const canvas = await buildExportCanvas();
+      if (!canvas) return;
 
       const imgData = canvas.toDataURL("image/jpeg", 0.95);
       const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [900, 540] });
@@ -314,7 +359,6 @@ export function CertificatePage() {
       );
       pdf.save(`${filename}.pdf`);
     } catch {
-      // fallback to print
       window.print();
     } finally {
       setExporting(false);
@@ -322,15 +366,11 @@ export function CertificatePage() {
   };
 
   const handleExportImage = async () => {
-    if (!certRef.current || !cert) return;
+    if (!cert) return;
     setExporting(true);
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(certRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: "#fafbfe",
-      });
+      const canvas = await buildExportCanvas();
+      if (!canvas) return;
 
       const link = document.createElement("a");
       const filename = sanitizeFilename(
@@ -408,7 +448,7 @@ export function CertificatePage() {
 
             {/* Certificate visual — scrollable on mobile */}
             <div className="overflow-x-auto fade-in-up">
-              <div style={{ minWidth: "900px" }} ref={certRef}>
+              <div style={{ minWidth: "900px" }}>
                 <CertificateVisual cert={cert} qrDataUrl={qrDataUrl} />
               </div>
             </div>
