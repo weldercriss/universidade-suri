@@ -56,7 +56,10 @@ export function ChangelogModal({ open, onClose }: Props) {
 
   useEffect(() => {
     if (open && releases.length > 0) {
-      localStorage.setItem(STORAGE_KEY, releases[0].version);
+      const firstRelease = releases[0];
+      if (firstRelease) {
+        localStorage.setItem(STORAGE_KEY, firstRelease.version);
+      }
     }
   }, [open, releases]);
 
@@ -132,8 +135,9 @@ export function useChangelogBadge() {
     apiRequest("/changelog")
       .then((data) => {
         const releases = data as Release[];
-        if (releases.length === 0) return;
-        const latest = releases[0].version;
+        const latestRelease = releases[0];
+        if (!latestRelease) return;
+        const latest = latestRelease.version;
         setLatestVersion(latest);
         const seen = localStorage.getItem(STORAGE_KEY);
         setHasNew(seen !== latest);
