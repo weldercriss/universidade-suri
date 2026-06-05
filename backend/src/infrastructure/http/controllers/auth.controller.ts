@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Put, Patch, Param, Query, UseGuards, Req, Inject, UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException, UseInterceptors, UploadedFile, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Get, Put, Patch, Delete, Param, Query, UseGuards, Req, Inject, UnauthorizedException, BadRequestException, ForbiddenException, NotFoundException, UseInterceptors, UploadedFile, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -264,6 +264,33 @@ export class AuthController {
       id: updated.id,
       isActive: updated.isActive,
     };
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Exclui permanentemente um usuário e todos os dados vinculados (certificados, progresso, etc)' })
+  @ApiResponse({ status: 200, description: 'Usuário excluído com sucesso' })
+  @ApiResponse({ status: 403, description: 'Apenas administradores' })
+  @ApiResponse({ status: 404, description: 'Usuário não encontrado' })
+  @Delete('users/:id')
+  @UseGuards(AuthGuard('jwt'))
+  async deleteUser(@Req() req: any, @Param('id') id: string) {
+    const admin: User = req.user;
+    if (!admin.isAdmin) {
+      throw new ForbiddenException('Acesso restrito para administradores');
+    }
+    
+    // Prevent admin from deleting themselves
+    if (admin.id === id) {
+      throw new BadRequestException('Você não pode excluir sua própria conta');
+    }
+
+    const target = await this.userRepository.findById(id);
+    if (!target) {
+      throw new NotFoundException('Usuário não encontrado');
+    }
+
+    await this.userRepository.delete(id);
+    return { message: 'Usuário e todos os dados vinculados foram excluídos com sucesso' };
   }
 
   @Post('me/avatar')

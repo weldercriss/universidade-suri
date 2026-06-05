@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Users, Loader2, Plus, Edit, Lock, Unlock, UserCheck, UserX, Search, ArrowLeft, Mail, ImageIcon } from "lucide-react";
+import { Users, Loader2, Plus, Edit, Lock, Unlock, UserCheck, UserX, Search, ArrowLeft, Mail, ImageIcon, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function AdminPanelPage() {
@@ -22,6 +22,7 @@ export function AdminPanelPage() {
 
   const [openUsersModal, setOpenUsersModal] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [userToDelete, setUserToDelete] = useState<{id: string, name: string} | null>(null);
   const [editUserForm, setEditUserForm] = useState({ name: "", group: "", tier: "", level: 1, business: "", newsletter: false });
   const [userSearch, setUserSearch] = useState("");
   const [userFilter, setUserFilter] = useState<"all" | "active" | "inactive" | "newsletter">("all");
@@ -85,6 +86,22 @@ export function AdminPanelPage() {
       fetchUsers();
     } catch {
       toast.error("Erro ao alterar status do usuário");
+    }
+  };
+
+  const handleDeleteUser = (id: string, name: string) => {
+    setUserToDelete({ id, name });
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return;
+    try {
+      await apiRequest(`/auth/users/${userToDelete.id}`, { method: "DELETE" });
+      toast.success("Usuário excluído com sucesso!");
+      fetchUsers();
+      setUserToDelete(null);
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao excluir usuário");
     }
   };
 
@@ -333,6 +350,15 @@ export function AdminPanelPage() {
                   >
                     {u.isActive ? <Lock className="size-4" /> : <Unlock className="size-4" />}
                   </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title="Excluir usuário permanentemente"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => handleDeleteUser(u.id, u.name)}
+                  >
+                    <Trash2 className="size-4" />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -391,6 +417,30 @@ export function AdminPanelPage() {
               </label>
               <Button type="submit" className="w-full bg-primary text-primary-foreground hover:opacity-90">Salvar Alterações</Button>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal de Confirmação de Exclusão */}
+        <Dialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+          <DialogContent className="sm:max-w-[425px] bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="text-destructive flex items-center gap-2">
+                <Trash2 className="size-5" /> Excluir Usuário
+              </DialogTitle>
+            </DialogHeader>
+            <div className="py-4 text-sm text-muted-foreground">
+              Tem certeza que deseja excluir permanentemente o usuário <strong className="text-foreground">{userToDelete?.name}</strong> e TODOS os seus dados?
+              <br/><br/>
+              Esta ação não pode ser desfeita e vai apagar certificados, ranking e histórico de aulas.
+            </div>
+            <div className="flex justify-end gap-3 mt-4">
+              <Button variant="outline" onClick={() => setUserToDelete(null)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmDelete}>
+                Excluir Permanentemente
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </Card>

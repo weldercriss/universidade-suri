@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "date": "2025-11-01",
+  "date": "2026-06-05",
   "title": "Lançamento Inicial",
   "changes": [
     { "type": "new", "text": "Plataforma de ensino Universidade Suri lançada" },
@@ -8,6 +8,20 @@
     { "type": "new", "text": "Certificados digitais com código de verificação único" },
     { "type": "new", "text": "Leaderboard e gamificação com sistema de XP e níveis" },
     { "type": "new", "text": "Comunidade segmentada por grupo (VIP e Embaixadores)" },
-    { "type": "new", "text": "Painel administrativo com CRUD de cursos, usuários e quizzes" }
+    { "type": "new", "text": "Painel administrativo com CRUD de cursos, usuários e quizzes" },
+    { "type": "new", "text": "Trilhas de aprendizado com múltiplos cursos agrupados" },
+    { "type": "new", "text": "Exame final de trilha com até 3 tentativas e aprovação ≥70%" },
+    { "type": "new", "text": "Certificado de trilha com código SURI-TR-[HEX]" },
+    { "type": "new", "text": "Roadmap de capacitação profissional curado pelo admin" },
+    { "type": "new", "text": "API externa com 15 endpoints para integração com CRM e painéis" },
+    { "type": "new", "text": "Performance do feed da comunidade com paginação otimizada" },
+    { "type": "new", "text": "Correção no cálculo de progresso de cursos com módulos opcionais" },
+    { "type": "new", "text": "Sistema de changelog integrado à plataforma com notificações de atualização" },
+    { "type": "new", "text": "Tokens de API para integração com sistemas externos (CRM, automações)" },
+    { "type": "new", "text": "Gerenciamento de logotipos diretamente pelo painel administrativo" },
+    { "type": "new", "text": "Visibilidade de fotos de perfil configurável pelo administrador" },
+    { "type": "new", "text": "Interface mobile com bottom navigation bar e suporte a gestos" },
+    { "type": "new", "text": "Sidebar recolhível com estado persistido entre sessões" },
+    { "type": "new", "text": "Correção no redirecionamento do Roadmap para administradores" }
   ]
 }

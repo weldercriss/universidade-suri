@@ -7,5 +7,6 @@ export interface IUserRepository {
   update(user: User): Promise<User>;
   listAll(): Promise<User[]>;
   listLeaderboard(groupType?: string): Promise<User[]>;
+  delete(id: string): Promise<void>;
 }
 export const IUserRepository = Symbol('IUserRepository');

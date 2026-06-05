@@ -124,6 +124,19 @@ export class PrismaUserRepository implements IUserRepository {
     }
   }
 
+  async delete(id: string): Promise<void> {
+    try {
+      await this.prisma.$transaction([
+        this.prisma.quizExtraAttempt.deleteMany({ where: { userId: id } }),
+        this.prisma.apiToken.deleteMany({ where: { createdById: id } }),
+        this.prisma.profile.delete({ where: { id } }),
+      ]);
+    } catch (e) {
+      this.logger.error('Error deleting user', e);
+      throw e;
+    }
+  }
+
   private mapRowToEntity(row: any): User {
     return new User(
       row.id,
