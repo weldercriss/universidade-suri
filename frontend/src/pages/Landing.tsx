@@ -13,7 +13,6 @@ import totvsDark from "@/assets/icons/totvs.svg";
 import suriBlue from "@/assets/icons/suri-blue.svg";
 import suriWhite from "@/assets/icons/suri-white.svg";
 import fotoPh from "@/assets/img/foto-ph.png";
-import noiseBg from "@/assets/noise.png";
 
 // Gradientes de fallback usados quando o curso não possui capa cadastrada
 const GRADIENT_COVERS = [
@@ -445,7 +444,7 @@ export function LandingPage() {
         <section className="py-24 bg-gradient-to-b from-transparent to-primary/5 border-t border-border">
           <div className="container mx-auto px-4 sm:px-6 lg:px-8">
             <div className={`max-w-4xl mx-auto rounded-3xl p-8 md:p-16 text-center shadow-glow overflow-hidden relative ${isLight ? "bg-deep" : "bg-snow"}`}>
-              <div className="absolute inset-0 opacity-10 mix-blend-overlay" style={{ backgroundImage: `url(${noiseBg})` }}></div>
+              <div className="absolute inset-0 opacity-10 mix-blend-overlay"></div>
               <h2 className={`text-3xl md:text-5xl font-bold mb-6 relative z-10 ${isLight ? "text-snow" : "text-deep"}`}>Pronto para dar o próximo passo?</h2>
               <p className={`text-lg md:text-xl mb-10 max-w-2xl mx-auto relative z-10 ${isLight ? "text-snow/80" : "text-deep/80"}`}>
                 Junte-se a milhares de profissionais que já transformaram suas carreiras com a Universidade Suri.
