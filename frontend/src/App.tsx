@@ -12,8 +12,7 @@ import { SettingsPage } from "./pages/Settings";
 import { AdminPanelPage } from "./pages/AdminPanel";
 import { AdminCoursesPage } from "./pages/AdminCourses";
 import { AdminTrailsPage } from "./pages/AdminTrails";
-import { LoginPage } from "./pages/Login";
-import { SignUpPage } from "./pages/SignUp";
+import { AuthPage } from "./pages/AuthPage";
 import { ForgotPasswordPage } from "./pages/ForgotPassword";
 import { ResetPasswordPage } from "./pages/ResetPassword";
 import { CertificatePage } from "./pages/Certificate";
@@ -101,8 +100,8 @@ export default function App() {
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignUpPage />} />
+        <Route path="/login" element={<AuthPage />} />
+        <Route path="/signup" element={<AuthPage />} />
         <Route path="/esqueceu-senha" element={<ForgotPasswordPage />} />
         <Route path="/redefinir-senha" element={<ResetPasswordPage />} />
         <Route path="/certificado/:codigo" element={<CertificatePage />} />
