@@ -4,12 +4,10 @@ import { AppShell } from "@/components/app-shell";
 import { useAuth } from "@/lib/auth";
 import { apiRequest, API_BASE_URL } from "@/lib/api";
 import { type Course } from "@/types";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { PlayCircle, Lock, CheckCircle2, Search, BookOpen, Loader2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { PlayCircle, CheckCircle2, Search, BookOpen, Loader2, ShieldCheck, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface EnrollmentProgress {
@@ -18,12 +16,128 @@ interface EnrollmentProgress {
   totalModules: number;
 }
 
+function Coursecover({ c, className }: { c: Course; className?: string }) {
+  const hasImage = c.cover && (c.cover.startsWith("http") || c.cover.startsWith("/"));
+  const src = c.cover?.startsWith("/") ? `${API_BASE_URL}${c.cover}` : c.cover;
+
+  if (hasImage) {
+    return (
+      <img
+        src={src}
+        alt={c.title}
+        className={className ?? "absolute inset-0 w-full h-full object-cover"}
+      />
+    );
+  }
+  return (
+    <div
+      className={`absolute inset-0 bg-gradient-to-br ${c.cover || "from-primary to-secondary"} opacity-90 ${className ?? ""}`}
+    />
+  );
+}
+
+function PosterCard({
+  c,
+  isAdmin,
+  onEnroll,
+  enrolling,
+  enrolled,
+}: {
+  c: Course;
+  isAdmin?: boolean;
+  onEnroll?: (id: string) => void;
+  enrolling?: boolean;
+  enrolled?: boolean;
+}) {
+  const progress = c.progress ?? 0;
+  const label = progress === 100 ? "Acessar" : progress > 0 ? "Continuar" : "Iniciar";
+
+  return (
+    <div className="group relative aspect-[2/3] rounded-xl overflow-hidden cursor-pointer shadow-elegant transition-all duration-300 hover:scale-105 hover:shadow-glow hover:z-10">
+      {/* Cover */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/60 to-secondary/60">
+        <Coursecover c={c} />
+      </div>
+
+      {/* Admin badge */}
+      {isAdmin && (
+        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 bg-black/70 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+          <ShieldCheck className="size-3" />
+          ADMIN
+        </div>
+      )}
+
+      {/* Progress bar (enrolled courses) */}
+      {enrolled && progress > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 h-1 bg-black/40 z-10">
+          <div
+            className="h-full bg-primary transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
+
+      {/* Default overlay — rodapé com título */}
+      <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-black/90 via-black/50 to-transparent pt-8 pb-3 px-3 transition-all duration-300 group-hover:opacity-0">
+        <p className="text-white text-xs font-semibold line-clamp-2 leading-tight">{c.title}</p>
+        <p className="text-white/60 text-[10px] mt-0.5">{c.lessons.length} aulas</p>
+      </div>
+
+      {/* Hover overlay completo */}
+      <div className="absolute inset-0 z-20 flex flex-col justify-end bg-black/70 opacity-0 group-hover:opacity-100 transition-all duration-300 p-3">
+        <p className="text-white text-sm font-bold line-clamp-2 leading-tight mb-1">{c.title}</p>
+        {c.description && (
+          <p className="text-white/70 text-[11px] line-clamp-2 mb-2">{c.description}</p>
+        )}
+        <div className="flex items-center gap-1.5 mb-2">
+          <span className="text-white/60 text-[10px]">{c.lessons.length} aulas</span>
+          {c.group !== "all" && (
+            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-primary/30 text-primary uppercase">
+              {c.group}
+            </span>
+          )}
+        </div>
+        {enrolled && progress > 0 && (
+          <div className="mb-2">
+            <div className="flex justify-between text-[10px] text-white/60 mb-0.5">
+              <span>Progresso</span>
+              <span>{progress}%</span>
+            </div>
+            <Progress value={progress} className="h-1" />
+          </div>
+        )}
+        {isAdmin ? (
+          <div className="text-center text-xs text-white/50 py-1">Modo Administrador</div>
+        ) : enrolled ? (
+          <button className="w-full flex items-center justify-center gap-1.5 bg-primary text-primary-foreground text-xs font-bold py-2 rounded-lg hover:bg-primary/90 transition-colors">
+            <PlayCircle className="size-3.5" />
+            {label}
+          </button>
+        ) : (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onEnroll?.(c.id);
+            }}
+            disabled={enrolling}
+            className="w-full flex items-center justify-center gap-1.5 bg-white/20 border border-white/40 text-white text-xs font-bold py-2 rounded-lg hover:bg-white/30 transition-colors disabled:opacity-60"
+          >
+            {enrolling ? <Loader2 className="size-3.5 animate-spin" /> : null}
+            {enrolling ? "Inscrevendo..." : "Inscrever-se"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function CoursesListPage() {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [courseProgress, setCourseProgress] = useState<Record<string, EnrollmentProgress>>({});
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<"meus" | "catalogo">("meus");
   const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
@@ -38,9 +152,7 @@ export function CoursesListPage() {
 
   useEffect(() => {
     if (!user) return;
-
     const isAdminUser = user.group === "admin" || user.isAdmin;
-
     Promise.all([
       apiRequest<any[]>("/courses"),
       isAdminUser ? Promise.resolve([] as EnrollmentProgress[]) : apiRequest<EnrollmentProgress[]>("/enrollments/progress"),
@@ -67,7 +179,7 @@ export function CoursesListPage() {
             id: c.id,
             title: c.title,
             description: c.description || "",
-            cover: c.coverUrl || "from-marine to-deep",
+            cover: c.coverUrl || "from-primary to-secondary",
             group: c.targetGroup || c.target_group || "all",
             progress: progressPct,
             lessons: (c.lessons || []).map((l: any) => ({
@@ -106,12 +218,9 @@ export function CoursesListPage() {
   if (!user) return null;
 
   const isAdmin = user.group === "admin" || user.isAdmin;
-
   const groupFiltered = courses.filter((c) => c.group === "all" || c.group === user.group);
   const enrolledCourses = groupFiltered.filter((c) => courseProgress[c.id] !== undefined);
   const catalogCourses = groupFiltered.filter((c) => courseProgress[c.id] === undefined);
-
-
 
   const filteredEnrolled = enrolledCourses.filter(
     (c) => !search || c.title.toLowerCase().includes(search.toLowerCase())
@@ -120,266 +229,154 @@ export function CoursesListPage() {
     (c) => !search || c.title.toLowerCase().includes(search.toLowerCase())
   );
 
-  const CourseCardInner = ({ c }: { c: Course }) => (
-    <Card className="group bg-gradient-card border-border p-5 hover:border-primary/50 hover:shadow-glow transition-all duration-200 shadow-elegant">
-      <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
-        <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 min-w-0">
-          <div className="w-16 h-16 rounded-lg shrink-0 flex items-center justify-center bg-gradient-to-br from-marine to-deep relative overflow-hidden">
-            {c.cover && (c.cover.startsWith("http") || c.cover.startsWith("/")) ? (
-              <img
-                src={c.cover.startsWith("http") ? c.cover : `${API_BASE_URL}${c.cover}`}
-                alt={c.title}
-                className="absolute inset-0 w-full h-full object-cover"
-              />
-            ) : (
-              <div className={`absolute inset-0 bg-gradient-to-br ${c.cover} opacity-80`} />
-            )}
-            <PlayCircle className="size-8 text-white/80 group-hover:scale-110 transition-transform relative z-10" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors truncate">
-              {c.title}
-            </h3>
-            <p className="text-sm text-muted-foreground mb-2 truncate">
-              {c.description || "Aprenda e domine este conteúdo completo."}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {c.group !== "all" && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20 uppercase">
-                  {c.group}
-                </span>
-              )}
-              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground border border-border">
-                {c.lessons.length} aulas
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-4 shrink-0 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-border">
-          <div className="hidden md:block text-right w-24">
-            <div className="text-sm font-medium text-foreground">{c.progress}%</div>
-            <Progress value={c.progress} className="h-1.5 mt-1" />
-          </div>
-          <button className="flex-1 md:flex-none cursor-pointer rounded-lg font-bold transition-colors duration-200 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground px-4 py-2.5 text-sm whitespace-nowrap">
-            {c.progress === 100 ? "Acessar" : c.progress > 0 ? "Continuar" : "Iniciar"}
-          </button>
-        </div>
-      </div>
-    </Card>
-  );
+  const gridClass = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4";
 
   return (
     <AppShell>
-      <header className="mb-6 fade-in-up">
-        <h1 className="text-3xl font-bold text-gradient">Cursos & Jornada</h1>
-        <p className="text-muted-foreground mt-1">
-          {isAdmin
-            ? "Catálogo de cursos cadastrados na plataforma."
-            : `Trilha completa para ${user.group === "vip" ? "VIPs" : "Embaixadores"}.`}
-        </p>
+      {/* Header */}
+      <header className="flex items-start justify-between mb-6 fade-in-up">
+        <div>
+          <h1 className="text-3xl font-bold text-gradient">Cursos & Jornada</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {isAdmin
+              ? "Catálogo de cursos cadastrados na plataforma."
+              : `Trilha completa para ${user.group === "vip" ? "VIPs" : "Embaixadores"}.`}
+          </p>
+        </div>
+        {/* Search toggle */}
+        <div className="flex items-center gap-2 mt-1">
+          {searchOpen && (
+            <div className="relative fade-in">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+              <Input
+                autoFocus
+                placeholder="Pesquisar cursos…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 pr-8 h-9 w-48 sm:w-64 bg-muted/30 border-border text-sm"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+          )}
+          <button
+            onClick={() => {
+              setSearchOpen((v) => !v);
+              if (searchOpen) setSearch("");
+            }}
+            className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors"
+          >
+            <Search className="size-5" />
+          </button>
+        </div>
       </header>
 
       {/* Tabs — somente para usuários */}
       {!isAdmin && (
-        <>
-          <div className="flex gap-1 mb-6 border-b border-border">
-            <button
-              onClick={() => setActiveTab("meus")}
-              className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                activeTab === "meus"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Meus Cursos
-              {enrolledCourses.length > 0 && (
-                <span className="ml-1.5 text-xs opacity-70">({enrolledCourses.length})</span>
-              )}
-            </button>
-            <button
-              onClick={() => setActiveTab("catalogo")}
-              className={`px-5 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                activeTab === "catalogo"
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Catálogo
-              {catalogCourses.length > 0 && (
-                <span className="ml-1.5 text-xs opacity-70">({catalogCourses.length})</span>
-              )}
-            </button>
-          </div>
-
-          <div className="relative mb-6 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <Input
-              placeholder="Pesquisar cursos"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 bg-muted/30 border-border h-10"
-            />
-          </div>
-        </>
+        <div className="flex gap-0 mb-6 border-b border-border">
+          {(["meus", "catalogo"] as const).map((tab) => {
+            const label = tab === "meus" ? "Meus Cursos" : "Catálogo";
+            const count = tab === "meus" ? enrolledCourses.length : catalogCourses.length;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 -mb-px relative ${
+                  activeTab === tab
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {label}
+                {count > 0 && (
+                  <span className={`ml-1.5 text-xs ${activeTab === tab ? "text-primary/70" : "opacity-50"}`}>
+                    ({count})
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
       )}
 
+      {/* Loading skeleton */}
       {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i} className="bg-gradient-card border-border p-5 animate-pulse">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-muted/30 rounded-lg shrink-0" />
-                <div className="flex-1 space-y-3">
-                  <div className="h-4 bg-muted/30 rounded w-1/3" />
-                  <div className="h-3 bg-muted/20 rounded w-1/4" />
-                </div>
-              </div>
-            </Card>
+        <div className={gridClass}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="aspect-[2/3] rounded-xl bg-muted/30 animate-pulse" />
           ))}
         </div>
       ) : isAdmin ? (
-        /* Vista do admin: todos os cursos */
-        <div className="space-y-4 stagger-children">
-          {courses.map((c) => (
-            <div key={c.id} onClick={() => toast.info("Administradores não realizam cursos.")}>
-              <Card className="group bg-gradient-card border-border p-5 hover:border-primary/50 transition-all duration-200 shadow-elegant cursor-default">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-lg shrink-0 flex items-center justify-center bg-gradient-to-br from-marine to-deep relative overflow-hidden">
-                    {c.cover && (c.cover.startsWith("http") || c.cover.startsWith("/")) ? (
-                      <img
-                        src={c.cover.startsWith("http") ? c.cover : `${API_BASE_URL}${c.cover}`}
-                        alt={c.title}
-                        className="absolute inset-0 w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className={`absolute inset-0 bg-gradient-to-br ${c.cover} opacity-80`} />
-                    )}
-                    <PlayCircle className="size-8 text-white/80 relative z-10" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-foreground mb-0.5 truncate">{c.title}</h3>
-                    <p className="text-sm text-muted-foreground truncate">{c.description}</p>
-                  </div>
-                  <span className="text-sm font-medium text-secondary whitespace-nowrap">Modo Admin</span>
-                </div>
-              </Card>
-            </div>
-          ))}
-          {courses.length === 0 && (
-            <Card className="bg-gradient-card border-border p-12 text-center text-muted-foreground shadow-elegant">
-              <BookOpen className="size-10 mx-auto mb-3 text-muted-foreground/50" />
-              <p className="font-medium">Nenhum curso cadastrado</p>
-            </Card>
-          )}
-        </div>
+        /* Vista admin */
+        courses.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+            <BookOpen className="size-10 mb-3 opacity-50" />
+            <p className="font-medium">Nenhum curso cadastrado</p>
+          </div>
+        ) : (
+          <div className={gridClass}>
+            {courses.map((c) => (
+              <div key={c.id} onClick={() => toast.info("Administradores não realizam cursos.")}>
+                <PosterCard c={c} isAdmin />
+              </div>
+            ))}
+          </div>
+        )
       ) : activeTab === "meus" ? (
         /* Meus Cursos */
         enrolledCourses.length === 0 ? (
-          <Card className="bg-gradient-card border-border p-12 text-center shadow-elegant fade-in-up">
-            <BookOpen className="size-10 mx-auto mb-3 text-muted-foreground/50" />
+          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground fade-in-up">
+            <BookOpen className="size-10 mb-3 opacity-50" />
             <p className="font-medium text-foreground">Você ainda não está inscrito em nenhum curso</p>
-            <p className="text-sm text-muted-foreground mt-1 mb-5">
-              Explore o catálogo e inscreva-se para começar sua jornada.
-            </p>
+            <p className="text-sm mt-1 mb-5">Explore o catálogo e comece sua jornada.</p>
             <Button onClick={() => setActiveTab("catalogo")} className="bg-primary text-primary-foreground">
               Explorar Catálogo
             </Button>
-          </Card>
+          </div>
+        ) : filteredEnrolled.length === 0 && search ? (
+          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+            <Search className="size-8 mb-2 opacity-50" />
+            <p className="text-sm">Nenhum curso encontrado para "{search}"</p>
+          </div>
         ) : (
-          <>
-
-
-            {/* Grid de cursos inscritos */}
-            <section>
-              <h2 className="text-lg font-semibold mb-4">Todos os meus cursos</h2>
-              <div className="space-y-4 stagger-children">
-                {filteredEnrolled.map((c) => (
-                  <Link key={c.id} to={`/cursos/${c.id}`} className="block">
-                    <CourseCardInner c={c} />
-                  </Link>
-                ))}
-                {filteredEnrolled.length === 0 && search && (
-                  <Card className="bg-gradient-card border-border p-8 text-center text-muted-foreground shadow-elegant">
-                    <Search className="size-8 mx-auto mb-2 text-muted-foreground/50" />
-                    <p className="text-sm">Nenhum curso encontrado para "{search}"</p>
-                  </Card>
-                )}
-              </div>
-            </section>
-          </>
+          <div className={`${gridClass} stagger-children`}>
+            {filteredEnrolled.map((c) => (
+              <Link key={c.id} to={`/cursos/${c.id}`}>
+                <PosterCard c={c} enrolled />
+              </Link>
+            ))}
+          </div>
         )
       ) : (
         /* Catálogo */
         catalogCourses.length === 0 ? (
-          <Card className="bg-gradient-card border-border p-12 text-center shadow-elegant fade-in-up">
-            <CheckCircle2 className="size-10 mx-auto mb-3 text-success/70" />
+          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground fade-in-up">
+            <CheckCircle2 className="size-10 mb-3 text-success/70" />
             <p className="font-medium text-foreground">Você está inscrito em todos os cursos disponíveis!</p>
-            <p className="text-sm text-muted-foreground mt-1">Continue sua jornada em Meus Cursos.</p>
-          </Card>
+            <p className="text-sm mt-1">Continue sua jornada em Meus Cursos.</p>
+          </div>
+        ) : filteredCatalog.length === 0 && search ? (
+          <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+            <Search className="size-8 mb-2 opacity-50" />
+            <p className="text-sm">Nenhum curso encontrado para "{search}"</p>
+          </div>
         ) : (
-          <div className="space-y-4 stagger-children">
+          <div className={`${gridClass} stagger-children`}>
             {filteredCatalog.map((c) => (
-              <Card
+              <PosterCard
                 key={c.id}
-                className="group bg-gradient-card border-border p-5 hover:border-primary/50 hover:shadow-glow transition-all duration-200 shadow-elegant"
-              >
-                <div className="flex flex-col md:flex-row items-start md:items-center md:justify-between gap-4">
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-4 flex-1 min-w-0">
-                    <div className="w-16 h-16 rounded-lg shrink-0 flex items-center justify-center bg-gradient-to-br from-marine to-deep relative overflow-hidden">
-                      {c.cover && (c.cover.startsWith("http") || c.cover.startsWith("/")) ? (
-                        <img
-                          src={c.cover.startsWith("http") ? c.cover : `${API_BASE_URL}${c.cover}`}
-                          alt={c.title}
-                          className="absolute inset-0 w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${c.cover} opacity-80`} />
-                      )}
-                      <PlayCircle className="size-8 text-white/80 group-hover:scale-110 transition-transform relative z-10" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-foreground mb-1 group-hover:text-primary transition-colors truncate">
-                        {c.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-2 truncate">
-                        {c.description || "Aprenda e domine este conteúdo completo."}
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {c.group !== "all" && (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary border border-primary/20 uppercase">
-                            {c.group}
-                          </span>
-                        )}
-                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-muted text-muted-foreground border border-border">
-                          {c.lessons.length} aulas
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 shrink-0 w-full md:w-auto mt-2 md:mt-0 pt-4 md:pt-0 border-t md:border-t-0 border-border">
-                    <Button
-                      onClick={() => handleEnroll(c.id)}
-                      disabled={enrollingId === c.id}
-                      className="flex-1 md:flex-none bg-primary text-primary-foreground hover:bg-primary/90"
-                    >
-                      {enrollingId === c.id ? (
-                        <>
-                          <Loader2 className="size-4 mr-2 animate-spin" /> Inscrevendo...
-                        </>
-                      ) : (
-                        "Inscrever-se"
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              </Card>
+                c={c}
+                enrolled={false}
+                onEnroll={handleEnroll}
+                enrolling={enrollingId === c.id}
+              />
             ))}
-            {filteredCatalog.length === 0 && search && (
-              <Card className="bg-gradient-card border-border p-8 text-center text-muted-foreground shadow-elegant">
-                <Search className="size-8 mx-auto mb-2 text-muted-foreground/50" />
-                <p className="text-sm">Nenhum curso encontrado para "{search}"</p>
-              </Card>
-            )}
           </div>
         )
       )}

@@ -152,7 +152,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* Collapse toggle */}
-        <div className="flex px-3 py-2 justify-end shrink-0">
+        <div className={`flex py-2 shrink-0 ${sidebarCollapsed ? "justify-center px-2" : "px-3 justify-end"}`}>
           <Button
             size="icon"
             variant="ghost"
@@ -194,7 +194,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
         {/* User Profile */}
         <div className="p-3 border-t border-border mt-auto shrink-0">
-          <div className={`bg-background/40 border border-border rounded-xl p-3 flex items-center gap-3 ${sidebarCollapsed ? "justify-center" : ""}`}>
+          <div className={`bg-background/40 border border-border rounded-xl p-3 flex items-center gap-3 ${sidebarCollapsed ? "justify-center flex-col" : ""}`}>
             <div className="size-10 rounded-full bg-gradient-brand grid place-items-center text-sm font-semibold text-white relative overflow-hidden shrink-0">
               {user.profileImage && (user.profileImage.startsWith('data:image/') || user.profileImage.startsWith('http') || user.profileImage.startsWith('/uploads')) ? (
                 <img
@@ -211,7 +211,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {isAdmin ? <ShieldCheck className="size-3 text-primary fill-primary" /> : isVip ? <Sparkles className="size-3 text-secondary fill-secondary" /> : <Shield className="size-3 text-success fill-success" />}
               </span>
             </div>
-            {!sidebarCollapsed && (
+            {sidebarCollapsed ? (
+              <Button size="icon" variant="ghost" onClick={logout} aria-label="Sair" className="hover:bg-destructive/15 hover:text-destructive size-8">
+                <LogOut className="size-4" />
+              </Button>
+            ) : (
               <>
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium truncate">{user.name}</div>

@@ -9,17 +9,18 @@ export class SupabaseStorageService {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_KEY;
+    // Service role key bypasses RLS — required for server-side uploads
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
     this.bucket = process.env.SUPABASE_BUCKET || 'universidade-suri-uploads';
 
     if (!supabaseUrl || !supabaseKey) {
-      this.logger.warn('As variáveis SUPABASE_URL ou SUPABASE_KEY não estão definidas. O upload falhará.');
+      this.logger.warn('As variáveis SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não estão definidas. O upload falhará.');
     }
 
-    // Inicializa o cliente do Supabase
     this.supabase = createClient(supabaseUrl || '', supabaseKey || '', {
       auth: {
         persistSession: false,
+        autoRefreshToken: false,
       },
     });
   }

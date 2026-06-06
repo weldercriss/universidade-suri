@@ -1,11 +1,11 @@
-# 🔌 API Externa & Tokens de Integração
+# API Externa & Tokens de Integração
 
 Permite que sistemas externos consultem dados da plataforma de forma somente-leitura, autenticados
 por **API Token** (não JWT).
 
 ---
 
-## 🔑 1. API Tokens (`ApiToken`)
+## API Tokens (`ApiToken`)
 
 - Model `ApiToken` (`api_tokens`, PK `cuid()`): `name`, `tokenHash` (SHA256 unique), `lastUsedAt?`,
   `expiresAt?`, `isActive` (default `true`), `createdById`, timestamps.
@@ -23,20 +23,20 @@ por **API Token** (não JWT).
 | `PATCH` | `/admin/api-tokens/:id/toggle` | Ativa/desativa |
 | `DELETE` | `/admin/api-tokens/:id` | Remove |
 
-DTO: `backend/src/infrastructure/http/dtos/api-token.dto.ts` (`CreateApiTokenDto`).
+DTO: `src/infrastructure/http/dtos/api-token.dto.ts` (`CreateApiTokenDto`)
 
 ---
 
-## 🛡️ 2. Autenticação das rotas `/external/*`
+## Autenticação das rotas `/external/*`
 
-- Enviado como `Authorization: Bearer suri_<token>`.
-- Validado em `infrastructure/http/strategies/api-token.strategy.ts` (passport-custom): extrai o
-  Bearer, calcula `SHA256` e compara com `tokenHash`.
-- Guard `ApiTokenGuard` aplicado no `ExternalApiController` (`@UseGuards(ApiTokenGuard)`).
+- Enviado como `Authorization: Bearer suri_<token>`
+- Validado em `infrastructure/http/strategies/api-token.strategy.ts` (passport-custom):
+  extrai o Bearer, calcula `SHA256` e compara com `tokenHash`
+- Guard `ApiTokenGuard` aplicado no `ExternalApiController` (`@UseGuards(ApiTokenGuard)`)
 
 ---
 
-## 📡 3. Endpoints `GET /external/*` (somente leitura, 15)
+## Endpoints `GET /external/*` (somente leitura — 15 endpoints)
 
 | Rota | Retorno |
 |------|---------|
@@ -58,7 +58,7 @@ DTO: `backend/src/infrastructure/http/dtos/api-token.dto.ts` (`CreateApiTokenDto
 
 ---
 
-## 🔗 Relacionado
+## Relacionado
 
-- Autenticação de usuários (JWT) e segurança geral: `architecture.md` / `business-rules.md`.
-- Schema de `ApiToken`: `database.md`.
+- Autenticação JWT de usuários: `auth-seguranca.md`
+- Schema de `ApiToken`: `database.md`

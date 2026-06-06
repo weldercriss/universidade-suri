@@ -1,4 +1,4 @@
-import { Joyride, STATUS, EVENTS, type EventData } from "react-joyride";
+import { Joyride, STATUS, EVENTS, ACTIONS, type EventData } from "react-joyride";
 import { useTour } from "@/lib/tour";
 import { tourSteps } from "@/lib/tour-steps";
 import { useTheme } from "@/lib/theme";
@@ -9,7 +9,9 @@ export function GuidedTour() {
   const isDark = theme !== "snow-blue";
 
   function handleEvent(data: EventData) {
-    if (data.type === EVENTS.TOUR_END || data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED) {
+    const isEnd = data.type === EVENTS.TOUR_END || data.status === STATUS.FINISHED || data.status === STATUS.SKIPPED;
+    const isClosed = data.action === ACTIONS.CLOSE;
+    if (isEnd || isClosed) {
       stopTour();
     }
   }
@@ -26,6 +28,7 @@ export function GuidedTour() {
         close: "Fechar",
         last: "Finalizar",
         next: "Próximo",
+        nextWithProgress: "Próximo ({current} de {total})",
         skip: "Pular tour",
         open: "Abrir",
       }}
@@ -39,6 +42,20 @@ export function GuidedTour() {
         showProgress: true,
         skipBeacon: true,
         buttons: ["back", "close", "primary", "skip"],
+      }}
+      styles={{
+        tooltip: {
+          borderRadius: 20,
+        },
+        buttonPrimary: {
+          borderRadius: 12,
+        },
+        buttonBack: {
+          borderRadius: 12,
+        },
+        buttonSkip: {
+          borderRadius: 12,
+        },
       }}
     />
   );

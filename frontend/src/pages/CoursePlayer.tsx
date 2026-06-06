@@ -5,7 +5,7 @@ import { usePlatformSettings } from "@/lib/settings";
 import { UserAvatar } from "@/components/UserAvatar";
 import { type Course } from "@/types";
 import { AppShell } from "@/components/app-shell";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, API_BASE_URL } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import {
   CheckCircle2, Circle, ArrowRight, ArrowLeft, Loader2, Award, Lock,
   Heart, MessageCircle, Send, Image as ImageIcon, FileText, Link as LinkIcon, Video,
-  Users, BookOpen, FolderKanban, ClipboardList, AlertTriangle,
+  Users, BookOpen, FolderKanban, ClipboardList, AlertTriangle, PlayCircle,
 } from "lucide-react";
 import { QuizModal } from "@/components/QuizModal";
 import { toast } from "sonner";
@@ -61,9 +61,14 @@ export function CoursePlayerPage() {
   const [videoFinished, setVideoFinished] = useState(false);
   const [realVideoDuration, setRealVideoDuration] = useState<string | null>(null);
   const [generatingCert, setGeneratingCert] = useState(false);
+  const [courseDetails, setCourseDetails] = useState<{
+    workloadHours: number;
+    xpReward: number;
+    createdAt: string;
+  } | null>(null);
 
   // Tab state
-  const [activeTab, setActiveTab] = useState<"aulas" | "comunidade" | "projetos" | "prova">("aulas");
+  const [activeTab, setActiveTab] = useState<"aulas" | "comunidade" | "projetos" | "prova" | "detalhes">("aulas");
 
   // Quiz state
   const [quizStatus, setQuizStatus] = useState<{
@@ -129,11 +134,17 @@ export function CoursePlayerPage() {
         const lessonIds = rawLessons.map((l: { id: string }) => l.id);
         const completedMap = buildCompletedMap(lessonIds, progressData.completedModuleIds);
 
+        setCourseDetails({
+          workloadHours: data.workloadHours ?? 0,
+          xpReward: data.xpReward ?? 50,
+          createdAt: data.createdAt ?? "",
+        });
+
         const mapped: Course = {
           id: data.id,
           title: data.title,
           description: data.description || "",
-          cover: "from-marine to-deep",
+          cover: data.coverUrl || "from-primary to-secondary",
           group: data.targetGroup || data.target_group || "all",
           progress:
             progressData.totalModules > 0
@@ -469,52 +480,88 @@ export function CoursePlayerPage() {
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
+  // Hero cover helpers
+  const hasHeroImage = course.cover && (course.cover.startsWith("http") || course.cover.startsWith("/"));
+  const heroCoverSrc = course.cover?.startsWith("/") ? `${API_BASE_URL}${course.cover}` : course.cover;
+  const heroLabel = pct === 100 ? "Rever curso" : pct > 0 ? "Continuar assistindo" : "Assistir";
+
   return (
     <AppShell>
-      {/* Breadcrumb */}
-      <div className="mb-4 flex items-center gap-3 text-sm text-muted-foreground fade-in-up">
-        <Link to="/cursos" className="hover:text-foreground hover:text-gradient transition-smooth">Cursos</Link>
-        <span>/</span>
-        <span className="text-foreground">{course.title}</span>
+      {/* ── Hero Banner ── */}
+      <div className="relative w-full rounded-2xl overflow-hidden mb-6 fade-in-up" style={{ minHeight: "280px", maxHeight: "380px", height: "clamp(280px, 28vw, 380px)" }}>
+        {/* Background */}
+        {hasHeroImage ? (
+          <img src={heroCoverSrc} alt={course.title} className="absolute inset-0 w-full h-full object-cover" />
+        ) : (
+          <div className={`absolute inset-0 bg-gradient-to-br ${course.cover}`} />
+        )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/50 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+
+        {/* Content */}
+        <div className="relative h-full flex flex-col justify-end p-6 sm:p-8">
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-xs text-white/60 mb-3">
+            <Link to="/cursos" className="hover:text-white transition-colors">Cursos</Link>
+            <span>/</span>
+            <span className="text-white/80 truncate">{course.title}</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight mb-2 max-w-2xl">
+            {course.title}
+          </h1>
+          {course.description && (
+            <p className="text-white/70 text-sm max-w-xl line-clamp-2 mb-4">{course.description}</p>
+          )}
+          <div className="flex items-center gap-3 flex-wrap">
+            <button
+              onClick={() => setActiveTab("aulas")}
+              className="flex items-center gap-2 bg-white text-black font-bold px-5 py-2.5 rounded-lg hover:bg-white/90 transition-colors text-sm"
+            >
+              <PlayCircle className="size-4" />
+              {heroLabel}
+            </button>
+            <button
+              onClick={() => setActiveTab("detalhes")}
+              className="flex items-center gap-2 border border-white/40 text-white font-semibold px-4 py-2.5 rounded-lg hover:bg-white/10 transition-colors text-sm"
+            >
+              ℹ Detalhes
+            </button>
+          </div>
+          {/* Progress bar at bottom */}
+          {pct > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+              <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-1 mb-6 p-1 bg-muted/30 rounded-xl w-fit border border-border">
-        <button
-          type="button"
-          onClick={() => setActiveTab("aulas")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-smooth
-            ${activeTab === "aulas" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          <BookOpen className="size-4" /> Aulas
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("comunidade")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-smooth
-            ${activeTab === "comunidade" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          <Users className="size-4" /> Comunidade
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("projetos")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-smooth
-            ${activeTab === "projetos" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          <FolderKanban className="size-4" /> Projetos
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("prova")}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-smooth relative
-            ${activeTab === "prova" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          <ClipboardList className="size-4" /> Prova
-          {quizStatus?.passed && (
-            <span className="absolute -top-1 -right-1 size-2 rounded-full bg-secondary" />
-          )}
-        </button>
+      <div className="flex gap-0 mb-6 border-b border-border overflow-x-auto">
+        {(
+          [
+            { id: "aulas" as const, icon: <BookOpen className="size-4" />, label: "Aulas" },
+            { id: "comunidade" as const, icon: <Users className="size-4" />, label: "Comunidade" },
+            { id: "projetos" as const, icon: <FolderKanban className="size-4" />, label: "Projetos" },
+            { id: "prova" as const, icon: <ClipboardList className="size-4" />, label: "Prova" },
+            { id: "detalhes" as const, icon: null, label: "Detalhes" },
+          ]
+        ).map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`relative flex items-center gap-1.5 px-4 py-2.5 text-sm font-semibold whitespace-nowrap transition-colors border-b-2 -mb-px shrink-0
+              ${activeTab === tab.id ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+          >
+            {tab.icon}
+            {tab.label}
+            {tab.id === "prova" && quizStatus?.passed && (
+              <span className="absolute top-1 right-1 size-1.5 rounded-full bg-secondary" />
+            )}
+          </button>
+        ))}
       </div>
 
       {/* ── AULAS tab ── */}
@@ -975,6 +1022,82 @@ export function CoursePlayerPage() {
           )}
         </div>
       )}
+      {/* ── DETALHES tab ── */}
+      {activeTab === "detalhes" && (
+        <div className="fade-in-up max-w-2xl">
+          <h2 className="text-xl font-bold text-gradient mb-5">Detalhes do Curso</h2>
+          <div className="bg-gradient-card border border-border rounded-2xl overflow-hidden shadow-elegant">
+            {/* Cover */}
+            <div className="relative aspect-[21/9] bg-gradient-to-br from-primary/40 to-secondary/40 overflow-hidden">
+              {hasHeroImage ? (
+                <img src={heroCoverSrc} alt={course.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className={`absolute inset-0 bg-gradient-to-br ${course.cover}`} />
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              <div className="absolute bottom-4 left-5">
+                <p className="text-white font-bold text-lg">{course.title}</p>
+              </div>
+            </div>
+
+            {/* Metadata grid */}
+            <div className="p-5 grid grid-cols-2 gap-x-6 gap-y-4 text-sm">
+              <div>
+                <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-1">Aulas</p>
+                <p className="font-semibold text-foreground">{course.lessons.length}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-1">Progresso</p>
+                <p className="font-semibold text-foreground">{pct}%</p>
+              </div>
+              {courseDetails?.workloadHours ? (
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-1">Carga horária</p>
+                  <p className="font-semibold text-foreground">{courseDetails.workloadHours}h</p>
+                </div>
+              ) : null}
+              <div>
+                <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-1">Público</p>
+                <p className="font-semibold text-foreground capitalize">
+                  {course.group === "all" ? "Todos" : course.group === "vip" ? "VIP" : "Embaixador"}
+                </p>
+              </div>
+              {courseDetails?.xpReward ? (
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-1">XP ao concluir</p>
+                  <p className="font-semibold text-foreground">+{courseDetails.xpReward} XP</p>
+                </div>
+              ) : null}
+              {courseDetails?.createdAt ? (
+                <div>
+                  <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-1">Publicado em</p>
+                  <p className="font-semibold text-foreground">
+                    {new Date(courseDetails.createdAt).toLocaleDateString("pt-BR")}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+
+            {course.description && (
+              <div className="px-5 pb-5 border-t border-border pt-4">
+                <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-2">Sobre o curso</p>
+                <p className="text-sm text-foreground leading-relaxed">{course.description}</p>
+              </div>
+            )}
+
+            <div className="px-5 pb-5 pt-2">
+              <button
+                onClick={() => setActiveTab("aulas")}
+                className="flex items-center gap-2 bg-primary text-primary-foreground font-bold px-5 py-2.5 rounded-lg hover:bg-primary/90 transition-colors text-sm"
+              >
+                <PlayCircle className="size-4" />
+                {heroLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <QuizModal
         open={quizModalOpen}
         courseId={courseId!}

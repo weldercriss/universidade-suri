@@ -6,7 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Zap, Edit2, Save, X, Loader2, ArrowLeft, Award, MessageSquare, GraduationCap, ExternalLink } from "lucide-react";
+import {
+  Zap, Edit2, Save, X, Loader2, ArrowLeft, Award, MessageSquare,
+  GraduationCap, ExternalLink, Plus, Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 interface XpRule {
@@ -27,12 +30,29 @@ interface GroupRule {
   maxXp: number | null;
 }
 
-const ICON_MAP: Record<string, React.ComponentType<any>> = {
+const ICON_OPTIONS = ["Zap", "MessageSquare", "Award", "GraduationCap"] as const;
+type IconKey = typeof ICON_OPTIONS[number];
+
+const ICON_MAP: Record<IconKey, React.ComponentType<{ className?: string }>> = {
   MessageSquare,
   Award,
   GraduationCap,
   Zap,
 };
+
+function toActionSlug(label: string) {
+  return label
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim()
+    .replace(/\s+/g, "_");
+}
+
+const BUILT_IN_ACTIONS = ["post", "trail_exam"];
+
+const emptyNewRule = { label: "", action: "", description: "", xpValue: "10", icon: "Zap" as IconKey };
 
 export function AdminGamificationPage() {
   const [xpRules, setXpRules] = useState<XpRule[]>([]);
@@ -41,6 +61,10 @@ export function AdminGamificationPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValues, setEditValues] = useState<Record<string, { xpValue: string; label: string; description: string }>>({});
   const [saving, setSaving] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newRule, setNewRule] = useState(emptyNewRule);
+  const [creating, setCreating] = useState(false);
 
   useEffect(() => {
     apiRequest("/gamification/rules")
@@ -100,6 +124,64 @@ export function AdminGamificationPage() {
     }
   }
 
+  async function deleteRule(rule: XpRule) {
+    setDeletingId(rule.id);
+    try {
+      await apiRequest(`/admin/gamification/rules/${rule.id}`, { method: "DELETE" });
+      setXpRules((prev) => prev.filter((r) => r.id !== rule.id));
+      toast.success("Regra excluída");
+    } catch {
+      toast.error("Erro ao excluir regra");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  function handleNewLabelChange(label: string) {
+    setNewRule((prev) => ({
+      ...prev,
+      label,
+      action: toActionSlug(label),
+    }));
+  }
+
+  async function createRule() {
+    if (!newRule.label.trim()) {
+      toast.error("Informe o nome da ação");
+      return;
+    }
+    if (!newRule.action.trim()) {
+      toast.error("Identificador inválido");
+      return;
+    }
+    const xpValue = parseInt(newRule.xpValue, 10);
+    if (isNaN(xpValue) || xpValue < 0) {
+      toast.error("Valor de XP deve ser um número positivo");
+      return;
+    }
+    setCreating(true);
+    try {
+      const created = await apiRequest("/admin/gamification/rules", {
+        method: "POST",
+        body: JSON.stringify({
+          action: newRule.action,
+          label: newRule.label,
+          description: newRule.description || undefined,
+          xpValue,
+          icon: newRule.icon,
+        }),
+      });
+      setXpRules((prev) => [...prev, created]);
+      setNewRule(emptyNewRule);
+      setShowCreateForm(false);
+      toast.success("Regra criada com sucesso");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Erro ao criar regra");
+    } finally {
+      setCreating(false);
+    }
+  }
+
   const vipRules = groupRules.filter((r) => r.groupType === "vip");
   const embRules = groupRules.filter((r) => r.groupType === "embaixador");
 
@@ -123,8 +205,14 @@ export function AdminGamificationPage() {
 
         {/* Regras de XP configuráveis */}
         <Card className="bg-gradient-card">
-          <CardHeader className="pb-3">
+          <CardHeader className="pb-3 flex flex-row items-center justify-between">
             <CardTitle className="text-base">Valores de XP por Ação</CardTitle>
+            {!showCreateForm && (
+              <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={() => setShowCreateForm(true)}>
+                <Plus className="h-3.5 w-3.5" />
+                Nova Regra
+              </Button>
+            )}
           </CardHeader>
           <CardContent className="space-y-3">
             {loading ? (
@@ -137,13 +225,11 @@ export function AdminGamificationPage() {
                 {xpRules.map((rule) => {
                   const isEditing = editingId === rule.id;
                   const vals = editValues[rule.id];
-                  const IconComp = ICON_MAP[rule.icon ?? ""] ?? Zap;
+                  const IconComp = ICON_MAP[(rule.icon as IconKey) ?? "Zap"] ?? Zap;
+                  const isBuiltIn = BUILT_IN_ACTIONS.includes(rule.action);
 
                   return (
-                    <div
-                      key={rule.id}
-                      className="rounded-lg border border-border bg-background/40 p-4"
-                    >
+                    <div key={rule.id} className="rounded-lg border border-border bg-background/40 p-4">
                       {isEditing ? (
                         <div className="space-y-3">
                           <div className="flex items-center gap-2">
@@ -175,16 +261,8 @@ export function AdminGamificationPage() {
                               <span className="text-sm text-muted-foreground">XP</span>
                             </div>
                             <div className="flex gap-2 ml-auto">
-                              <Button
-                                size="sm"
-                                onClick={() => saveRule(rule)}
-                                disabled={saving === rule.id}
-                              >
-                                {saving === rule.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Save className="h-4 w-4" />
-                                )}
+                              <Button size="sm" onClick={() => saveRule(rule)} disabled={saving === rule.id}>
+                                {saving === rule.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                                 Salvar
                               </Button>
                               <Button size="sm" variant="ghost" onClick={cancelEdit}>
@@ -202,25 +280,122 @@ export function AdminGamificationPage() {
                               {rule.description && (
                                 <p className="text-xs text-muted-foreground">{rule.description}</p>
                               )}
+                              <p className="text-[10px] text-muted-foreground/60 font-mono mt-0.5">{rule.action}</p>
                             </div>
                           </div>
-                          <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
                             <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
                               +{rule.xpValue} XP
                             </Badge>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => startEdit(rule)}
-                            >
+                            <Button size="sm" variant="ghost" onClick={() => startEdit(rule)}>
                               <Edit2 className="h-4 w-4" />
                             </Button>
+                            {!isBuiltIn && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => deleteRule(rule)}
+                                disabled={deletingId === rule.id}
+                                className="hover:bg-destructive/15 hover:text-destructive"
+                              >
+                                {deletingId === rule.id
+                                  ? <Loader2 className="h-4 w-4 animate-spin" />
+                                  : <Trash2 className="h-4 w-4" />}
+                              </Button>
+                            )}
                           </div>
                         </div>
                       )}
                     </div>
                   );
                 })}
+
+                {/* Formulário de criação */}
+                {showCreateForm && (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-4 space-y-3">
+                    <p className="text-sm font-semibold text-primary">Nova Regra de XP</p>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Nome da ação</label>
+                        <Input
+                          value={newRule.label}
+                          onChange={(e) => handleNewLabelChange(e.target.value)}
+                          placeholder="Ex: Comentar no fórum"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Identificador (auto)</label>
+                        <Input
+                          value={newRule.action}
+                          onChange={(e) => setNewRule((p) => ({ ...p, action: e.target.value }))}
+                          placeholder="ex: comentar_forum"
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">Descrição (opcional)</label>
+                      <Input
+                        value={newRule.description}
+                        onChange={(e) => setNewRule((p) => ({ ...p, description: e.target.value }))}
+                        placeholder="XP concedido ao aluno ao..."
+                      />
+                    </div>
+
+                    <div className="flex flex-wrap items-end gap-4">
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Valor de XP</label>
+                        <div className="flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-yellow-400 shrink-0" />
+                          <Input
+                            type="number"
+                            min={0}
+                            value={newRule.xpValue}
+                            onChange={(e) => setNewRule((p) => ({ ...p, xpValue: e.target.value }))}
+                            className="w-24"
+                          />
+                          <span className="text-sm text-muted-foreground">XP</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">Ícone</label>
+                        <div className="flex gap-1.5">
+                          {ICON_OPTIONS.map((key) => {
+                            const Icon = ICON_MAP[key];
+                            return (
+                              <button
+                                key={key}
+                                type="button"
+                                onClick={() => setNewRule((p) => ({ ...p, icon: key }))}
+                                className={`p-2 rounded-md border transition-colors ${
+                                  newRule.icon === key
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border text-muted-foreground hover:border-primary/50"
+                                }`}
+                                title={key}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 ml-auto">
+                        <Button size="sm" onClick={createRule} disabled={creating}>
+                          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                          Criar
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => { setShowCreateForm(false); setNewRule(emptyNewRule); }}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Curso — informativo, não editável aqui */}
                 <div className="rounded-lg border border-border bg-background/40 p-4 flex items-center justify-between opacity-70">
