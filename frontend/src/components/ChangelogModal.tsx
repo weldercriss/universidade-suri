@@ -127,27 +127,55 @@ export function ChangelogModal({ open, onClose }: Props) {
   );
 }
 
+let cachedLatestVersion: string | null = null;
+let cachedHasNew: boolean = false;
+let isFetched = false;
+let fetchPromise: Promise<void> | null = null;
+
 export function useChangelogBadge() {
-  const [latestVersion, setLatestVersion] = useState<string | null>(null);
-  const [hasNew, setHasNew] = useState(false);
+  const [latestVersion, setLatestVersion] = useState<string | null>(
+    cachedLatestVersion || localStorage.getItem(STORAGE_KEY) || null
+  );
+  const [hasNew, setHasNew] = useState(cachedHasNew);
 
   useEffect(() => {
-    apiRequest("/changelog")
-      .then((data) => {
-        const releases = data as Release[];
-        const latestRelease = releases[0];
-        if (!latestRelease) return;
-        const latest = latestRelease.version;
-        setLatestVersion(latest);
-        const seen = localStorage.getItem(STORAGE_KEY);
-        setHasNew(seen !== latest);
-      })
-      .catch(() => {});
+    if (isFetched) {
+      setLatestVersion(cachedLatestVersion);
+      setHasNew(cachedHasNew);
+      return;
+    }
+
+    if (!fetchPromise) {
+      fetchPromise = apiRequest("/changelog")
+        .then((data) => {
+          const releases = data as Release[];
+          const latestRelease = releases[0];
+          if (!latestRelease) return;
+          const latest = latestRelease.version;
+          cachedLatestVersion = latest;
+          setLatestVersion(latest);
+          
+          const seen = localStorage.getItem(STORAGE_KEY);
+          const isNew = seen !== latest;
+          cachedHasNew = isNew;
+          setHasNew(isNew);
+          isFetched = true;
+        })
+        .catch(() => {});
+    } else {
+      fetchPromise.then(() => {
+        if (isFetched) {
+          setLatestVersion(cachedLatestVersion);
+          setHasNew(cachedHasNew);
+        }
+      });
+    }
   }, []);
 
   const markSeen = () => {
     if (latestVersion) {
       localStorage.setItem(STORAGE_KEY, latestVersion);
+      cachedHasNew = false;
       setHasNew(false);
     }
   };
