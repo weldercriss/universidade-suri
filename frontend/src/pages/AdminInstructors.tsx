@@ -249,7 +249,7 @@ export function AdminInstructorsPage() {
         title={confirmState.title}
         description={confirmState.description}
         onConfirm={confirmState.onConfirm}
-        onCancel={() => setConfirmState((s) => ({ ...s, open: false }))}
+        onOpenChange={(open) => setConfirmState((s) => ({ ...s, open }))}
       />
     </AppShell>
   );
