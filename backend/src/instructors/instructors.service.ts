@@ -1,11 +1,13 @@
 import { Injectable, Inject, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { IInstructorRepository } from '../domain/repositories/instructor.repository.interface';
+import { SupabaseStorageService } from '../infrastructure/storage/supabase-storage.service';
 
 @Injectable()
 export class InstructorsService {
   constructor(
     @Inject(IInstructorRepository)
     private readonly instructorRepository: IInstructorRepository,
+    private readonly supabaseStorage: SupabaseStorageService,
   ) {}
 
   async listPublic() {
@@ -68,5 +70,28 @@ export class InstructorsService {
     if (!user.isAdmin) throw new ForbiddenException('Acesso negado');
     await this.instructorRepository.removeFromCourse(courseId, instructorId);
     return { message: 'Associação removida' };
+  }
+
+  async uploadPhoto(id: string, file: Express.Multer.File, user: any) {
+    if (!user.isAdmin) throw new ForbiddenException('Acesso negado');
+    if (!file) throw new BadRequestException('Nenhum arquivo enviado');
+    
+    const existing = await this.instructorRepository.findById(id);
+    if (!existing) throw new NotFoundException('Instrutor não encontrado');
+
+    const imageUrl = await this.supabaseStorage.uploadFile(
+      file.buffer,
+      file.originalname,
+      file.mimetype,
+      `instructors/${id}`
+    );
+
+    return this.instructorRepository.update(id, {
+      name: existing.name,
+      title: existing.title,
+      bio: existing.bio,
+      photoUrl: imageUrl,
+      isActive: existing.isActive,
+    });
   }
 }

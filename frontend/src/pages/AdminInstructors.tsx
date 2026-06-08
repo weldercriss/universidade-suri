@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AppShell } from "@/components/app-shell";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, apiUpload } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +23,8 @@ export function AdminInstructorsPage() {
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<{
     open: boolean; title: string; onConfirm: () => void; description?: string;
   }>({ open: false, title: "", onConfirm: () => {} });
@@ -40,6 +42,8 @@ export function AdminInstructorsPage() {
   const openCreate = () => {
     setEditing(null);
     setForm(emptyForm);
+    setPhotoFile(null);
+    setPhotoPreview(null);
     setDialogOpen(true);
   };
 
@@ -52,6 +56,8 @@ export function AdminInstructorsPage() {
       photoUrl: instructor.photoUrl || "",
       isActive: instructor.isActive,
     });
+    setPhotoFile(null);
+    setPhotoPreview(instructor.photoUrl || null);
     setDialogOpen(true);
   };
 
@@ -59,19 +65,28 @@ export function AdminInstructorsPage() {
     e.preventDefault();
     setSaving(true);
     try {
+      let instructorId = editing?.id;
+
       if (editing) {
         await apiRequest(`/admin/instructors/${editing.id}`, {
           method: "PUT",
           body: JSON.stringify(form),
         });
-        toast.success("Instrutor atualizado!");
       } else {
-        await apiRequest("/admin/instructors", {
+        const res = await apiRequest("/admin/instructors", {
           method: "POST",
           body: JSON.stringify(form),
         });
-        toast.success("Instrutor criado!");
+        instructorId = res.id;
       }
+
+      if (photoFile && instructorId) {
+        const formData = new FormData();
+        formData.append("file", photoFile);
+        await apiUpload(`/admin/instructors/${instructorId}/photo`, formData);
+      }
+
+      toast.success(editing ? "Instrutor atualizado!" : "Instrutor criado!");
       setDialogOpen(false);
       fetchInstructors();
     } catch {
@@ -207,16 +222,22 @@ export function AdminInstructorsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="photoUrl">URL da Foto (opcional)</Label>
+              <Label htmlFor="photoFile">Foto do Instrutor (opcional)</Label>
               <Input
-                id="photoUrl"
-                value={form.photoUrl}
-                onChange={(e) => setForm((f) => ({ ...f, photoUrl: e.target.value }))}
-                placeholder="https://..."
+                id="photoFile"
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    const file = e.target.files[0];
+                    setPhotoFile(file);
+                    setPhotoPreview(URL.createObjectURL(file));
+                  }
+                }}
               />
-              {form.photoUrl && (
+              {photoPreview && (
                 <img
-                  src={form.photoUrl}
+                  src={photoPreview}
                   alt="Preview"
                   className="size-16 rounded-full object-cover border mt-1"
                   onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}

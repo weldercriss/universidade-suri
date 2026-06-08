@@ -1,7 +1,8 @@
 import {
   Controller, Get, Post, Put, Delete,
-  Param, Body, UseGuards, Req,
+  Param, Body, UseGuards, Req, UseInterceptors, UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { InstructorsService } from './instructors.service';
@@ -51,6 +52,19 @@ export class InstructorsController {
   @Delete('admin/instructors/:id')
   async remove(@Param('id') id: string, @Req() req: any) {
     return this.instructorsService.remove(id, req.user);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Upload de foto do instrutor' })
+  @UseGuards(AuthGuard('jwt'))
+  @Post('admin/instructors/:id/photo')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadPhoto(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
+  ) {
+    return this.instructorsService.uploadPhoto(id, file, req.user);
   }
 
   // ── Associação Curso ↔ Instrutor ─────────────────────────────────────────────

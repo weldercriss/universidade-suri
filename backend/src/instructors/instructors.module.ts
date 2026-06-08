@@ -4,7 +4,10 @@ import { InstructorsService } from './instructors.service';
 import { IInstructorRepository } from '../domain/repositories/instructor.repository.interface';
 import { PrismaInstructorRepository } from '../infrastructure/database/repositories/prisma-instructor.repository';
 
+import { StorageModule } from '../infrastructure/storage/storage.module';
+
 @Module({
+  imports: [StorageModule],
   controllers: [InstructorsController],
   providers: [
     InstructorsService,
