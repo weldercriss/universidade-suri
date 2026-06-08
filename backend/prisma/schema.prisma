@@ -3,36 +3,35 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
 }
 
 model UserRole {
-  id       String @id @default(uuid()) @db.Uuid
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
   roleName String @unique @map("role_name")
 
   @@map("user_roles")
 }
 
 model Profile {
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String
-  email        String   @unique
-  business     String   @default("")
-  phone        String?
-  passwordHash String   @map("password_hash")
-  groupType    String   @default("embaixador") @map("group_type")
-  tier         String   @default("Embaixador Voice")
-  xp           Int      @default(0)
-  level        Int      @default(1)
-  isAdmin      Boolean  @default(false) @map("is_admin")
-  isActive     Boolean  @default(true) @map("is_active")
+  id                  String    @id @default(auto()) @map("_id") @db.ObjectId
+  name                String
+  email               String    @unique
+  business            String    @default("")
+  phone               String?
+  passwordHash        String    @map("password_hash")
+  groupType           String    @default("embaixador") @map("group_type")
+  tier                String    @default("Embaixador Voice")
+  xp                  Int       @default(0)
+  level               Int       @default(1)
+  isAdmin             Boolean   @default(false) @map("is_admin")
+  isActive            Boolean   @default(true) @map("is_active")
   newsletter          Boolean   @default(false)
   profileImage        String?   @map("profile_image")
   resetPasswordToken  String?   @map("reset_password_token")
-  resetPasswordExpiry DateTime? @map("reset_password_expiry") @db.Timestamptz(6)
-  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  resetPasswordExpiry DateTime? @map("reset_password_expiry")
+  createdAt           DateTime  @default(now()) @map("created_at")
 
   enrollments       Enrollment[]
   certificates      Certificate[]
@@ -48,7 +47,7 @@ model Profile {
 }
 
 model Course {
-  id            String   @id @default(uuid()) @db.Uuid
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
   title         String
   description   String?
   workloadHours Int      @default(0) @map("workload_hours")
@@ -56,73 +55,74 @@ model Course {
   coverUrl      String?  @map("cover_url")
   targetGroup   String   @default("all") @map("target_group")
   isPublished   Boolean  @default(false) @map("is_published")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at")
 
-  modules       Module[]
-  enrollments   Enrollment[]
-  certificates  Certificate[]
-  trails        TrailCourse[]
-  posts         Post[]
-  questions     Question[]
-  quizAttempts  QuizAttempt[]
-  instructors   CourseInstructor[]
+  modules      Module[]
+  enrollments  Enrollment[]
+  certificates Certificate[]
+  trails       TrailCourse[]
+  posts        Post[]
+  questions    Question[]
+  quizAttempts QuizAttempt[]
+  instructors  CourseInstructor[]
 
   @@map("courses")
 }
 
 model Instructor {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
   title     String
   bio       String?
   photoUrl  String?  @map("photo_url")
   isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at")
 
-  courses   CourseInstructor[]
+  courses CourseInstructor[]
 
   @@map("instructors")
 }
 
 model CourseInstructor {
-  courseId     String @map("course_id") @db.Uuid
-  instructorId String @map("instructor_id") @db.Uuid
+  id           String @id @default(auto()) @map("_id") @db.ObjectId
+  courseId     String @map("course_id") @db.ObjectId
+  instructorId String @map("instructor_id") @db.ObjectId
 
   course     Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   instructor Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
 
-  @@id([courseId, instructorId])
+  @@unique([courseId, instructorId])
   @@map("course_instructors")
 }
 
 model Module {
-  id          String   @id @default(uuid()) @db.Uuid
-  courseId    String?  @map("course_id") @db.Uuid
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId    String?  @map("course_id") @db.ObjectId
   title       String
   description String?
   content     String?
   videoUrl    String?  @map("video_url")
   duration    String?  @default("10:00")
   sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at")
 
-  course      Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  progress    ModuleProgress[]
+  course   Course?          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress ModuleProgress[]
 
   @@index([courseId])
   @@map("modules")
 }
 
 model Enrollment {
-  id          String    @id @default(uuid()) @db.Uuid
-  userId      String?   @map("user_id") @db.Uuid
-  courseId    String?   @map("course_id") @db.Uuid
-  enrolledAt  DateTime  @default(now()) @map("enrolled_at") @db.Timestamptz(6)
-  completedAt DateTime? @map("completed_at") @db.Timestamptz(6)
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String?   @map("user_id") @db.ObjectId
+  courseId    String?   @map("course_id") @db.ObjectId
+  enrolledAt  DateTime  @default(now()) @map("enrolled_at")
+  completedAt DateTime? @map("completed_at")
 
-  user        Profile?  @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course      Course?   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  progress    ModuleProgress[]
+  user     Profile?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course   Course?          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  progress ModuleProgress[]
 
   @@unique([userId, courseId])
   @@index([userId])
@@ -131,14 +131,14 @@ model Enrollment {
 }
 
 model ModuleProgress {
-  id           String    @id @default(uuid()) @db.Uuid
-  enrollmentId String?   @map("enrollment_id") @db.Uuid
-  moduleId     String?   @map("module_id") @db.Uuid
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  enrollmentId String?   @map("enrollment_id") @db.ObjectId
+  moduleId     String?   @map("module_id") @db.ObjectId
   isCompleted  Boolean   @default(false) @map("is_completed")
-  completedAt  DateTime? @map("completed_at") @db.Timestamptz(6)
+  completedAt  DateTime? @map("completed_at")
 
-  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  module       Module?     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  module     Module?     @relation(fields: [moduleId], references: [id], onDelete: Cascade)
 
   @@unique([enrollmentId, moduleId])
   @@index([enrollmentId])
@@ -147,14 +147,14 @@ model ModuleProgress {
 }
 
 model Certificate {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String?  @map("user_id") @db.Uuid
-  courseId         String?  @map("course_id") @db.Uuid
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String?  @map("user_id") @db.ObjectId
+  courseId         String?  @map("course_id") @db.ObjectId
   verificationCode String   @unique @map("verification_code")
-  issuedAt         DateTime @default(now()) @map("issued_at") @db.Timestamptz(6)
+  issuedAt         DateTime @default(now()) @map("issued_at")
 
-  user             Profile? @relation(fields: [userId], references: [id], onDelete: Cascade)
-  course           Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user   Profile? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([courseId])
@@ -162,19 +162,19 @@ model Certificate {
 }
 
 model Post {
-  id        String   @id @default(uuid()) @db.Uuid
-  authorId  String   @map("author_id") @db.Uuid
-  courseId  String?  @map("course_id") @db.Uuid
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  authorId  String   @map("author_id") @db.ObjectId
+  courseId  String?  @map("course_id") @db.ObjectId
   title     String
   body      String
   mediaType String?  @map("media_type")
   mediaUrl  String?  @map("media_url")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at")
 
-  author    Profile  @relation(fields: [authorId], references: [id], onDelete: Cascade)
-  course    Course?  @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  likes     PostLike[]
-  comments  PostComment[]
+  author   Profile       @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  course   Course?       @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  likes    PostLike[]
+  comments PostComment[]
 
   @@index([authorId])
   @@index([courseId])
@@ -182,13 +182,13 @@ model Post {
 }
 
 model PostLike {
-  id        String   @id @default(uuid()) @db.Uuid
-  postId    String   @map("post_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @map("post_id") @db.ObjectId
+  userId    String   @map("user_id") @db.ObjectId
+  createdAt DateTime @default(now()) @map("created_at")
 
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
   @@index([postId])
@@ -197,14 +197,14 @@ model PostLike {
 }
 
 model PostComment {
-  id        String   @id @default(uuid()) @db.Uuid
-  postId    String   @map("post_id") @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  postId    String   @map("post_id") @db.ObjectId
+  userId    String   @map("user_id") @db.ObjectId
   content   String
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at")
 
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@index([userId])
@@ -212,12 +212,12 @@ model PostComment {
 }
 
 model Trail {
-  id          String       @id @default(uuid()) @db.Uuid
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   description String?
-  targetGroup String       @default("all") @map("target_group")
-  sortOrder   Int          @default(0) @map("sort_order")
-  createdAt   DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  targetGroup String   @default("all") @map("target_group")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
 
   courses      TrailCourse[]
   enrollments  TrailEnrollment[]
@@ -228,13 +228,13 @@ model Trail {
 }
 
 model TrailCourse {
-  id        String  @id @default(uuid()) @db.Uuid
-  trailId   String  @map("trail_id") @db.Uuid
-  courseId  String  @map("course_id") @db.Uuid
-  sortOrder Int     @default(0) @map("sort_order")
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  trailId   String @map("trail_id") @db.ObjectId
+  courseId  String @map("course_id") @db.ObjectId
+  sortOrder Int    @default(0) @map("sort_order")
 
-  trail     Trail   @relation(fields: [trailId], references: [id], onDelete: Cascade)
-  course    Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  trail  Trail  @relation(fields: [trailId], references: [id], onDelete: Cascade)
+  course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
 
   @@unique([trailId, courseId])
   @@index([trailId])
@@ -243,10 +243,10 @@ model TrailCourse {
 }
 
 model TrailEnrollment {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
-  trailId    String   @map("trail_id") @db.Uuid
-  enrolledAt DateTime @default(now()) @map("enrolled_at") @db.Timestamptz(6)
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @map("user_id") @db.ObjectId
+  trailId    String   @map("trail_id") @db.ObjectId
+  enrolledAt DateTime @default(now()) @map("enrolled_at")
 
   user  Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
   trail Trail   @relation(fields: [trailId], references: [id], onDelete: Cascade)
@@ -258,11 +258,11 @@ model TrailEnrollment {
 }
 
 model TrailCertificate {
-  id               String   @id @default(uuid()) @db.Uuid
-  userId           String   @map("user_id") @db.Uuid
-  trailId          String   @map("trail_id") @db.Uuid
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String   @map("user_id") @db.ObjectId
+  trailId          String   @map("trail_id") @db.ObjectId
   verificationCode String   @unique @map("verification_code")
-  issuedAt         DateTime @default(now()) @map("issued_at") @db.Timestamptz(6)
+  issuedAt         DateTime @default(now()) @map("issued_at")
 
   user  Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
   trail Trail   @relation(fields: [trailId], references: [id], onDelete: Cascade)
@@ -273,13 +273,13 @@ model TrailCertificate {
 }
 
 model TrailQuizAttempt {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  trailId       String   @map("trail_id") @db.Uuid
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @map("user_id") @db.ObjectId
+  trailId       String   @map("trail_id") @db.ObjectId
   score         Float
   passed        Boolean
   attemptNumber Int      @map("attempt_number")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at")
 
   user    Profile                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   trail   Trail                    @relation(fields: [trailId], references: [id], onDelete: Cascade)
@@ -291,11 +291,11 @@ model TrailQuizAttempt {
 }
 
 model TrailQuizAttemptAnswer {
-  id             String           @id @default(uuid()) @db.Uuid
-  attemptId      String           @map("attempt_id") @db.Uuid
-  questionId     String           @map("question_id") @db.Uuid
-  selectedOption String           @map("selected_option")
-  isCorrect      Boolean          @map("is_correct")
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  attemptId      String  @map("attempt_id") @db.ObjectId
+  questionId     String  @map("question_id") @db.ObjectId
+  selectedOption String  @map("selected_option")
+  isCorrect      Boolean @map("is_correct")
 
   attempt  TrailQuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
@@ -306,12 +306,12 @@ model TrailQuizAttemptAnswer {
 }
 
 model Question {
-  id        String   @id @default(uuid()) @db.Uuid
-  courseId  String   @map("course_id") @db.Uuid
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  courseId  String   @map("course_id") @db.ObjectId
   text      String
   options   Json
   answer    String
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at")
 
   course              Course                   @relation(fields: [courseId], references: [id], onDelete: Cascade)
   attemptAnswers      QuizAttemptAnswer[]
@@ -322,13 +322,13 @@ model Question {
 }
 
 model QuizAttempt {
-  id            String   @id @default(uuid()) @db.Uuid
-  userId        String   @map("user_id") @db.Uuid
-  courseId      String   @map("course_id") @db.Uuid
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @map("user_id") @db.ObjectId
+  courseId      String   @map("course_id") @db.ObjectId
   score         Float
   passed        Boolean
   attemptNumber Int      @map("attempt_number")
-  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt     DateTime @default(now()) @map("created_at")
 
   user    Profile             @relation(fields: [userId], references: [id], onDelete: Cascade)
   course  Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -340,11 +340,11 @@ model QuizAttempt {
 }
 
 model QuizAttemptAnswer {
-  id             String      @id @default(uuid()) @db.Uuid
-  attemptId      String      @map("attempt_id") @db.Uuid
-  questionId     String      @map("question_id") @db.Uuid
-  selectedOption String      @map("selected_option")
-  isCorrect      Boolean     @map("is_correct")
+  id             String  @id @default(auto()) @map("_id") @db.ObjectId
+  attemptId      String  @map("attempt_id") @db.ObjectId
+  questionId     String  @map("question_id") @db.ObjectId
+  selectedOption String  @map("selected_option")
+  isCorrect      Boolean @map("is_correct")
 
   attempt  QuizAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
@@ -355,12 +355,12 @@ model QuizAttemptAnswer {
 }
 
 model QuizExtraAttempt {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  courseId  String   @map("course_id") @db.Uuid
-  grantedBy String   @map("granted_by") @db.Uuid
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @map("user_id") @db.ObjectId
+  courseId  String   @map("course_id") @db.ObjectId
+  grantedBy String   @map("granted_by") @db.ObjectId
   used      Boolean  @default(false)
-  grantedAt DateTime @default(now()) @map("granted_at") @db.Timestamptz(6)
+  grantedAt DateTime @default(now()) @map("granted_at")
 
   @@index([userId])
   @@index([courseId])
@@ -368,61 +368,61 @@ model QuizExtraAttempt {
 }
 
 model GroupRule {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   groupType String   @map("group_type")
   tier      String
   minXp     Int      @map("min_xp")
   maxXp     Int?     @map("max_xp")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("group_rules")
 }
 
 model SystemSetting {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
   key       String   @unique
   value     String
-  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @map("updated_at")
 
   @@map("system_settings")
 }
 
 model XpRule {
-  id          String   @id @default(uuid()) @db.Uuid
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
   action      String   @unique
   label       String
   description String?
   xpValue     Int      @map("xp_value")
   icon        String?
   isActive    Boolean  @default(true) @map("is_active")
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("xp_rules")
 }
 
 model Roadmap {
-  id          String        @id @default(uuid()) @db.Uuid
+  id          String        @id @default(auto()) @map("_id") @db.ObjectId
   title       String
   description String?
   isActive    Boolean       @default(true) @map("is_active")
   sortOrder   Int           @default(0) @map("sort_order")
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime      @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
   items       RoadmapItem[]
 
   @@map("roadmaps")
 }
 
 model RoadmapItem {
-  id          String   @id @default(uuid()) @db.Uuid
-  roadmapId   String   @map("roadmap_id") @db.Uuid
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  roadmapId   String   @map("roadmap_id") @db.ObjectId
   type        String
   title       String
   url         String
   description String?
   sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at")
   roadmap     Roadmap  @relation(fields: [roadmapId], references: [id], onDelete: Cascade)
 
   @@index([roadmapId])
@@ -430,15 +430,15 @@ model RoadmapItem {
 }
 
 model ApiToken {
-  id          String    @id @default(cuid())
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
   name        String
   tokenHash   String    @unique @map("token_hash")
-  lastUsedAt  DateTime? @map("last_used_at") @db.Timestamptz(6)
-  expiresAt   DateTime? @map("expires_at") @db.Timestamptz(6)
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
   isActive    Boolean   @default(true) @map("is_active")
-  createdById String    @map("created_by_id") @db.Uuid
-  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById String    @map("created_by_id") @db.ObjectId
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@map("api_tokens")
 }
