@@ -182,6 +182,14 @@ export function SettingsPage() {
   const [company, setCompany] = useState(user?.business || "");
   const [saving, setSaving] = useState(false);
 
+  // Sync state when user profile loads from the server
+  useEffect(() => {
+    if (user) {
+      setName(user.name || "");
+      setCompany(user.business || "");
+    }
+  }, [user?.id]);
+
   // Avatar states
   const [editingSrc, setEditingSrc] = useState<string | null>(null);
   const [avatarUploading, setAvatarUploading] = useState(false);

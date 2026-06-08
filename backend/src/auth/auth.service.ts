@@ -51,6 +51,7 @@ export class AuthService {
         isAdmin: user.isAdmin,
         isActive: user.isActive,
         profileImage: user.profileImage,
+        business: user.business || '',
       },
     };
   }
@@ -103,6 +104,7 @@ export class AuthService {
         isAdmin: saved.isAdmin,
         isActive: saved.isActive,
         profileImage: saved.profileImage,
+        business: saved.business || '',
         isFirstLogin: true,
       },
     };
@@ -132,6 +134,7 @@ export class AuthService {
     if (body.name !== undefined) user.name = body.name;
     if (body.profileImage !== undefined) user.profileImage = body.profileImage;
     if (body.level !== undefined && user.isAdmin) user.level = body.level; // admin can update level
+    if (body.business !== undefined) user.business = body.business;
 
     const updated = await this.userRepository.update(user);
     return {
@@ -145,6 +148,7 @@ export class AuthService {
       isAdmin: updated.isAdmin,
       isActive: updated.isActive,
       profileImage: updated.profileImage,
+      business: updated.business || '',
     };
   }
 
