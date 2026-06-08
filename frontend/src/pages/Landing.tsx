@@ -12,8 +12,6 @@ import totvsLight from "@/assets/icons/totvs-dark.svg";
 import totvsDark from "@/assets/icons/totvs.svg";
 import suriBlue from "@/assets/icons/suri-blue.svg";
 import suriWhite from "@/assets/icons/suri-white.svg";
-import fotoPh from "@/assets/img/foto-ph.png";
-
 // Gradientes de fallback usados quando o curso não possui capa cadastrada
 const GRADIENT_COVERS = [
   "from-cyan-500 to-blue-500",
@@ -32,12 +30,21 @@ interface PreviewCourse {
   lessons: number;
 }
 
+interface Instructor {
+  id: string;
+  name: string;
+  title: string;
+  bio?: string | null;
+  photoUrl?: string | null;
+}
+
 export function LandingPage() {
   const { theme, toggleTheme } = useTheme();
   const { settings } = usePlatformSettings();
   const isLight = theme === "snow-blue";
   const [courses, setCourses] = useState<PreviewCourse[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
+  const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [changelogOpen, setChangelogOpen] = useState(false);
   const { latestVersion, hasNew, markSeen } = useChangelogBadge();
@@ -64,6 +71,13 @@ export function LandingPage() {
       .then((data: PreviewCourse[]) => setCourses(Array.isArray(data) ? data : []))
       .catch(() => setCourses([]))
       .finally(() => setLoadingCourses(false));
+  }, []);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/instructors`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: Instructor[]) => setInstructors(Array.isArray(data) ? data : []))
+      .catch(() => setInstructors([]));
   }, []);
 
   return (
@@ -362,7 +376,7 @@ export function LandingPage() {
                   <Card key={course.id} className="group flex flex-col h-full overflow-hidden border-border bg-card shadow-elegant hover:shadow-glow transition-all duration-300">
                     <div className={`h-40 w-full relative flex items-center justify-center p-6 ${course.coverUrl ? "" : `bg-gradient-to-br ${GRADIENT_COVERS[index % GRADIENT_COVERS.length]}`}`}>
                       {course.coverUrl ? (
-                        <img src={`${API_BASE_URL}${course.coverUrl}`} alt={course.title} className="absolute inset-0 w-full h-full object-cover" />
+                        <img src={course.coverUrl.startsWith("http") ? course.coverUrl : `${API_BASE_URL}${course.coverUrl}`} alt={course.title} className="absolute inset-0 w-full h-full object-cover" />
                       ) : null}
                       <PlayCircle className="relative size-12 text-white/90 drop-shadow-md group-hover:scale-110 transition-transform duration-300" />
                     </div>
@@ -387,42 +401,46 @@ export function LandingPage() {
         </section>
 
         {/* Instrutores */}
-        <section id="instrutores" className="py-24 bg-muted/20 border-t border-border/50">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center max-w-2xl mx-auto mb-16 fade-in-up">
-              <h2 className="text-3xl font-bold text-foreground mb-4">Conheça alguns de nossos Instrutores</h2>
-              <p className="text-muted-foreground text-lg">
-                Aprenda com especialistas que vivenciam na prática os desafios do mercado de atendimento e IA.
-              </p>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-              {[
-                {
-                  foto: fotoPh,
-                  nome: `Paulo Henrique - PH`,
-                  titulo: "Especialista Meta e Coordenador do time de Suporte",
-                },
-                
-              ].map((instrutor, i) => (
-                <Card key={i} className="group p-6 text-center border-border bg-card shadow-elegant hover:shadow-glow hover:-translate-y-1 transition-all duration-300">
-                  <div className="relative size-28 mx-auto mb-5">
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary via-cyan-accent to-primary opacity-60 group-hover:opacity-100 transition-opacity duration-300 blur-[2px]" />
-                    <div className="relative size-28 rounded-full overflow-hidden border-2 border-background shadow-lg">
-                      <img 
-                        src={instrutor.foto} 
-                        alt={instrutor.nome} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                      />
+        {instructors.length > 0 && (
+          <section id="instrutores" className="py-24 bg-muted/20 border-t border-border/50">
+            <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="text-center max-w-2xl mx-auto mb-16 fade-in-up">
+                <h2 className="text-3xl font-bold text-foreground mb-4">Conheça alguns de nossos Instrutores</h2>
+                <p className="text-muted-foreground text-lg">
+                  Aprenda com especialistas que vivenciam na prática os desafios do mercado de atendimento e IA.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                {instructors.map((instrutor) => (
+                  <Card key={instrutor.id} className="group p-6 text-center border-border bg-card shadow-elegant hover:shadow-glow hover:-translate-y-1 transition-all duration-300">
+                    <div className="relative size-28 mx-auto mb-5">
+                      <div className="absolute inset-0 rounded-full bg-gradient-to-br from-primary via-cyan-accent to-primary opacity-60 group-hover:opacity-100 transition-opacity duration-300 blur-[2px]" />
+                      <div className="relative size-28 rounded-full overflow-hidden border-2 border-background shadow-lg flex items-center justify-center bg-muted">
+                        {instrutor.photoUrl ? (
+                          <img
+                            src={instrutor.photoUrl}
+                            alt={instrutor.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <span className="text-3xl font-bold text-muted-foreground">
+                            {instrutor.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                  <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">{instrutor.nome}</h3>
-                  <p className="text-xs text-primary font-semibold uppercase tracking-wider">{instrutor.titulo}</p>
-                </Card>
-              ))}
+                    <h3 className="text-lg font-bold mb-1 group-hover:text-primary transition-colors">{instrutor.name}</h3>
+                    <p className="text-xs text-primary font-semibold uppercase tracking-wider">{instrutor.title}</p>
+                    {instrutor.bio && (
+                      <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{instrutor.bio}</p>
+                    )}
+                  </Card>
+                ))}
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
 
 
 

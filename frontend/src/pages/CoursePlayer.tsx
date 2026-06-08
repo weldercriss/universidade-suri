@@ -65,6 +65,7 @@ export function CoursePlayerPage() {
     workloadHours: number;
     xpReward: number;
     createdAt: string;
+    instructors: { id: string; name: string; title: string; photoUrl?: string | null }[];
   } | null>(null);
 
   // Tab state
@@ -138,6 +139,7 @@ export function CoursePlayerPage() {
           workloadHours: data.workloadHours ?? 0,
           xpReward: data.xpReward ?? 50,
           createdAt: data.createdAt ?? "",
+          instructors: Array.isArray(data.instructors) ? data.instructors : [],
         });
 
         const mapped: Course = {
@@ -511,7 +513,15 @@ export function CoursePlayerPage() {
             {course.title}
           </h1>
           {course.description && (
-            <p className="text-white/70 text-sm max-w-xl line-clamp-2 mb-4">{course.description}</p>
+            <p className="text-white/70 text-sm max-w-xl line-clamp-2 mb-3">{course.description}</p>
+          )}
+          {courseDetails?.instructors && courseDetails.instructors.length > 0 && (
+            <p className="text-white/60 text-xs mb-4">
+              <span className="font-semibold text-white/80">
+                {courseDetails.instructors.length === 1 ? "Instrutor:" : "Instrutores:"}
+              </span>{" "}
+              {courseDetails.instructors.map((i) => i.name).join(", ")}
+            </p>
           )}
           <div className="flex items-center gap-3 flex-wrap">
             <button
@@ -1082,6 +1092,33 @@ export function CoursePlayerPage() {
               <div className="px-5 pb-5 border-t border-border pt-4">
                 <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-2">Sobre o curso</p>
                 <p className="text-sm text-foreground leading-relaxed">{course.description}</p>
+              </div>
+            )}
+
+            {courseDetails?.instructors && courseDetails.instructors.length > 0 && (
+              <div className="px-5 pb-5 border-t border-border pt-4">
+                <p className="text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-3">
+                  {courseDetails.instructors.length === 1 ? "Instrutor" : "Instrutores"}
+                </p>
+                <div className="flex flex-col gap-3">
+                  {courseDetails.instructors.map((inst) => (
+                    <div key={inst.id} className="flex items-center gap-3">
+                      <div className="size-10 rounded-full overflow-hidden bg-muted shrink-0 flex items-center justify-center border border-border">
+                        {inst.photoUrl ? (
+                          <img src={inst.photoUrl} alt={inst.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-sm font-bold text-muted-foreground">
+                            {inst.name.charAt(0).toUpperCase()}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-foreground leading-tight">{inst.name}</p>
+                        <p className="text-xs text-primary">{inst.title}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

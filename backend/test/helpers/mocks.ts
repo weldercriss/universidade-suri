@@ -104,8 +104,29 @@ export function buildPostRepoMock() {
     create: jest.fn(),
     listAllByGroup: jest.fn(),
     listAll: jest.fn(),
+    listByCourse: jest.fn(),
     likePost: jest.fn(),
     commentPost: jest.fn(),
+  };
+}
+
+export function buildInstructorRepoMock() {
+  return {
+    listActive: jest.fn(),
+    listAll: jest.fn(),
+    findById: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    courseExists: jest.fn(),
+    addToCourse: jest.fn(),
+    removeFromCourse: jest.fn(),
+  };
+}
+
+export function buildStorageMock() {
+  return {
+    uploadFile: jest.fn().mockResolvedValue('https://storage/file.png'),
   };
 }
 
@@ -129,6 +150,10 @@ export function buildPrismaMock() {
     },
     course: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
+    },
+    courseInstructor: {
+      findMany: jest.fn().mockResolvedValue([]),
     },
     certificate: {
       findFirst: jest.fn(),
@@ -169,8 +194,18 @@ export function buildPrismaMock() {
       upsert: jest.fn(),
       deleteMany: jest.fn(),
     },
+    quizExtraAttempt: {
+      count: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+    },
+    xpRule: {
+      findUnique: jest.fn(),
+    },
     profile: {
       update: jest.fn(),
+      findUnique: jest.fn(),
     },
   };
 }

@@ -78,42 +78,51 @@ graph LR
 
 | Camada | Pasta | Responsabilidade |
 |---|---|---|
+| **Feature Modules** | `src/<feature>/` | Uma pasta por domínio: `*.module.ts` + `*.controller.ts` (fino) + `*.service.ts` (lógica) |
 | **Domain** | `src/domain/entities/` | Entidades de negócio (User, Course, Post, Certificate) |
 | **Domain** | `src/domain/repositories/` | Interfaces/contratos dos repositórios |
-| **Infrastructure** | `src/infrastructure/database/` | PrismaService + repositórios concretos |
-| **Infrastructure** | `src/infrastructure/http/controllers/` | Controllers REST (13 controllers) |
+| **Infrastructure** | `src/infrastructure/database/` | PrismaService (+ PrismaModule @Global) + repositórios concretos |
+| **Infrastructure** | `src/infrastructure/storage/` | StorageModule (@Global) + SupabaseStorageService |
 | **Infrastructure** | `src/infrastructure/http/dtos/` | DTOs com class-validator |
 | **Infrastructure** | `src/infrastructure/http/strategies/` | JwtStrategy + ApiTokenStrategy (Passport.js) |
 | **Infrastructure** | `src/infrastructure/http/guards/` | ApiTokenGuard |
 | **Bootstrap** | `src/main.ts` | CORS, Helmet, ValidationPipe, Swagger, body limit |
-| **Config** | `src/app.module.ts` | DI binding, ThrottlerModule, JwtModule |
+| **Config** | `src/app.module.ts` | Importa infra global + todos os feature modules |
+
+> **Feature modules**: cada domínio é isolado em `src/<feature>/`. O controller apenas delega
+> ao service; a lógica de negócio e a autorização ficam no service. Repositório dedicado onde
+> há CRUD claro; features de agregação/leitura/config usam `PrismaService` direto no service.
 
 ### Repositórios
 
 | Interface | Implementação | Descrição |
 |---|---|---|
-| `IUserRepository` | `PrismaUserRepository` | CRUD de perfis, leaderboard, auth |
-| `ICourseRepository` | `PrismaCourseRepository` | Cursos, aulas, matrículas, certificados |
-| `IPostRepository` | `PrismaPostRepository` | Posts, likes, comentários da comunidade |
-| `IRoadmapRepository` | `PrismaRoadmapRepository` | Roadmaps e itens |
+| `IUserRepository` | `PrismaUserRepository` | CRUD de perfis, leaderboard, auth (AuthModule) |
+| `ICourseRepository` | `PrismaCourseRepository` | Cursos, aulas (CoursesModule, CertificatesModule, QuizModule) |
+| `IPostRepository` | `PrismaPostRepository` | Posts, likes, comentários da comunidade (PostsModule) |
+| `IRoadmapRepository` | `PrismaRoadmapRepository` | Roadmaps e itens (RoadmapsModule) |
+| `IInstructorRepository` | `PrismaInstructorRepository` | Instrutores + associação a cursos (InstructorsModule) |
 
-### Controllers (13 no total)
+### Feature Modules e Controllers
 
-| Controller | Prefixo | Auth | Descrição |
-|---|---|---|---|
-| `AuthController` | `/auth` | JWT | Login, signup, perfil, usuários |
-| `CourseController` | `/courses` | JWT / Admin | CRUD de cursos e aulas |
-| `EnrollmentController` | `/enrollments` | JWT | Matrículas e progresso |
-| `CertificateController` | `/certificates` | JWT / Admin | Emissão e validação |
-| `QuizController` | `/quiz` | JWT / Admin | Questões e tentativas |
-| `TrailController` | `/trails` | JWT / Admin | Trilhas e exame final |
-| `PostController` | `/posts` | JWT | Comunidade de projetos |
-| `RoadmapController` | `/roadmaps` | JWT / Admin | Roadmaps de aprendizado |
-| `SettingsController` | `/settings` | Público / Admin | Configurações globais e logos |
-| `AdminGroupsController` | `/admin/groups` | Admin | Regras de tier por XP |
-| `AdminReportsController` | `/admin/reports` | Admin | Relatórios analíticos |
-| `AdminApiTokenController` | `/admin/api-tokens` | Admin | Gerenciar tokens de API externa |
-| `ExternalApiController` | `/external` | API Token | Endpoints para sistemas externos |
+| Feature Module | Controller(s) | Prefixo | Auth | Descrição |
+|---|---|---|---|---|
+| `AuthModule` | `AuthController` | `/auth` | JWT | Login, signup, perfil, usuários |
+| `CoursesModule` | `CoursesController` | `/courses` | JWT / Admin | CRUD de cursos e aulas |
+| `EnrollmentsModule` | `EnrollmentsController` | `/enrollments` | JWT | Matrículas e progresso |
+| `CertificatesModule` | `CertificatesController` | `/certificates` | JWT / Admin | Emissão e validação |
+| `QuizModule` | `QuizController` | `/quiz` | JWT / Admin | Questões e tentativas |
+| `TrailsModule` | `TrailsController` | `/trails` | JWT / Admin | Trilhas e exame final |
+| `PostsModule` | `PostsController` | `/posts` | JWT | Comunidade de projetos |
+| `RoadmapsModule` | `RoadmapsController` | `/roadmaps` | JWT / Admin | Roadmaps de aprendizado |
+| `SettingsModule` | `SettingsController` | `/settings` | Público / Admin | Configurações globais e logos |
+| `GamificationModule` | `GamificationController` | `/gamification`, `/admin/gamification` | JWT / Admin | XpRules e GroupRules |
+| `InstructorsModule` | `InstructorsController` | `/instructors`, `/admin/instructors` | Público / Admin | Instrutores + associação a cursos |
+| `ChangelogModule` | `ChangelogController` | `/changelog` | Público | Versões da plataforma |
+| `AdminModule` | `AdminGroupsController` | `/admin/groups` | Admin | Regras de tier por XP |
+| `AdminModule` | `AdminReportsController` | `/admin/reports` | Admin | Relatórios analíticos |
+| `AdminModule` | `AdminApiTokenController` | `/admin/api-tokens` | Admin | Gerenciar tokens de API externa |
+| `ExternalApiModule` | `ExternalApiController` | `/external` | API Token | Endpoints para sistemas externos |
 
 ---
 

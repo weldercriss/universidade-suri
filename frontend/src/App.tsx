@@ -28,6 +28,7 @@ import { AdminNewsletterPage } from "./pages/AdminNewsletter";
 import { AdminApiTokensPage } from "./pages/AdminApiTokens";
 import GamificationPage from "./pages/Gamification";
 import { AdminGamificationPage } from "./pages/AdminGamification";
+import { AdminInstructorsPage } from "./pages/AdminInstructors";
 import { TourProvider } from "./lib/tour";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
@@ -264,6 +265,14 @@ export default function App() {
           element={
             <AdminRoute>
               <AdminGamificationPage />
+            </AdminRoute>
+          }
+        />
+        <Route
+          path="/admin/instrutores"
+          element={
+            <AdminRoute>
+              <AdminInstructorsPage />
             </AdminRoute>
           }
         />

@@ -40,23 +40,39 @@ npm run db:seed        # cria admin: admin@suri.com / SuriAdmin123
 
 ## Arquitetura
 
-**Um único `AppModule`** — sem feature modules. Tudo registrado centralmente em `src/app.module.ts`.
+**Feature modules** — cada domínio em sua pasta `src/<feature>/` (estilo NestJS), com
+`*.module.ts`, `*.controller.ts` e `*.service.ts`. O `AppModule` importa os módulos de
+infraestrutura globais (`PrismaModule`, `StorageModule`, `PassportModule`, `ThrottlerModule`)
+e todos os feature modules. **Controllers são finos e delegam ao service; toda a lógica de
+negócio + autorização vive no service. Nunca acessar Prisma direto no controller.**
+
+Módulos: `auth/`, `courses/`, `enrollments/`, `certificates/`, `posts/`, `trails/`, `quiz/`,
+`roadmaps/`, `settings/`, `gamification/`, `instructors/`, `external/`, `changelog/` e
+`admin/` (agrega groups + reports + api-tokens).
 
 ### Padrão de Repositório
-Injetados por token de interface (não classe):
+Injetados por token de interface (não classe), **registrado no feature module**:
 ```typescript
+// <feature>.module.ts → providers
 { provide: IUserRepository, useClass: PrismaUserRepository }
+// service → constructor
+@Inject(ICourseRepository) private readonly courseRepository: ICourseRepository
 ```
-- Interfaces: `domain/repositories/*.repository.interface.ts`
+- Interfaces + Symbol: `domain/repositories/*.repository.interface.ts`
 - Implementações: `infrastructure/database/repositories/prisma-*.repository.ts`
+- Camada de repositório onde há **CRUD claro** (courses, posts, roadmaps, instructors, users).
+  Features de agregação/leitura/config (enrollments, certificates, quiz, trails, settings,
+  gamification, admin, external) usam `PrismaService` direto **dentro do service**.
 
-### Controllers (prefixos de rota)
+### Controllers (prefixos de rota — inalterados pela refatoração)
 `auth`, `courses`, `enrollments`, `certificates`, `quiz`, `trails`, `posts`, `roadmaps`,
-`settings`, `changelog`, `gamification`, `admin/groups`, `admin/reports`, `admin/api-tokens`,
-`admin/gamification`, `external`
+`settings`, `changelog`, `gamification`, `instructors`, `admin/groups`, `admin/reports`,
+`admin/api-tokens`, `admin/gamification`, `external`
 
 ### Onde vive a lógica de negócio
-Principalmente nos **controllers** + **repositórios Prisma**. A pasta `application/` é mínima hoje — seguir o padrão controller→repository existente ao adicionar funcionalidades.
+Nos **services** de cada feature module (`src/<feature>/<feature>.service.ts`), que orquestram
+repositórios e/ou `PrismaService`. Ao adicionar funcionalidade: estender o service do domínio
+(ou criar um novo feature module no estilo `courses/`).
 
 ---
 

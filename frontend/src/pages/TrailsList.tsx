@@ -491,7 +491,7 @@ function MyTrailCard({
                 {c.coverUrl && (
                   <div className="size-10 rounded-lg overflow-hidden shrink-0">
                     <img
-                      src={`${API_BASE_URL}${c.coverUrl}`}
+                      src={c.coverUrl.startsWith("http") ? c.coverUrl : `${API_BASE_URL}${c.coverUrl}`}
                       alt=""
                       className="w-full h-full object-cover"
                     />
