@@ -21,7 +21,8 @@
     "db:sync": "ts-node scripts/sync.ts",
     "db:backup": "ts-node scripts/backup.ts",
     "db:restore": "ts-node scripts/restore.ts",
-    "db:seed": "ts-node scripts/seed-admin.ts"
+    "db:seed": "ts-node scripts/seed-admin.ts",
+    "db:migrate:mongo": "ts-node scripts/migrate-supabase-to-mongo.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.3",

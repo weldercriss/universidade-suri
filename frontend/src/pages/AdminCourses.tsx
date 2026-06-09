@@ -12,6 +12,9 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { GraduationCap, Loader2, Plus, Video, Trash2, Edit, Image as ImageIcon, Upload, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 
+/** Resolve a URL da capa: URLs absolutas (Supabase) usam direto; caminhos relativos recebem o API_BASE_URL. */
+const resolveCoverUrl = (url: string) => (url.startsWith("http") ? url : `${API_BASE_URL}${url}`);
+
 export function AdminCoursesPage() {
   const [courses, setCourses] = useState<any[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(true);
@@ -321,7 +324,7 @@ export function AdminCoursesPage() {
                 title="Clique para trocar a capa"
               >
                 {c.coverUrl ? (
-                  <img src={`${API_BASE_URL}${c.coverUrl}`} alt="capa" className="w-full h-full object-cover" />
+                  <img src={resolveCoverUrl(c.coverUrl)} alt="capa" className="w-full h-full object-cover" />
                 ) : (
                   <div className="w-full h-full flex flex-col items-center justify-center gap-1">
                     <ImageIcon className="size-7 text-white/30" />
@@ -464,7 +467,7 @@ export function AdminCoursesPage() {
                   {editCourseCoverPreview ? (
                     <img src={editCourseCoverPreview} alt="Capa" className="w-full h-full object-cover" />
                   ) : editingCourse?.coverUrl ? (
-                    <img src={`${API_BASE_URL}${editingCourse.coverUrl}`} alt="Capa atual" className="w-full h-full object-cover" />
+                    <img src={resolveCoverUrl(editingCourse.coverUrl)} alt="Capa atual" className="w-full h-full object-cover" />
                   ) : (
                     <div className="flex flex-col items-center gap-1 text-muted-foreground">
                       <ImageIcon className="size-6" />
