@@ -437,7 +437,7 @@ export function AdminCoursesPage() {
             </div>
             <div className="space-y-2">
               <Label>Duração do Módulo</Label>
-              <Input value={lessonForm.duration} onChange={e => setLessonForm({...lessonForm, duration: e.target.value})} placeholder="Ex: 10:00" required className="bg-muted/50 border-border" />
+              <Input value={lessonForm.duration} onChange={e => setLessonForm({...lessonForm, duration: e.target.value})} placeholder="Ex: 10:00" className="bg-muted/50 border-border" />
             </div>
             <Button type="submit" className="w-full bg-primary text-primary-foreground hover:opacity-90">Salvar Módulo</Button>
           </form>
@@ -559,7 +559,7 @@ export function AdminCoursesPage() {
             </div>
             <div className="space-y-2">
               <Label>Duração do Módulo</Label>
-              <Input value={lessonForm.duration} onChange={e => setLessonForm({...lessonForm, duration: e.target.value})} placeholder="Ex: 10:00" required className="bg-muted/50 border-border" />
+              <Input value={lessonForm.duration} onChange={e => setLessonForm({...lessonForm, duration: e.target.value})} placeholder="Ex: 10:00" className="bg-muted/50 border-border" />
             </div>
             <Button type="submit" className="w-full bg-primary text-primary-foreground hover:opacity-90">Salvar Alterações</Button>
           </form>
