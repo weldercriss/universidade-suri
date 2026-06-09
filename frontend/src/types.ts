@@ -9,7 +9,8 @@ export interface Course {
     id: string;
     title: string;
     duration: string;
-    youtubeId: string;
+    videoProvider: "youtube" | "loom";
+    videoEmbedUrl: string;
     done: boolean;
   }[];
 }

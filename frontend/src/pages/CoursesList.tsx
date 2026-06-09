@@ -185,8 +185,9 @@ export function CoursesListPage() {
             lessons: (c.lessons || []).map((l: any) => ({
               id: l.id,
               title: l.title,
-              duration: l.duration || "10:00",
-              youtubeId: l.videoUrl || "",
+              duration: l.duration || "",
+              videoProvider: "youtube" as const,
+              videoEmbedUrl: "",
               done: false,
             })),
           };

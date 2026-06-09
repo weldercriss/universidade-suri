@@ -35,10 +35,32 @@ interface ProjectPost {
   commentDetails?: { userName: string; userEmail: string; content: string; createdAt: string }[];
 }
 
-function extractYoutubeId(urlOrId: string) {
-  if (!urlOrId) return "dQw4w9WgXcQ";
-  const match = urlOrId.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?\/\s]{11})/);
-  return (match?.[1] ?? urlOrId) || "dQw4w9WgXcQ";
+type VideoProvider = "youtube" | "loom";
+
+interface VideoSource {
+  provider: VideoProvider;
+  embedUrl: string;
+}
+
+function resolveVideoSource(urlOrId: string): VideoSource {
+  const raw = (urlOrId || "").trim();
+
+  // Loom: https://www.loom.com/share/<id> | /embed/<id> | id de 32 hex
+  const loomMatch = raw.match(/loom\.com\/(?:share|embed)\/([0-9a-f]{32})/i);
+  if (loomMatch) {
+    return { provider: "loom", embedUrl: `https://www.loom.com/embed/${loomMatch[1]}` };
+  }
+  if (/^[0-9a-f]{32}$/i.test(raw)) {
+    return { provider: "loom", embedUrl: `https://www.loom.com/embed/${raw}` };
+  }
+
+  // YouTube: URL completa ou ID de 11 chars (legado)
+  const ytMatch = raw.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^"&?\/\s]{11})/);
+  const ytId = ytMatch?.[1] ?? raw ?? "dQw4w9WgXcQ";
+  return {
+    provider: "youtube",
+    embedUrl: `https://www.youtube.com/embed/${ytId || "dQw4w9WgXcQ"}?enablejsapi=1&rel=0`,
+  };
 }
 
 function buildCompletedMap(lessonIds: string[], completedModuleIds: string[]) {
@@ -152,13 +174,17 @@ export function CoursePlayerPage() {
             progressData.totalModules > 0
               ? Math.round((progressData.completedCount / progressData.totalModules) * 100)
               : 0,
-          lessons: rawLessons.map((l: any) => ({
-            id: l.id,
-            title: l.title,
-            duration: l.duration || "10:00",
-            youtubeId: extractYoutubeId(l.videoUrl || l.video_url || ""),
-            done: !!completedMap[l.id],
-          })),
+          lessons: rawLessons.map((l: any) => {
+            const source = resolveVideoSource(l.videoUrl || l.video_url || "");
+            return {
+              id: l.id,
+              title: l.title,
+              duration: l.duration || "",
+              videoProvider: source.provider,
+              videoEmbedUrl: source.embedUrl,
+              done: !!completedMap[l.id],
+            };
+          }),
         };
 
         setCourse(mapped);
@@ -188,6 +214,14 @@ export function CoursePlayerPage() {
     if (activeTab !== "aulas") return;
     setVideoFinished(false);
     setRealVideoDuration(null);
+
+    // Loom (e outros não-YouTube) não expõem progresso sem SDK próprio:
+    // libera a conclusão da aula assim que o vídeo é exibido.
+    const activeLesson = course?.lessons[activeIdx];
+    if (activeLesson && activeLesson.videoProvider !== "youtube") {
+      setVideoFinished(true);
+      return;
+    }
 
     let player: { destroy?: () => void } | undefined;
     let progressInterval: number | undefined;
@@ -264,7 +298,7 @@ export function CoursePlayerPage() {
         try { player.destroy(); } catch { /* ignore */ }
       }
     };
-  }, [activeIdx, courseId, activeTab]);
+  }, [activeIdx, courseId, activeTab, course]);
 
   // Community: load posts when tab is opened
   const fetchPosts = useCallback(async () => {
@@ -582,9 +616,9 @@ export function CoursePlayerPage() {
               <div className="aspect-video bg-black relative">
                 <iframe
                   key={lesson.id}
-                  id="youtube-player"
+                  id={lesson.videoProvider === "youtube" ? "youtube-player" : undefined}
                   title={lesson.title}
-                  src={`https://www.youtube.com/embed/${lesson.youtubeId}?enablejsapi=1&rel=0`}
+                  src={lesson.videoEmbedUrl}
                   className="w-full h-full border-0"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
@@ -598,7 +632,9 @@ export function CoursePlayerPage() {
                     </div>
                     <h1 className="text-2xl font-bold mt-1 text-gradient">{lesson.title}</h1>
                   </div>
-                  <Badge variant="outline" className="border-border">{realVideoDuration || lesson.duration}</Badge>
+                  {(realVideoDuration || lesson.duration) && (
+                    <Badge variant="outline" className="border-border">{realVideoDuration || lesson.duration}</Badge>
+                  )}
                 </div>
                 <p className="text-muted-foreground mt-3">{course.description}</p>
                 <div className="mt-6 flex flex-wrap gap-2">
@@ -679,7 +715,7 @@ export function CoursePlayerPage() {
                     )}
                     <div className="flex-1 min-w-0">
                       <div className="text-sm truncate font-medium">{l.title}</div>
-                      <div className="text-[11px] text-muted-foreground">{l.duration}</div>
+                      {l.duration && <div className="text-[11px] text-muted-foreground">{l.duration}</div>}
                     </div>
                   </button>
                 );

@@ -52,7 +52,12 @@ async function bootstrap() {
         directives: {
           defaultSrc: ["'self'"],
           scriptSrc: ["'self'", "'unsafe-inline'"],
-          frameSrc: ["'self'", 'https://www.youtube.com', 'https://player.vimeo.com'],
+          frameSrc: [
+            "'self'",
+            'https://www.youtube.com',
+            'https://player.vimeo.com',
+            'https://www.loom.com',
+          ],
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
           connectSrc: ["'self'", ...allowedOrigins],
           mediaSrc: ["'self'", 'https:'],

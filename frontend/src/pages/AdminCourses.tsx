@@ -20,7 +20,7 @@ export function AdminCoursesPage() {
   const [loadingCourses, setLoadingCourses] = useState(true);
 
   const [courseForm, setCourseForm] = useState({ title: "", targetGroup: "all", description: "", xpReward: 50, workloadHours: 0 });
-  const [lessonForm, setLessonForm] = useState({ title: "", videoUrl: "", duration: "10:00" });
+  const [lessonForm, setLessonForm] = useState({ title: "", videoUrl: "", duration: "" });
   const [openCourse, setOpenCourse] = useState(false);
   const [editingCourse, setEditingCourse] = useState<any>(null);
   const [openLessonFor, setOpenLessonFor] = useState<string | null>(null);
@@ -103,7 +103,7 @@ export function AdminCoursesPage() {
       });
       toast.success("Aula adicionada com sucesso!");
       setOpenLessonFor(null);
-      setLessonForm({ title: "", videoUrl: "", duration: "10:00" });
+      setLessonForm({ title: "", videoUrl: "", duration: "" });
       fetchCourses();
     } catch {
       toast.error("Erro ao adicionar aula");
@@ -144,7 +144,7 @@ export function AdminCoursesPage() {
       });
       toast.success("Aula atualizada com sucesso!");
       setEditingLesson(null);
-      setLessonForm({ title: "", videoUrl: "", duration: "10:00" });
+      setLessonForm({ title: "", videoUrl: "", duration: "" });
       fetchCourses();
     } catch {
       toast.error("Erro ao atualizar aula");
@@ -373,7 +373,7 @@ export function AdminCoursesPage() {
                         </div>
                         <div className="flex opacity-0 group-hover/lesson:opacity-100 transition-opacity shrink-0 gap-0.5">
                           <Button variant="ghost" size="icon" className="size-5 rounded" onClick={() => {
-                            setLessonForm({ title: l.title, videoUrl: l.videoUrl || l.video_url || "", duration: l.duration || "10:00" });
+                            setLessonForm({ title: l.title, videoUrl: l.videoUrl || l.video_url || "", duration: l.duration || "" });
                             setEditingLesson(l);
                           }}>
                             <Edit className="size-2.5 text-primary" />
@@ -396,7 +396,7 @@ export function AdminCoursesPage() {
                     <Edit className="size-3 text-primary" />
                   </Button>
                   <Button variant="ghost" size="icon" className="size-7" title="Adicionar módulo"
-                    onClick={() => { setOpenLessonFor(c.id); setLessonForm({ title: "", videoUrl: "", duration: "10:00" }); }}>
+                    onClick={() => { setOpenLessonFor(c.id); setLessonForm({ title: "", videoUrl: "", duration: "" }); }}>
                     <Plus className="size-3 text-muted-foreground" />
                   </Button>
                   <div className="ml-auto flex items-center gap-0.5">
@@ -419,7 +419,7 @@ export function AdminCoursesPage() {
 
       <Dialog open={!!openLessonFor} onOpenChange={(open) => {
         setOpenLessonFor(open ? openLessonFor : null);
-        if (!open) setLessonForm({ title: "", videoUrl: "", duration: "10:00" });
+        if (!open) setLessonForm({ title: "", videoUrl: "", duration: "" });
       }}>
         <DialogContent className="sm:max-w-[425px] bg-card border-border">
           <DialogHeader>
@@ -431,12 +431,12 @@ export function AdminCoursesPage() {
               <Input value={lessonForm.title} onChange={e => setLessonForm({...lessonForm, title: e.target.value})} required className="bg-muted/50 border-border" />
             </div>
             <div className="space-y-2">
-              <Label>ID do Vídeo do YouTube</Label>
-              <Input value={lessonForm.videoUrl} onChange={e => setLessonForm({...lessonForm, videoUrl: e.target.value})} placeholder="Ex: dQw4w9WgXcQ" required className="bg-muted/50 border-border" />
-              <p className="text-[10px] text-muted-foreground">Em youtube.com/watch?v=12345, o ID é 12345</p>
+              <Label>Vídeo (YouTube ou Loom)</Label>
+              <Input value={lessonForm.videoUrl} onChange={e => setLessonForm({...lessonForm, videoUrl: e.target.value})} placeholder="ID do YouTube ou link do Loom" required className="bg-muted/50 border-border" />
+              <p className="text-[10px] text-muted-foreground">YouTube: ID (ex: dQw4w9WgXcQ) ou URL. Loom: cole o link de compartilhamento (loom.com/share/...).</p>
             </div>
             <div className="space-y-2">
-              <Label>Duração do Módulo</Label>
+              <Label>Duração do Módulo <span className="text-muted-foreground font-normal">(opcional)</span></Label>
               <Input value={lessonForm.duration} onChange={e => setLessonForm({...lessonForm, duration: e.target.value})} placeholder="Ex: 10:00" className="bg-muted/50 border-border" />
             </div>
             <Button type="submit" className="w-full bg-primary text-primary-foreground hover:opacity-90">Salvar Módulo</Button>
@@ -540,7 +540,7 @@ export function AdminCoursesPage() {
       <Dialog open={!!editingLesson} onOpenChange={(open) => {
         if (!open) {
           setEditingLesson(null);
-          setLessonForm({ title: "", videoUrl: "", duration: "10:00" });
+          setLessonForm({ title: "", videoUrl: "", duration: "" });
         }
       }}>
         <DialogContent className="sm:max-w-[425px] bg-card border-border">
@@ -553,12 +553,12 @@ export function AdminCoursesPage() {
               <Input value={lessonForm.title} onChange={e => setLessonForm({...lessonForm, title: e.target.value})} required className="bg-muted/50 border-border" />
             </div>
             <div className="space-y-2">
-              <Label>ID do Vídeo do YouTube</Label>
-              <Input value={lessonForm.videoUrl} onChange={e => setLessonForm({...lessonForm, videoUrl: e.target.value})} placeholder="Ex: dQw4w9WgXcQ" required className="bg-muted/50 border-border" />
-              <p className="text-[10px] text-muted-foreground">Ex: Em youtube.com/watch?v=12345, o ID é 12345</p>
+              <Label>Vídeo (YouTube ou Loom)</Label>
+              <Input value={lessonForm.videoUrl} onChange={e => setLessonForm({...lessonForm, videoUrl: e.target.value})} placeholder="ID do YouTube ou link do Loom" required className="bg-muted/50 border-border" />
+              <p className="text-[10px] text-muted-foreground">YouTube: ID (ex: dQw4w9WgXcQ) ou URL. Loom: cole o link de compartilhamento (loom.com/share/...).</p>
             </div>
             <div className="space-y-2">
-              <Label>Duração do Módulo</Label>
+              <Label>Duração do Módulo <span className="text-muted-foreground font-normal">(opcional)</span></Label>
               <Input value={lessonForm.duration} onChange={e => setLessonForm({...lessonForm, duration: e.target.value})} placeholder="Ex: 10:00" className="bg-muted/50 border-border" />
             </div>
             <Button type="submit" className="w-full bg-primary text-primary-foreground hover:opacity-90">Salvar Alterações</Button>

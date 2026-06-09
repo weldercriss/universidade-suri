@@ -92,7 +92,7 @@ export class CoursesService {
       body.description,
       body.content,
       body.videoUrl,
-      body.duration || '10:00',
+      body.duration ?? '',
       body.sortOrder || 0
     );
     return this.courseRepository.createLesson(lesson);
