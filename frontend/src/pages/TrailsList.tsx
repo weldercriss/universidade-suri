@@ -631,7 +631,7 @@ export function TrailsListPage() {
       </header>
 
       {/* Abas */}
-      <div className="flex gap-1 bg-card border border-border rounded-xl p-1 mb-6 w-fit">
+      <div data-tour="trilhas-tabs" className="flex gap-1 bg-card border border-border rounded-xl p-1 mb-6 w-fit">
         <button
           onClick={() => setActiveTab("mine")}
           className={`px-4 py-2 rounded-lg text-sm font-medium transition-smooth ${

@@ -57,6 +57,11 @@ export class PrismaUserRepository implements IUserRepository {
   }
 
   async findById(id: string): Promise<User | null> {
+    // Mongo `_id` é ObjectId (24 hex). Ids legados em formato UUID (era PostgreSQL)
+    // não convertem e fariam o Prisma lançar — trata como "não encontrado".
+    if (!PrismaUserRepository.isValidObjectId(id)) {
+      return null;
+    }
     try {
       const row = await this.prisma.profile.findUnique({
         where: { id },
@@ -67,6 +72,11 @@ export class PrismaUserRepository implements IUserRepository {
       this.logger.error('Error finding user by id', e);
       return null;
     }
+  }
+
+  /** ObjectId do Mongo: exatamente 24 caracteres hexadecimais. */
+  private static isValidObjectId(id: string): boolean {
+    return typeof id === 'string' && /^[a-f\d]{24}$/i.test(id);
   }
 
   async create(user: User): Promise<User> {

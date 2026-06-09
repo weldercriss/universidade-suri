@@ -65,7 +65,7 @@ export default function Gamification() {
   return (
     <AppShell>
       <div className="p-4 md:p-6 max-w-4xl mx-auto space-y-6">
-        <div>
+        <div data-tour="gam-header">
           <h1 className="text-2xl font-bold text-gradient flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
             Regras de Gamificação

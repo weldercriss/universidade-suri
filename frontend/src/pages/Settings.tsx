@@ -252,7 +252,7 @@ export function SettingsPage() {
 
   return (
     <AppShell>
-      <header className="mb-8 fade-in-up">
+      <header data-tour="config-header" className="mb-8 fade-in-up">
         <h1 className="text-3xl font-bold text-gradient">Configurações</h1>
         <p className="text-muted-foreground mt-1">Gerencie sua conta e preferências.</p>
       </header>

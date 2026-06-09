@@ -13,6 +13,7 @@ import { usePlatformSettings } from "@/lib/settings";
 import { ChangelogModal, useChangelogBadge } from "@/components/ChangelogModal";
 import { GuidedTour } from "@/components/GuidedTour";
 import { useTour } from "@/lib/tour";
+import { pageIdFromPath } from "@/lib/tour-steps";
 import totvsW from "@/assets/icons/totvs.svg";
 import totvsD from "@/assets/icons/totvs-dark.svg";
 import totvsLilac from "@/assets/icons/totvs-lilac.svg";
@@ -48,7 +49,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const { settings } = usePlatformSettings();
   const [changelogOpen, setChangelogOpen] = useState(false);
   const { latestVersion, hasNew, markSeen } = useChangelogBadge();
-  const { startTour } = useTour();
+  const { startTour, hasTour } = useTour();
 
   if (!user) {
     return null;
@@ -58,6 +59,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isAdmin = user.group === "admin" || user.isAdmin;
   const BrandIcon = isAdmin ? ShieldCheck : (isVip ? Sparkles : Shield);
   const isLight = theme === "snow-blue";
+
+  const tourPageId = pageIdFromPath(pathname);
+  const showTourButton = !isAdmin && hasTour(tourPageId);
 
   const filteredNav = nav.filter(item => {
     if ((item as any).adminOnly) return isAdmin;
@@ -164,7 +168,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
 
-        {/* Changelog / Version + Tour */}
+        {/* Changelog / Version */}
         <div className={`px-3 pb-1 shrink-0 flex items-center gap-1 ${sidebarCollapsed ? "justify-center flex-col" : ""}`}>
           <button
             onClick={() => { setChangelogOpen(true); markSeen(); }}
@@ -180,16 +184,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               <span className="absolute top-0.5 right-0.5 size-2 rounded-full bg-secondary ring-2 ring-card" />
             )}
           </button>
-          {!isAdmin && (
-            <button
-              data-tour="tour-btn"
-              onClick={startTour}
-              title="Tour do produto — clique para conhecer a plataforma"
-              className="text-muted-foreground hover:text-foreground transition-colors rounded-lg p-1.5"
-            >
-              <HelpCircle className="size-4" />
-            </button>
-          )}
         </div>
 
         {/* User Profile */}
@@ -316,15 +310,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <MessageCircle className="size-4" />
             </Button>
-            {!isAdmin && (
+            {showTourButton && (
               <Button
-                data-tour="tour-btn"
                 size="icon"
                 variant="outline"
-                onClick={startTour}
-                className="md:hidden border-border size-8"
-                aria-label="Tour do produto"
-                title="Tour do produto"
+                onClick={() => tourPageId && startTour(tourPageId)}
+                className="border-border size-8 md:size-9"
+                aria-label="Tour desta tela"
+                title="Tour desta tela — clique para conhecer esta página"
               >
                 <HelpCircle className="size-4" />
               </Button>

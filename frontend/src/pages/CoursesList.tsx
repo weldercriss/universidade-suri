@@ -235,7 +235,7 @@ export function CoursesListPage() {
   return (
     <AppShell>
       {/* Header */}
-      <header className="flex items-start justify-between mb-6 fade-in-up">
+      <header data-tour="cursos-header" className="flex items-start justify-between mb-6 fade-in-up">
         <div>
           <h1 className="text-3xl font-bold text-gradient">Cursos & Jornada</h1>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -280,7 +280,7 @@ export function CoursesListPage() {
 
       {/* Tabs — somente para usuários */}
       {!isAdmin && (
-        <div className="flex gap-0 mb-6 border-b border-border">
+        <div data-tour="cursos-tabs" className="flex gap-0 mb-6 border-b border-border">
           {(["meus", "catalogo"] as const).map((tab) => {
             const label = tab === "meus" ? "Meus Cursos" : "Catálogo";
             const count = tab === "meus" ? enrolledCourses.length : catalogCourses.length;

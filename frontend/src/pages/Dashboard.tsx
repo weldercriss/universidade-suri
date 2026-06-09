@@ -136,7 +136,7 @@ export function DashboardPage() {
   return (
     <AppShell>
       {/* Hero & Stats */}
-      <div className="mb-6 fade-in-up">
+      <div data-tour="dash-hero" className="mb-6 fade-in-up">
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">
           {isFirstLogin ? "Bem-vindo," : "Bem-vindo de volta,"}{" "}
           <span className="text-gradient" data-ph-mask="true">
@@ -154,7 +154,7 @@ export function DashboardPage() {
       </div>
 
       {!isAdmin && (
-        <div className="mb-8 stagger-children">
+        <div data-tour="dash-stats" className="mb-8 stagger-children">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             {stats.map((s) => (
               <article

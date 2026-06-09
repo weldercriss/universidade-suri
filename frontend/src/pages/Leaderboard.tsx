@@ -66,7 +66,7 @@ export function LeaderboardPage() {
 
   return (
     <AppShell>
-      <header className="mb-8 fade-in-up">
+      <header data-tour="ranking-header" className="mb-8 fade-in-up">
         <h1 className="text-3xl font-bold text-gradient">Ranking</h1>
         <p className="text-muted-foreground mt-1">
           {isAdmin

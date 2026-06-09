@@ -91,7 +91,7 @@ export function ProfilePage() {
   return (
     <AppShell>
       {/* Hero Profile Card */}
-      <Card className="bg-gradient-hero border-border p-8 shadow-elegant relative overflow-hidden fade-in-up">
+      <Card data-tour="perfil-hero" className="bg-gradient-hero border-border p-8 shadow-elegant relative overflow-hidden fade-in-up">
         <div className="absolute inset-0 bg-gradient-glow pointer-events-none" />
         <div className="relative z-10 flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
           <div className="flex flex-col md:flex-row gap-6 items-start md:items-center">

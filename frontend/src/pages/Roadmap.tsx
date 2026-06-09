@@ -40,7 +40,7 @@ function RoadmapPathView({ roadmap, onBack }: { roadmap: Roadmap; onBack: () => 
 
   return (
     <AppShell>
-      <div className="fade-in-up max-w-2xl mx-auto">
+      <div data-tour="roadmap-header" className="fade-in-up max-w-2xl mx-auto">
         <button
           onClick={onBack}
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6 transition-smooth"
@@ -182,7 +182,7 @@ export function RoadmapPage() {
 
   return (
     <AppShell>
-      <div className="fade-in-up mb-8">
+      <div data-tour="roadmap-header" className="fade-in-up mb-8">
         <h1 className="text-2xl sm:text-3xl font-bold text-gradient flex items-center gap-2">
           <MapIcon className="size-7 text-primary" />
           Roadmaps

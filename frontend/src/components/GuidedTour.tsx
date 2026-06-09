@@ -1,10 +1,9 @@
 import { Joyride, STATUS, EVENTS, ACTIONS, type EventData } from "react-joyride";
 import { useTour } from "@/lib/tour";
-import { tourSteps } from "@/lib/tour-steps";
 import { useTheme } from "@/lib/theme";
 
 export function GuidedTour() {
-  const { tourActive, stopTour } = useTour();
+  const { tourActive, activeSteps, stopTour } = useTour();
   const { theme } = useTheme();
   const isDark = theme !== "snow-blue";
 
@@ -18,7 +17,7 @@ export function GuidedTour() {
 
   return (
     <Joyride
-      steps={tourSteps}
+      steps={activeSteps}
       run={tourActive}
       continuous
       scrollToFirstStep

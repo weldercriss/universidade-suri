@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useTheme } from "@/lib/theme";
 import { usePlatformSettings } from "@/lib/settings";
-import { PlayCircle, ArrowRight, CheckCircle2, ChevronRight, Users, Layout, Moon, Sun, GraduationCap, FileText, MessageSquare, BookOpen, Link as LinkIcon, ArrowUp, ChevronDown, Newspaper } from "lucide-react";
+import { PlayCircle, ArrowRight, CheckCircle2, ChevronRight, Users, Layout, Moon, Sun, GraduationCap, FileText, MessageSquare, BookOpen, ArrowUp, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { API_BASE_URL } from "@/lib/api";
-import { ChangelogModal, useChangelogBadge } from "@/components/ChangelogModal";
 import totvsLight from "@/assets/icons/totvs-dark.svg";
 import totvsDark from "@/assets/icons/totvs.svg";
 import suriBlue from "@/assets/icons/suri-blue.svg";
@@ -46,8 +45,6 @@ export function LandingPage() {
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [instructors, setInstructors] = useState<Instructor[]>([]);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [changelogOpen, setChangelogOpen] = useState(false);
-  const { latestVersion, hasNew, markSeen } = useChangelogBadge();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -110,8 +107,13 @@ export function LandingPage() {
                   <Card className="flex flex-col md:flex-row overflow-hidden border-border bg-card shadow-elegant">
                     <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4 p-4">
                       <a href="https://www.suri.ai/plataforma" target="_blank" rel="noopener noreferrer" className="group/item block space-y-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="aspect-[4/3] rounded-lg bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-900/40 flex items-center justify-center border border-border/50 group-hover/item:border-primary/50 transition-colors shadow-sm">
-                          <Layout className="size-10 text-primary/60 group-hover/item:scale-110 transition-transform" />
+                        <div className="aspect-[4/3] rounded-lg overflow-hidden border border-border/50 group-hover/item:border-primary/50 transition-colors shadow-sm bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-950/40 dark:to-blue-900/40">
+                          <img
+                            src="https://cdn.prod.website-files.com/5f99af040fc8a6ae400fc29d/68b8825b7142fac6847d8742_Teste_plataforma.png"
+                            alt="Plataforma Suri"
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-300"
+                          />
                         </div>
                         <div>
                           <h4 className="font-bold text-sm mb-1 group-hover/item:text-primary transition-colors">Plataforma</h4>
@@ -121,8 +123,13 @@ export function LandingPage() {
                       </a>
 
                       <a href="https://www.suri.ai/integracoes" target="_blank" rel="noopener noreferrer" className="group/item block space-y-3 p-2 rounded-lg hover:bg-muted/50 transition-colors">
-                        <div className="aspect-[4/3] rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center border border-border/50 group-hover/item:shadow-glow transition-all shadow-sm">
-                          <LinkIcon className="size-10 text-white/80 group-hover/item:scale-110 transition-transform" />
+                        <div className="aspect-[4/3] rounded-lg overflow-hidden border border-border/50 group-hover/item:shadow-glow transition-all shadow-sm bg-gradient-to-br from-blue-600 to-indigo-700">
+                          <img
+                            src="https://cdn.prod.website-files.com/5f99af040fc8a6ae400fc29d/67816b0864d3f2fe761ef9f2_img_header_integracoes.jpg"
+                            alt="Integrações Suri"
+                            loading="lazy"
+                            className="w-full h-full object-cover group-hover/item:scale-105 transition-transform duration-300"
+                          />
                         </div>
                         <div>
                           <h4 className="font-bold text-sm mb-1 group-hover/item:text-primary transition-colors">Integrações</h4>
@@ -488,30 +495,17 @@ export function LandingPage() {
             <div>
               <h4 className="font-semibold mb-4 text-sm">Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-primary transition-colors">Termos de uso</a></li>
-                <li><a href="#" className="hover:text-primary transition-colors">Privacidade</a></li>
+                <li><a href="https://www.suri.ai/termos-de-servico" className="hover:text-primary transition-colors">Termos de uso</a></li>
+                <li><a href="https://www.suri.ai/privacy" className="hover:text-primary transition-colors">Privacidade</a></li>
               </ul>
             </div>
           </div>
           <div className="pt-8 border-t border-border/50 text-center md:text-left text-xs text-muted-foreground flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>© {new Date().getFullYear()} Universidade Suri. Todos os direitos reservados.</p>
-            {latestVersion && (
-              <button
-                onClick={() => { setChangelogOpen(true); markSeen(); }}
-                className="relative inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <Newspaper className="size-3.5" />
-                <span>v{latestVersion}</span>
-                {hasNew && (
-                  <span className="absolute -top-1 -right-1 size-2 rounded-full bg-secondary ring-2 ring-background" />
-                )}
-              </button>
-            )}
+            <p>© {new Date().getFullYear()} CHATBOT MAKER TECNOLOGIA DA INFORMACAO S.A. Todos os direitos reservados.</p>
+            <p>CNPJ: 26.745.287/0001-72</p>
           </div>
         </div>
       </footer>
-
-      <ChangelogModal open={changelogOpen} onClose={() => setChangelogOpen(false)} />
 
       {/* Botão de voltar ao topo */}
       <Button

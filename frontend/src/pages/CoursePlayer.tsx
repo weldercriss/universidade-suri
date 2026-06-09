@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import {
   CheckCircle2, Circle, ArrowRight, ArrowLeft, Loader2, Award, Lock,
   Heart, MessageCircle, Send, Image as ImageIcon, FileText, Link as LinkIcon, Video,
-  Users, BookOpen, FolderKanban, ClipboardList, AlertTriangle, PlayCircle,
+  Users, BookOpen, FolderKanban, ClipboardList, AlertTriangle, PlayCircle, Construction,
 } from "lucide-react";
 import { QuizModal } from "@/components/QuizModal";
 import { toast } from "sonner";
@@ -212,6 +212,7 @@ export function CoursePlayerPage() {
   // YouTube player — only initialize when on aulas tab
   useEffect(() => {
     if (activeTab !== "aulas") return;
+    if (!course?.lessons.length) return;
     setVideoFinished(false);
     setRealVideoDuration(null);
 
@@ -493,26 +494,11 @@ export function CoursePlayerPage() {
     );
   }
 
-  if (course.lessons.length === 0) {
-    return (
-      <AppShell>
-        <div className="mb-6 flex items-center gap-3 text-sm text-muted-foreground fade-in-up">
-          <Link to="/cursos" className="hover:text-foreground hover:text-gradient transition-smooth">Cursos</Link>
-          <span>/</span>
-          <span className="text-foreground">{course.title}</span>
-        </div>
-        <Card className="bg-gradient-card border-border p-12 text-center shadow-elegant">
-          <p className="text-muted-foreground">Este curso ainda não possui aulas cadastradas.</p>
-          <Button asChild className="mt-4 bg-gradient-hero text-snow"><Link to="/cursos">Voltar</Link></Button>
-        </Card>
-      </AppShell>
-    );
-  }
-
-  const lesson = course.lessons[activeIdx]!;
+  const hasLessons = course.lessons.length > 0;
+  const lesson = course.lessons[activeIdx];
   const doneCount = Object.values(completed).filter(Boolean).length;
-  const pct = course.lessons.length > 0 ? Math.round((doneCount / course.lessons.length) * 100) : 0;
-  const allLessonsCompleted = doneCount === course.lessons.length;
+  const pct = hasLessons ? Math.round((doneCount / course.lessons.length) * 100) : 0;
+  const allLessonsCompleted = hasLessons && doneCount === course.lessons.length;
 
   // ─── Render ──────────────────────────────────────────────────────────────────
 
@@ -524,7 +510,7 @@ export function CoursePlayerPage() {
   return (
     <AppShell>
       {/* ── Hero Banner ── */}
-      <div className="relative w-full rounded-2xl overflow-hidden mb-6 fade-in-up" style={{ minHeight: "280px", maxHeight: "380px", height: "clamp(280px, 28vw, 380px)" }}>
+      <div data-tour="player-hero" className="relative w-full rounded-2xl overflow-hidden mb-6 fade-in-up" style={{ minHeight: "280px", maxHeight: "380px", height: "clamp(280px, 28vw, 380px)" }}>
         {/* Background */}
         {hasHeroImage ? (
           <img src={heroCoverSrc} alt={course.title} className="absolute inset-0 w-full h-full object-cover" />
@@ -582,7 +568,7 @@ export function CoursePlayerPage() {
       </div>
 
       {/* Tab switcher */}
-      <div className="flex gap-0 mb-6 border-b border-border overflow-x-auto">
+      <div data-tour="player-tabs" className="flex gap-0 mb-6 border-b border-border overflow-x-auto">
         {(
           [
             { id: "aulas" as const, icon: <BookOpen className="size-4" />, label: "Aulas" },
@@ -612,63 +598,86 @@ export function CoursePlayerPage() {
       {activeTab === "aulas" && (
         <div className="grid lg:grid-cols-[1fr_320px] gap-4 lg:gap-6">
           <div className="fade-in-up">
-            <Card className="bg-gradient-card border-border overflow-hidden shadow-elegant">
-              <div className="aspect-video bg-black relative">
-                <iframe
-                  key={lesson.id}
-                  id={lesson.videoProvider === "youtube" ? "youtube-player" : undefined}
-                  title={lesson.title}
-                  src={lesson.videoEmbedUrl}
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                />
-              </div>
-              <div className="p-6">
-                <div className="flex items-center justify-between flex-wrap gap-3">
-                  <div>
-                    <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">
-                      Aula {activeIdx + 1} de {course.lessons.length}
+            {hasLessons && lesson ? (
+              <Card className="bg-gradient-card border-border overflow-hidden shadow-elegant">
+                <div className="aspect-video bg-black relative">
+                  <iframe
+                    key={lesson.id}
+                    id={lesson.videoProvider === "youtube" ? "youtube-player" : undefined}
+                    title={lesson.title}
+                    src={lesson.videoEmbedUrl}
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
+                <div className="p-6">
+                  <div className="flex items-center justify-between flex-wrap gap-3">
+                    <div>
+                      <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">
+                        Aula {activeIdx + 1} de {course.lessons.length}
+                      </div>
+                      <h1 className="text-2xl font-bold mt-1 text-gradient">{lesson.title}</h1>
                     </div>
-                    <h1 className="text-2xl font-bold mt-1 text-gradient">{lesson.title}</h1>
+                    {(realVideoDuration || lesson.duration) && (
+                      <Badge variant="outline" className="border-border">{realVideoDuration || lesson.duration}</Badge>
+                    )}
                   </div>
-                  {(realVideoDuration || lesson.duration) && (
-                    <Badge variant="outline" className="border-border">{realVideoDuration || lesson.duration}</Badge>
+                  <p className="text-muted-foreground mt-3">{course.description}</p>
+                  <div className="mt-6 flex flex-wrap gap-2">
+                    <Button variant="outline" onClick={prev} disabled={activeIdx === 0} className="border-border">
+                      <ArrowLeft className="size-4 mr-1" /> Anterior
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={finish}
+                      disabled={completed[lesson.id] || (!videoFinished && !completed[lesson.id])}
+                      className="bg-muted hover:bg-muted/80 text-foreground"
+                    >
+                      {completed[lesson.id] ? "✓ Concluída" : (!videoFinished ? "Assista até o fim..." : "Concluir aula")}
+                    </Button>
+                    {activeIdx === course.lessons.length - 1 ? (
+                      <Button
+                        onClick={() => setActiveTab("prova")}
+                        disabled={!completed[lesson.id]}
+                        className="bg-gradient-hero text-snow border border-border group"
+                      >
+                        Fazer a Prova <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={next}
+                        disabled={!completed[lesson.id]}
+                        className="bg-gradient-hero text-snow border border-border group"
+                      >
+                        Próxima aula <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            ) : (
+              <Card className="bg-gradient-card border-border overflow-hidden shadow-elegant">
+                <div className="aspect-video bg-black relative flex flex-col items-center justify-center text-center px-6">
+                  <div className="size-16 rounded-2xl bg-primary/15 flex items-center justify-center mb-4">
+                    <Construction className="size-8 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-bold text-white">Conteúdo em desenvolvimento</h2>
+                  <p className="text-white/60 text-sm mt-2 max-w-md">
+                    As aulas deste curso ainda estão sendo produzidas. Volte em breve para começar a assistir.
+                  </p>
+                </div>
+                <div className="p-6">
+                  <div className="text-[11px] uppercase tracking-widest text-muted-foreground font-medium">
+                    Em breve
+                  </div>
+                  <h1 className="text-2xl font-bold mt-1 text-gradient">{course.title}</h1>
+                  {course.description && (
+                    <p className="text-muted-foreground mt-3">{course.description}</p>
                   )}
                 </div>
-                <p className="text-muted-foreground mt-3">{course.description}</p>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  <Button variant="outline" onClick={prev} disabled={activeIdx === 0} className="border-border">
-                    <ArrowLeft className="size-4 mr-1" /> Anterior
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={finish}
-                    disabled={completed[lesson.id] || (!videoFinished && !completed[lesson.id])}
-                    className="bg-muted hover:bg-muted/80 text-foreground"
-                  >
-                    {completed[lesson.id] ? "✓ Concluída" : (!videoFinished ? "Assista até o fim..." : "Concluir aula")}
-                  </Button>
-                  {activeIdx === course.lessons.length - 1 ? (
-                    <Button
-                      onClick={() => setActiveTab("prova")}
-                      disabled={!completed[lesson.id]}
-                      className="bg-gradient-hero text-snow border border-border group"
-                    >
-                      Fazer a Prova <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                    </Button>
-                  ) : (
-                    <Button
-                      onClick={next}
-                      disabled={!completed[lesson.id]}
-                      className="bg-gradient-hero text-snow border border-border group"
-                    >
-                      Próxima aula <ArrowRight className="size-4 ml-1 group-hover:translate-x-0.5 transition-transform" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
+              </Card>
+            )}
           </div>
 
           <aside className="space-y-4">
@@ -692,6 +701,15 @@ export function CoursePlayerPage() {
               )}
             </Card>
             <Card className="bg-gradient-card border-border divide-y divide-border shadow-elegant overflow-hidden">
+              {!hasLessons && (
+                <div className="p-3 flex items-center gap-3 border-l-2 border-primary/40">
+                  <Circle className="size-4 text-muted-foreground shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">Módulo em Desenvolvimento</div>
+                    <div className="text-[11px] text-muted-foreground">Aulas em breve</div>
+                  </div>
+                </div>
+              )}
               {course.lessons.map((l, i) => {
                 const isActive = i === activeIdx;
                 const isDone = completed[l.id];
