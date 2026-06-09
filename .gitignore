@@ -71,3 +71,6 @@ Thumbs.db
 backend/uploads/
 
 .pdf
+
+welder/
+.wrd

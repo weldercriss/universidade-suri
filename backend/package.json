@@ -17,11 +17,11 @@
     "test:coverage": "jest --coverage",
     "test:integration": "jest --config jest.integration.config.js",
     "test:e2e": "jest --config jest.e2e.config.js",
-    "db:migrate": "ts-node scripts/migrate.ts",
+    "db:push": "npx prisma db push",
     "db:sync": "ts-node scripts/sync.ts",
     "db:backup": "ts-node scripts/backup.ts",
     "db:restore": "ts-node scripts/restore.ts",
-    "db:seed": "ts-node scripts/seed-test-user.ts"
+    "db:seed": "ts-node scripts/seed-admin.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.3",

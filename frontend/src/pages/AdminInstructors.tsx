@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { ArrowLeft, Loader2, Plus, Edit, Trash2, User } from "lucide-react";
+import { ArrowLeft, Loader2, Plus, Edit, Trash2, User, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 const emptyForm = { name: "", title: "", bio: "", photoUrl: "", isActive: true };
@@ -22,6 +22,8 @@ export function AdminInstructorsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<any>(null);
   const [form, setForm] = useState(emptyForm);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
@@ -65,25 +67,24 @@ export function AdminInstructorsPage() {
     e.preventDefault();
     setSaving(true);
     try {
-      let instructorId = editing?.id;
-
+      let savedInstructorId = editing?.id;
       if (editing) {
         await apiRequest(`/admin/instructors/${editing.id}`, {
           method: "PUT",
           body: JSON.stringify(form),
         });
       } else {
-        const res = await apiRequest("/admin/instructors", {
+        const res = await apiRequest<any>("/admin/instructors", {
           method: "POST",
           body: JSON.stringify(form),
         });
-        instructorId = res.id;
+        savedInstructorId = res.id;
       }
 
-      if (photoFile && instructorId) {
+      if (photoFile && savedInstructorId) {
         const formData = new FormData();
-        formData.append("file", photoFile);
-        await apiUpload(`/admin/instructors/${instructorId}/photo`, formData);
+        formData.append("photo", photoFile);
+        await apiUpload(`/admin/instructors/${savedInstructorId}/photo`, formData);
       }
 
       toast.success(editing ? "Instrutor atualizado!" : "Instrutor criado!");
@@ -93,6 +94,14 @@ export function AdminInstructorsPage() {
       toast.error("Erro ao salvar instrutor");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      setPhotoPreview(URL.createObjectURL(file));
     }
   };
 
@@ -222,27 +231,25 @@ export function AdminInstructorsPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="photoFile">Foto do Instrutor (opcional)</Label>
-              <Input
-                id="photoFile"
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  if (e.target.files && e.target.files[0]) {
-                    const file = e.target.files[0];
-                    setPhotoFile(file);
-                    setPhotoPreview(URL.createObjectURL(file));
-                  }
-                }}
-              />
-              {photoPreview && (
-                <img
-                  src={photoPreview}
-                  alt="Preview"
-                  className="size-16 rounded-full object-cover border mt-1"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                />
-              )}
+              <Label>Foto do Instrutor (opcional)</Label>
+              <div className="flex items-center gap-4">
+                <div className="size-16 rounded-full overflow-hidden bg-muted border flex shrink-0 items-center justify-center">
+                  {photoPreview ? (
+                    <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <User className="size-6 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="cursor-pointer"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Recomendado: 400x400px (JPG/PNG)</p>
+                </div>
+              </div>
             </div>
             <div className="flex items-center gap-3">
               <Switch
@@ -270,7 +277,7 @@ export function AdminInstructorsPage() {
         title={confirmState.title}
         description={confirmState.description}
         onConfirm={confirmState.onConfirm}
-        onOpenChange={(open) => setConfirmState((s) => ({ ...s, open }))}
+        onOpenChange={(v) => { if (!v) setConfirmState((s) => ({ ...s, open: false })) }}
       />
     </AppShell>
   );

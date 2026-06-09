@@ -51,7 +51,7 @@ export class AuthService {
         isAdmin: user.isAdmin,
         isActive: user.isActive,
         profileImage: user.profileImage,
-        business: user.business || '',
+        business: user.business,
       },
     };
   }
@@ -104,7 +104,7 @@ export class AuthService {
         isAdmin: saved.isAdmin,
         isActive: saved.isActive,
         profileImage: saved.profileImage,
-        business: saved.business || '',
+        business: saved.business,
         isFirstLogin: true,
       },
     };
@@ -148,7 +148,7 @@ export class AuthService {
       isAdmin: updated.isAdmin,
       isActive: updated.isActive,
       profileImage: updated.profileImage,
-      business: updated.business || '',
+      business: updated.business,
     };
   }
 

@@ -133,43 +133,27 @@ let isFetched = false;
 let fetchPromise: Promise<void> | null = null;
 
 export function useChangelogBadge() {
-  const [latestVersion, setLatestVersion] = useState<string | null>(
-    cachedLatestVersion || localStorage.getItem(STORAGE_KEY) || null
-  );
-  const [hasNew, setHasNew] = useState(cachedHasNew);
+  const [latestVersion, setLatestVersion] = useState<string | null>(() => localStorage.getItem("suri_changelog_latest"));
+  const [hasNew, setHasNew] = useState(() => {
+    const latest = localStorage.getItem("suri_changelog_latest");
+    if (!latest) return false;
+    const seen = localStorage.getItem(STORAGE_KEY);
+    return seen !== latest;
+  });
 
   useEffect(() => {
-    if (isFetched) {
-      setLatestVersion(cachedLatestVersion);
-      setHasNew(cachedHasNew);
-      return;
-    }
-
-    if (!fetchPromise) {
-      fetchPromise = apiRequest("/changelog")
-        .then((data) => {
-          const releases = data as Release[];
-          const latestRelease = releases[0];
-          if (!latestRelease) return;
-          const latest = latestRelease.version;
-          cachedLatestVersion = latest;
-          setLatestVersion(latest);
-          
-          const seen = localStorage.getItem(STORAGE_KEY);
-          const isNew = seen !== latest;
-          cachedHasNew = isNew;
-          setHasNew(isNew);
-          isFetched = true;
-        })
-        .catch(() => {});
-    } else {
-      fetchPromise.then(() => {
-        if (isFetched) {
-          setLatestVersion(cachedLatestVersion);
-          setHasNew(cachedHasNew);
-        }
-      });
-    }
+    apiRequest("/changelog")
+      .then((data) => {
+        const releases = data as Release[];
+        const latestRelease = releases[0];
+        if (!latestRelease) return;
+        const latest = latestRelease.version;
+        setLatestVersion(latest);
+        localStorage.setItem("suri_changelog_latest", latest);
+        const seen = localStorage.getItem(STORAGE_KEY);
+        setHasNew(seen !== latest);
+      })
+      .catch(() => {});
   }, []);
 
   const markSeen = () => {
