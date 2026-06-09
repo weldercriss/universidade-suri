@@ -19,26 +19,31 @@ export class SettingsService {
   ) {}
 
   async getPublicSettings() {
-    const settings = await this.prisma.systemSetting.findMany({
-      where: {
-        key: {
-          in: [
-            'logo_expanded_light',
-            'logo_expanded_dark',
-            'logo_collapsed_light',
-            'logo_collapsed_dark',
-            'show_user_photos',
-          ],
+    try {
+      const settings = await this.prisma.systemSetting.findMany({
+        where: {
+          key: {
+            in: [
+              'logo_expanded_light',
+              'logo_expanded_dark',
+              'logo_collapsed_light',
+              'logo_collapsed_dark',
+              'show_user_photos',
+            ],
+          },
         },
-      },
-    });
+      });
 
-    const result: Record<string, string> = {};
-    settings.forEach(s => {
-      result[s.key] = s.value;
-    });
+      const result: Record<string, string> = {};
+      settings.forEach(s => {
+        result[s.key] = s.value;
+      });
 
-    return result;
+      return result;
+    } catch (e) {
+      // Não derruba o boot do frontend em falha transitória de DB (ex.: cold-start)
+      return {};
+    }
   }
 
   async setPhotoVisibility(user: any, body: PhotoVisibilityDto) {

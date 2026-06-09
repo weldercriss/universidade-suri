@@ -68,7 +68,6 @@ export class PrismaPostRepository implements IPostRepository {
   async create(post: Post): Promise<Post> {
     const data = await this.prisma.post.create({
       data: {
-        id: post.id,
         authorId: post.authorId,
         courseId: post.courseId,
         title: post.title,

@@ -73,7 +73,6 @@ export class PrismaUserRepository implements IUserRepository {
     try {
       const row = await this.prisma.profile.create({
         data: {
-          id: user.id,
           name: user.name,
           email: user.email,
           passwordHash: user.passwordHash,
