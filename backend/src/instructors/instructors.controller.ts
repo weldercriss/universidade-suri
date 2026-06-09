@@ -1,6 +1,7 @@
 import {
   Controller, Get, Post, Put, Delete,
   Param, Body, UseGuards, Req,
+  UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -54,6 +55,31 @@ export class InstructorsController {
   @Delete('admin/instructors/:id')
   async remove(@Param('id') id: string, @Req() req: any) {
     return this.instructorsService.remove(id, req.user);
+  }
+
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '[Admin] Faz upload da foto do instrutor' })
+  @UseGuards(AuthGuard('jwt'))
+  @Post('admin/instructors/:id/photo')
+  @UseInterceptors(FileInterceptor('photo', {
+    storage: memoryStorage(),
+    fileFilter: (req, file, cb) => {
+      const allowed = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+      const ext = path.extname(file.originalname).toLowerCase();
+      if (allowed.includes(ext)) {
+        cb(null, true);
+      } else {
+        cb(new BadRequestException('Formato de imagem não suportado. Use JPG, PNG, WEBP ou GIF.'), false);
+      }
+    },
+    limits: { fileSize: 5 * 1024 * 1024 },
+  }))
+  async uploadPhoto(
+    @Param('id') id: string,
+    @UploadedFile() file: Express.Multer.File,
+    @Req() req: any,
+  ) {
+    return this.instructorsService.uploadPhoto(id, file, req.user);
   }
 
   // ── Associação Curso ↔ Instrutor ─────────────────────────────────────────────
