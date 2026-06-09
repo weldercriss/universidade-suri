@@ -12,7 +12,7 @@ Plataforma EAD com gamificação para grupos corporativos (VIP e Embaixadores). 
 
 | Camada | Tecnologia |
 |--------|-----------|
-| Backend | NestJS 10, Prisma ORM, PostgreSQL 16 |
+| Backend | NestJS 10, Prisma ORM, MongoDB |
 | Frontend | React 18, Vite, TypeScript, Tailwind CSS v4, shadcn/ui |
 | Auth | JWT (Passport.js), bcrypt |
 | Containerização | Docker Compose |
@@ -101,7 +101,7 @@ universidade-suri/
 │   │   └── manifest.json           # PWA manifest
 │   ├── index.html                  # Inclui inicialização do Webchat ChatbotMaker (CBM)
 │   └── vite.config.ts              # Port 5175, alias @, plugin Tailwind, PWA
-└── docker-compose.yml              # PostgreSQL (5435), Backend (3000), Frontend (80)
+└── docker-compose.yml              # MongoDB, Backend (3000), Frontend (80)
 ```
 
 ---
@@ -566,7 +566,7 @@ docker-compose up -d
 
 # Backend estará em http://localhost:3000
 # Frontend em http://localhost:80
-# PostgreSQL em localhost:5435
+# MongoDB em localhost:27017
 ```
 
 ### Desenvolvimento Local
@@ -575,7 +575,7 @@ docker-compose up -d
 # Backend
 cd backend
 cp .env.example .env
-# Edite DATABASE_URL e DIRECT_URL apontando para PostgreSQL local ou Supabase
+# Edite DATABASE_URL apontando para o MongoDB local ou MongoDB Atlas
 npm install
 npx prisma migrate dev
 npm run start:dev
@@ -589,8 +589,7 @@ npm run dev  # Porta 5175
 ### Variáveis de Ambiente Obrigatórias
 
 ```env
-DATABASE_URL=postgresql://user:pass@localhost:5435/suri
-DIRECT_URL=postgresql://user:pass@localhost:5432/suri  # direto (sem pool)
+DATABASE_URL=mongodb://localhost:27017/suri
 JWT_SECRET=sua_chave_secreta_minimo_32_caracteres
 ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5175
 FRONTEND_URL=http://localhost:5173

@@ -1,7 +1,7 @@
 # Universidade Suri
 
 Plataforma EAD corporativa (padrão TOTVS) com gamificação, comunidade social e certificação digital.  
-Monorepo: **backend NestJS** (Clean Architecture + Prisma + PostgreSQL) e **frontend React** (Vite + Tailwind CSS + shadcn/ui).
+Monorepo: **backend NestJS** (Clean Architecture + Prisma + MongoDB) e **frontend React** (Vite + Tailwind CSS + shadcn/ui).
 
 ---
 
@@ -10,7 +10,7 @@ Monorepo: **backend NestJS** (Clean Architecture + Prisma + PostgreSQL) e **fron
 | Camada | Tecnologia |
 |---|---|
 | Frontend | React 19, Vite 7, Tailwind CSS 4, shadcn/ui, React Router 6 |
-| Backend | NestJS 10, Prisma ORM 5, PostgreSQL 16, JWT (Passport.js) |
+| Backend | NestJS 10, Prisma ORM 5, MongoDB, JWT (Passport.js) |
 | Infra | Docker Compose (dev), Docker multi-stage (prod), GitHub Actions CI |
 | API Docs | Swagger (`/api/docs`) |
 

@@ -110,7 +110,7 @@ Os tokens de API não podem acessar endpoints JWT e vice-versa — as estratégi
 
 - Multi-stage builds geram imagens sem dependências de desenvolvimento.
 - Backend roda via usuário não-root no container.
-- PostgreSQL exposto apenas internamente na rede Docker (porta 5435 apenas para acesso local de dev).
+- MongoDB exposto apenas internamente na rede Docker (porta 27017 apenas para acesso local de dev).
 
 ---
 

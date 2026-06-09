@@ -10,7 +10,7 @@ A Universidade Suri é uma plataforma EAD com gamificação e comunidade social.
 
 ```
 universidade-suri/
-├── backend/      → API REST (NestJS + Prisma + PostgreSQL)
+├── backend/      → API REST (NestJS + Prisma + MongoDB)
 ├── frontend/     → SPA (React + Vite + Tailwind + shadcn/ui)
 ├── docs/         → Documentação técnica
 └── docker-compose.yml
@@ -38,7 +38,7 @@ graph TB
             Prisma["Prisma ORM"]
         end
 
-        DB[("PostgreSQL\n16-alpine")]
+        DB[("MongoDB")]
     end
 
     Browser --> React
@@ -134,7 +134,7 @@ O backend expõe um conjunto separado de endpoints (`/external/*`) autenticado p
 sequenceDiagram
     participant S as Sistema Externo
     participant B as Backend API
-    participant DB as PostgreSQL
+    participant DB as MongoDB
 
     S->>B: GET /external/stats\nAuthorization: Bearer suri_<token>
     B->>B: ApiTokenStrategy:\n1. Extrai token do header\n2. Hash SHA256\n3. Busca ApiToken no banco
@@ -369,7 +369,7 @@ sequenceDiagram
     participant U as Usuário
     participant F as Frontend
     participant B as Backend API
-    participant DB as PostgreSQL
+    participant DB as MongoDB
 
     U->>F: Preenche email + senha
     F->>B: POST /auth/login {email, password}
@@ -416,7 +416,7 @@ sequenceDiagram
 | Webchat | ChatbotMaker (CBM) via `webchat.chatbotmaker.io/cbm-jssdk.js` |
 | Backend Framework | NestJS 10 |
 | ORM | Prisma 5 |
-| Database | PostgreSQL 16 |
+| Database | MongoDB |
 | Auth (usuários) | JWT 7d + Passport.js + bcrypt(10) |
 | Auth (API externa) | Token SHA256 + `passport-custom` |
 | Segurança | helmet, @nestjs/throttler, class-validator |

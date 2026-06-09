@@ -110,5 +110,5 @@ docker exec -it unisuri-backend-prod npx prisma migrate deploy
 Configure um cron job no VPS para fazer backup do banco de dados diariamente:
 
 ```bash
-0 3 * * * docker exec unisuri-db-prod pg_dump -U postgres unisuri_db > /caminho/backup/unisuri_db_$(date +\%F).sql
+0 3 * * * docker exec unisuri-db-prod mongodump --uri="mongodb://localhost:27017/unisuri_db" --archive=/caminho/backup/unisuri_db_$(date +\%F).archive
 ```
