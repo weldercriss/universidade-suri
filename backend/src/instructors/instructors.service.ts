@@ -12,6 +12,7 @@ export class InstructorsService {
 
   async uploadPhoto(id: string, file: Express.Multer.File, user: any) {
     if (!user.isAdmin) throw new ForbiddenException('Acesso negado');
+    if (!file) throw new BadRequestException('Nenhum arquivo enviado');
     const existing = await this.instructorRepository.findById(id);
     if (!existing) throw new NotFoundException('Instrutor não encontrado');
 
@@ -94,28 +95,5 @@ export class InstructorsService {
     if (!user.isAdmin) throw new ForbiddenException('Acesso negado');
     await this.instructorRepository.removeFromCourse(courseId, instructorId);
     return { message: 'Associação removida' };
-  }
-
-  async uploadPhoto(id: string, file: Express.Multer.File, user: any) {
-    if (!user.isAdmin) throw new ForbiddenException('Acesso negado');
-    if (!file) throw new BadRequestException('Nenhum arquivo enviado');
-    
-    const existing = await this.instructorRepository.findById(id);
-    if (!existing) throw new NotFoundException('Instrutor não encontrado');
-
-    const imageUrl = await this.supabaseStorage.uploadFile(
-      file.buffer,
-      file.originalname,
-      file.mimetype,
-      `instructors/${id}`
-    );
-
-    return this.instructorRepository.update(id, {
-      name: existing.name,
-      title: existing.title,
-      bio: existing.bio,
-      photoUrl: imageUrl,
-      isActive: existing.isActive,
-    });
   }
 }

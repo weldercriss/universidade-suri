@@ -25,8 +25,6 @@ export function AdminInstructorsPage() {
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [confirmState, setConfirmState] = useState<{
     open: boolean; title: string; onConfirm: () => void; description?: string;
   }>({ open: false, title: "", onConfirm: () => {} });
