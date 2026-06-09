@@ -128,8 +128,13 @@ export function ChangelogModal({ open, onClose }: Props) {
 }
 
 export function useChangelogBadge() {
-  const [latestVersion, setLatestVersion] = useState<string | null>(null);
-  const [hasNew, setHasNew] = useState(false);
+  const [latestVersion, setLatestVersion] = useState<string | null>(() => localStorage.getItem("suri_changelog_latest"));
+  const [hasNew, setHasNew] = useState(() => {
+    const latest = localStorage.getItem("suri_changelog_latest");
+    if (!latest) return false;
+    const seen = localStorage.getItem(STORAGE_KEY);
+    return seen !== latest;
+  });
 
   useEffect(() => {
     apiRequest("/changelog")
@@ -139,6 +144,7 @@ export function useChangelogBadge() {
         if (!latestRelease) return;
         const latest = latestRelease.version;
         setLatestVersion(latest);
+        localStorage.setItem("suri_changelog_latest", latest);
         const seen = localStorage.getItem(STORAGE_KEY);
         setHasNew(seen !== latest);
       })

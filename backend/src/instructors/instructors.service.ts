@@ -1,12 +1,38 @@
 import { Injectable, Inject, ForbiddenException, NotFoundException, BadRequestException } from '@nestjs/common';
 import { IInstructorRepository } from '../domain/repositories/instructor.repository.interface';
+import { SupabaseStorageService } from '../infrastructure/storage/supabase-storage.service';
 
 @Injectable()
 export class InstructorsService {
   constructor(
     @Inject(IInstructorRepository)
     private readonly instructorRepository: IInstructorRepository,
+    private readonly storageService: SupabaseStorageService,
   ) {}
+
+  async uploadPhoto(id: string, file: Express.Multer.File, user: any) {
+    if (!user.isAdmin) throw new ForbiddenException('Acesso negado');
+    const existing = await this.instructorRepository.findById(id);
+    if (!existing) throw new NotFoundException('Instrutor não encontrado');
+
+    const ext = file.originalname.split('.').pop() || 'jpg';
+    const filename = `instructor-${id}-${Date.now()}.${ext}`;
+    
+    const photoUrl = await this.storageService.uploadFile(
+      file.buffer,
+      filename,
+      file.mimetype,
+      'instructors'
+    );
+
+    return this.instructorRepository.update(id, {
+      name: existing.name,
+      title: existing.title,
+      bio: existing.bio,
+      isActive: existing.isActive,
+      photoUrl,
+    });
+  }
 
   async listPublic() {
     return this.instructorRepository.listActive();

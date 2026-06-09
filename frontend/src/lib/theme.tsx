@@ -18,7 +18,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
       if (stored === "night-blue" || stored === "snow-blue") return stored;
     }
-    return "night-blue";
+    return "snow-blue";
   });
 
   useEffect(() => {
