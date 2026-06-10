@@ -261,7 +261,7 @@ export function SettingsPage() {
         <div className="lg:col-span-2 space-y-6 stagger-children">
 
         {/* ── Foto de Perfil ── */}
-        <Card className="bg-gradient-card border-border shadow-elegant overflow-hidden">
+        <Card data-tour="config-foto" className="bg-gradient-card border-border shadow-elegant overflow-hidden">
           <div className="p-6">
             <h2 className="font-semibold mb-1 text-gradient">Foto de Perfil</h2>
             <p className="text-xs text-muted-foreground mb-5">
@@ -357,7 +357,7 @@ export function SettingsPage() {
         </Card>
 
         {/* ── Perfil ── */}
-        <Card className="bg-gradient-card border-border p-6 shadow-elegant">
+        <Card data-tour="config-conta" className="bg-gradient-card border-border p-6 shadow-elegant">
           <h2 className="font-semibold mb-4 text-gradient">Informações Pessoais</h2>
           <div className="grid sm:grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -386,7 +386,7 @@ export function SettingsPage() {
 
 
         {/* ── Notificações ── */}
-        <Card className="bg-gradient-card border-border p-6 shadow-elegant">
+        <Card data-tour="config-notificacoes" className="bg-gradient-card border-border p-6 shadow-elegant">
           <h2 className="font-semibold mb-4 text-gradient">Notificações</h2>
           {[
             "Novas aulas disponíveis",

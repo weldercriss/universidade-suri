@@ -95,7 +95,7 @@ export default function Gamification() {
         )}
 
         {/* Como ganhar XP */}
-        <Card className="bg-gradient-card">
+        <Card data-tour="gam-xp" className="bg-gradient-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <Zap className="h-4 w-4 text-yellow-400" />
@@ -152,7 +152,7 @@ export default function Gamification() {
         </Card>
 
         {/* Progressão de Nível */}
-        <Card className="bg-gradient-card">
+        <Card data-tour="gam-niveis" className="bg-gradient-card">
           <CardHeader className="pb-3">
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />

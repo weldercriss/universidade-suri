@@ -148,7 +148,7 @@ export function ProfilePage() {
 
       {/* Progress - Only for non-admin */}
       {!isAdmin && (
-        <div className="grid gap-6 mt-6 stagger-children">
+        <div data-tour="perfil-jornada" className="grid gap-6 mt-6 stagger-children">
           <Card className="bg-gradient-card border-border p-5 shadow-elegant">
             <div className="text-sm font-semibold mb-3 text-gradient">Progresso da jornada</div>
             <Progress value={journeySteps.length > 0 ? (completed / journeySteps.length) * 100 : 0} />
@@ -195,7 +195,7 @@ export function ProfilePage() {
 
       {/* Certificados - Only for non-admin */}
       {!isAdmin && (
-        <div className="mt-6 fade-in-up">
+        <div data-tour="perfil-certificados" className="mt-6 fade-in-up">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-lg font-semibold flex items-center gap-2">
               <FileText className="size-5 text-primary" />

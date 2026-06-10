@@ -621,7 +621,7 @@ export function TrailsListPage() {
 
   return (
     <AppShell>
-      <header className="mb-6 fade-in-up">
+      <header data-tour="trilhas-header" className="mb-6 fade-in-up">
         <h1 className="text-3xl font-bold text-gradient flex items-center gap-2">
           <Route className="size-7 text-primary" /> Trilhas
         </h1>

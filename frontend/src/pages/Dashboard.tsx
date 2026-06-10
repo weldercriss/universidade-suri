@@ -184,7 +184,7 @@ export function DashboardPage() {
 
       {/* Journey */}
       {!isAdmin && (
-        <section className="mt-12">
+        <section data-tour="dash-journey" className="mt-12">
           <div className="flex items-end justify-between mb-6">
             <h2 className="text-xl font-semibold">Jornada educacional</h2>
             <div className="flex items-center gap-3">
@@ -229,7 +229,7 @@ export function DashboardPage() {
       )}
 
       {/* Continue assistindo + ranking */}
-      <section className="grid lg:grid-cols-3 gap-8 mt-12">
+      <section data-tour="dash-continue" className="grid lg:grid-cols-3 gap-8 mt-12">
         <div className="lg:col-span-2">
           <div className="flex items-end justify-between mb-6">
             <h2 className="text-xl font-semibold">
