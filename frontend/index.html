@@ -13,6 +13,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="manifest" href="/manifest.json" />
     <style>
+      /* Webchat visível apenas quando o usuário está logado
+         (classe webchat-enabled é alternada pelo AuthProvider) */
+      body:not(.webchat-enabled) .__talkjs_launcher {
+        display: none !important;
+      }
+
       /* Desktop: opacidade reduzida no launcher */
       @media (min-width: 768px) {
         .__talkjs_launcher {

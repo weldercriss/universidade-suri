@@ -85,6 +85,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchProfile();
   }, []);
 
+  // Exibe o webchat (launcher CBM) apenas quando há usuário logado
+  useEffect(() => {
+    document.body.classList.toggle("webchat-enabled", !!user);
+  }, [user]);
+
   const login = async (email: string, password: string) => {
     try {
       const data = await apiRequest("/auth/login", {

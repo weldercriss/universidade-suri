@@ -118,10 +118,7 @@ export function AuthPage() {
           {/* ── Sign In Form ── */}
           <div className="auth-form-panel auth-sign-in">
             <form onSubmit={handleLogin} className="auth-form">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border/70 bg-background/40 text-[10px] uppercase tracking-[0.18em] text-foreground/60 mb-5 self-start">
-                <span className="size-1.5 rounded-full bg-gradient-brand" />
-                Bem-vindo de volta
-              </div>
+              
 
               <h1 className="font-display text-[1.7rem] font-bold leading-tight mb-1 self-start">
                 Entre na{" "}
@@ -199,10 +196,7 @@ export function AuthPage() {
           {/* ── Sign Up Form ── */}
           <div className="auth-form-panel auth-sign-up">
             <form onSubmit={handleSignUp} className="auth-form">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border/70 bg-background/40 text-[10px] uppercase tracking-[0.18em] text-foreground/60 mb-4 self-start">
-                <span className="size-1.5 rounded-full bg-gradient-brand" />
-                Crie sua conta
-              </div>
+              
 
               <h1 className="font-display text-[1.55rem] font-bold leading-tight mb-4 self-start">
                 Entre na{" "}
@@ -288,10 +282,7 @@ export function AuthPage() {
               {/* Left — visible in signup mode (panel slid to left) */}
               <div className="auth-toggle-panel auth-toggle-left">
                 <img src={suriWhite} className="auth-toggle-logo" alt="Universidade Suri" />
-                <div className="auth-toggle-badge">
-                  <span className="size-1.5 rounded-full bg-white/80" />
-                  Bem-vindo de volta
-                </div>
+                
                 <h2 className="font-display text-[1.55rem] font-bold text-white leading-tight mb-3 text-center">
                   Entre na Universidade Suri
                 </h2>
@@ -306,12 +297,9 @@ export function AuthPage() {
               {/* Right — visible in signin mode (default) */}
               <div className="auth-toggle-panel auth-toggle-right">
                 <img src={suriWhite} className="auth-toggle-logo" alt="Universidade Suri" />
-                <div className="auth-toggle-badge">
-                  <span className="size-1.5 rounded-full bg-white/80" />
-                  Crie sua conta
-                </div>
+               
                 <h2 className="font-display text-[1.55rem] font-bold text-white leading-tight mb-3 text-center">
-                  Olá, amigo! Bem-vindo
+                  Olá! Bem-vindo a Universidade Suri
                 </h2>
                 <p className="text-white/70 text-[0.82rem] leading-relaxed mb-7 text-center">
                   Registre seus dados para aproveitar trilhas, certificados e muito mais

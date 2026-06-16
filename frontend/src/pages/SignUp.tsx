@@ -107,10 +107,7 @@ export function SignUpPage() {
 
             {/* ── LEFT: branding / copy ── */}
             <div className="md:w-[40%] md:border-r md:border-border/40 md:pr-10 lg:pr-14 flex flex-col justify-center mb-8 md:mb-0">
-              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-border/70 bg-background/40 text-[11px] uppercase tracking-[0.18em] text-foreground/60 mb-5 self-start">
-                <span className="size-1.5 rounded-full bg-gradient-brand" />
-                Crie sua conta
-              </div>
+              
               <h1 className="font-display text-3xl sm:text-[1.85rem] font-bold leading-tight mb-3">
                 Entre na{" "}
                 <span className="text-gradient">Universidade Suri</span>

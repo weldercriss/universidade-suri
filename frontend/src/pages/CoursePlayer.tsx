@@ -608,6 +608,7 @@ export function CoursePlayerPage() {
                     src={lesson.videoEmbedUrl}
                     className="w-full h-full border-0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    referrerPolicy="strict-origin-when-cross-origin"
                     allowFullScreen
                   />
                 </div>

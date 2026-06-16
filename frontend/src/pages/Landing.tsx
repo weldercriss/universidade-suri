@@ -9,8 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { API_BASE_URL } from "@/lib/api";
 import totvsLight from "@/assets/icons/totvs-dark.svg";
 import totvsDark from "@/assets/icons/totvs.svg";
-import suriBlue from "@/assets/icons/suri-blue.svg";
-import suriWhite from "@/assets/icons/suri-white.svg";
+import suriBlue from "@/assets/icons/SuriByTotvsBlue.svg";
+import suriWhite from "@/assets/icons/SuriByTotvsWhite.svg";
 // Gradientes de fallback usados quando o curso não possui capa cadastrada
 const GRADIENT_COVERS = [
   "from-cyan-500 to-blue-500",
@@ -88,7 +88,7 @@ export function LandingPage() {
                 <img
                   src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : suriBlue) : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : suriWhite)}
                   alt="Universidade Suri"
-                  className="h-8 w-auto"
+                  className="h-11 w-auto"
                 />
               </button>
             </div>
@@ -477,7 +477,7 @@ export function LandingPage() {
                 <img
                   src={isLight ? (settings?.logo_expanded_light ? `${API_BASE_URL}${settings.logo_expanded_light}` : suriBlue) : (settings?.logo_expanded_dark ? `${API_BASE_URL}${settings.logo_expanded_dark}` : suriWhite)}
                   alt="Universidade Suri"
-                  className="h-7 w-auto opacity-80"
+                  className="h-10 w-auto opacity-80"
                 />
               </div>
               <p className="text-sm text-muted-foreground max-w-sm">
